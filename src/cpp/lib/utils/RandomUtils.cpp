@@ -1,0 +1,72 @@
+#include "RandomUtils.hpp"
+
+shared_ptr<Integer> RandomUtils::genInteger(vector<uint8_t> input, const vector<uint8_t> &seed)
+{
+  string hex = Integer::createWithBinary(input)->toHex();
+  CryptoPP::Integer max(hex.c_str());
+
+  if (seed.size() == 0)
+  {
+    // No Seed
+    RandomGenerator prng;
+    return make_shared<IntegerImpl>(CryptoPP::Integer(prng, CryptoPP::Integer::Zero(), max));
+  }
+  else
+  {
+    // With Seed
+    CryptoPP::byte *s = (CryptoPP::byte *)seed.data();
+    RandomGenerator rng(s, (size_t)seed.size());
+
+    return make_shared<IntegerImpl>(CryptoPP::Integer(rng, CryptoPP::Integer::Zero(), max));
+  }
+}
+
+shared_ptr<Integer> RandomUtils::genInteger(int byteLength, bool prime, const vector<uint8_t> &seed)
+{
+  CryptoPP::Integer x;
+  int length = byteLength * 8;
+
+  CryptoPP::AlgorithmParameters params;
+  // Set Bit Length
+  if (!prime)
+    params = CryptoPP::MakeParameters("BitLength", length);
+  // Set Prime
+  else
+    params = CryptoPP::MakeParameters("BitLength", length)("RandomNumberType", CryptoPP::Integer::PRIME);
+
+  if (seed.size() == 0)
+  {
+    // No Seed
+    RandomGenerator prng;
+    x.GenerateRandom(prng, params);
+    return make_shared<IntegerImpl>(x);
+  }
+  else
+  {
+    // With Seed
+    CryptoPP::byte *s = (CryptoPP::byte *)seed.data();
+    RandomGenerator rng(s, (size_t)seed.size());
+
+    x.GenerateRandom(rng, params);
+    return make_shared<IntegerImpl>(x);
+  }
+}
+
+vector<uint8_t> RandomUtils::genBinary(int byteLength, const vector<uint8_t> &seed)
+{
+  auto retInt = RandomUtils::genInteger(byteLength, false, seed);
+  auto retBin = retInt->toBinary();
+  size_t len = retBin.size();
+  if (len == byteLength)
+    return retBin;
+
+  vector<uint8_t> newBin(byteLength - len, 0x0);
+  newBin.insert(newBin.end(), retBin.begin(), retBin.end());
+  return newBin;
+}
+
+string RandomUtils::genHex(int byteLength, const vector<uint8_t> &seed)
+{
+  auto ret = RandomUtils::genBinary(byteLength, seed);
+  return Utils::binaryToHex(ret);
+}

@@ -1,21 +1,21 @@
-#include "KeyPairImpl.hpp"
+#include "ECKeyPairImpl.hpp"
 
 using namespace std;
 using namespace cryptoplus;
 
 // Djinni Wrapper
-shared_ptr<KeyPair> KeyPair::createRandomKey(const shared_ptr<EC> &curve)
+shared_ptr<KeyPair> KeyPair::create(const shared_ptr<ECCurve> &curve)
 {
   vector<uint8_t> emptySeed;
   return make_shared<KeyPairImpl>(curve, emptySeed);
 }
 
-shared_ptr<KeyPair> KeyPair::createWithSeed(const shared_ptr<EC> &curve, const vector<uint8_t> &seed)
+shared_ptr<KeyPair> KeyPair::createWithSeed(const shared_ptr<ECCurve> &curve, const vector<uint8_t> &seed)
 {
   return make_shared<KeyPairImpl>(curve, seed);
 }
 
-shared_ptr<KeyPair> KeyPair::createWithPrivateKey(const shared_ptr<EC> &curve, const vector<uint8_t> &privateKey)
+shared_ptr<KeyPair> KeyPair::createWithPrivateKey(const shared_ptr<ECCurve> &curve, const vector<uint8_t> &privateKey)
 {
   vector<uint8_t> emptyKey;
   return make_shared<KeyPairImpl>(curve, privateKey, emptyKey);
@@ -23,10 +23,10 @@ shared_ptr<KeyPair> KeyPair::createWithPrivateKey(const shared_ptr<EC> &curve, c
 
 // Class Implement
 
-KeyPairImpl::KeyPairImpl(const shared_ptr<EC> &curve, const vector<uint8_t> &seed)
+KeyPairImpl::KeyPairImpl(const shared_ptr<ECCurve> &curve, const vector<uint8_t> &seed)
 {
   this->curve = curve;
-  auto _curve = dynamic_pointer_cast<ECImpl>(curve);
+  auto _curve = dynamic_pointer_cast<ECCurveImpl>(curve);
 
   CryptoPP::ECIES<CryptoPP::ECP>::PrivateKey ePrivateKey;
   CryptoPP::ECIES<CryptoPP::ECP>::PublicKey ePublicKey;
@@ -41,8 +41,8 @@ KeyPairImpl::KeyPairImpl(const shared_ptr<EC> &curve, const vector<uint8_t> &see
   else
   {
     // Hash the Seed until the length is fixed
-    vector<uint8_t> hash = Utils::calcHash(seed);
-    RandomGenerator rng((CryptoPP::byte *)hash.data(), (size_t) hash.size());
+    vector<uint8_t> hash = HashUtils::sha256(seed);
+    RandomGenerator rng((CryptoPP::byte *)hash.data(), (size_t)hash.size());
     ePrivateKey.Initialize(rng, _curve->getOID());
   }
   // Generate public key using private key
@@ -65,7 +65,7 @@ KeyPairImpl::KeyPairImpl(const shared_ptr<EC> &curve, const vector<uint8_t> &see
 }
 
 // Used for generated Keys
-KeyPairImpl::KeyPairImpl(const shared_ptr<EC> &curve, const vector<uint8_t> &privateKey, const vector<uint8_t> &publicKey)
+KeyPairImpl::KeyPairImpl(const shared_ptr<ECCurve> &curve, const vector<uint8_t> &privateKey, const vector<uint8_t> &publicKey)
 {
   this->curve = curve;
   this->privateKey = privateKey;
@@ -88,7 +88,7 @@ KeyPairImpl::KeyPairImpl(const shared_ptr<EC> &curve, const vector<uint8_t> &pri
   }
 }
 
-shared_ptr<EC> KeyPairImpl::getCurve()
+shared_ptr<ECCurve> KeyPairImpl::getCurve()
 {
   return curve;
 }
@@ -105,12 +105,12 @@ vector<uint8_t> KeyPairImpl::getPublicKey()
 
 shared_ptr<ECPoint> KeyPairImpl::getPublicElement()
 {
-  return EC::getPublicElement(publicKey);
+  return ECCurve::getPublicElement(publicKey);
 }
 
 shared_ptr<Integer> KeyPairImpl::getPrivateElement()
 {
-  return EC::getPrivateElement(privateKey);
+  return ECCurve::getPrivateElement(privateKey);
 }
 
 bool KeyPairImpl::eq(const std::shared_ptr<KeyPair> &b)

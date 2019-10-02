@@ -3,10 +3,10 @@
 #include "lib/namespace.hpp"
 
 #include "Utils.hpp"
+#include "RandomUtils.hpp"
 
-#include "EC.hpp"
+#include "ECCurve.hpp"
 
-#include "lib/utils/ECPointGenerator.hpp"
 #include "lib/algo/PedersenCommitment.hpp"
 
 using namespace cryptoplus;
@@ -14,13 +14,14 @@ namespace
 {
 TEST(PedersenCommitment, Commit_and_verify)
 {
-  auto curve = EC::SECP256K1();
+  auto curve = ECCurve::SECP256K1();
+  auto seed = Utils::hexToBinary("01EF");
   auto G = curve->getG();
-  auto H = ECPointGenerator::generate(curve, "01EF", true);
-  auto x = Utils::randomInt(32);
-  auto r = Utils::randomInt(32);
-  auto fakeX = Utils::randomInt(32);
-  auto fakeR = Utils::randomInt(32);
+  auto H = curve->computeGenerator(seed);
+  auto x = RandomUtils::randomInt(32);
+  auto r = RandomUtils::randomInt(32);
+  auto fakeX = RandomUtils::randomInt(32);
+  auto fakeR = RandomUtils::randomInt(32);
 
   auto c = PedersenCommitment::commit(curve, x, G, r, H);
   auto fakeC = PedersenCommitment::commit(curve, fakeX, G, fakeR, H);
@@ -40,15 +41,16 @@ TEST(PedersenCommitment, Commit_and_verify)
 
 TEST(PedersenCommitment, Speed_test_x10)
 {
-  auto curve = EC::SECP256K1();
+  auto seed = Utils::stringToBinary("test");
+  auto curve = ECCurve::SECP256K1();
   auto G = curve->getG();
-  auto H = ECPointGenerator::generate(curve, "test", true);
+  auto H = curve->computeGenerator(seed);
 
   int times = 10;
   for (int i = 0; i < times; i++)
   {
-    auto x = Utils::randomInt(32);
-    auto r = Utils::randomInt(32);
+    auto x = RandomUtils::randomInt(32);
+    auto r = RandomUtils::randomInt(32);
     auto c = PedersenCommitment::commit(curve, x, G, r, H);
     EXPECT_TRUE(PedersenCommitment::verify(curve, c, x, G, r, H));
   }
@@ -56,15 +58,16 @@ TEST(PedersenCommitment, Speed_test_x10)
 
 TEST(PedersenCommitment, Speed_test_x100)
 {
-  auto curve = EC::SECP256K1();
+  auto seed = Utils::stringToBinary("test");
+  auto curve = ECCurve::SECP256K1();
   auto G = curve->getG();
-  auto H = ECPointGenerator::generate(curve, "test", true);
+  auto H = curve->computeGenerator(seed);
 
   int times = 100;
   for (int i = 0; i < times; i++)
   {
-    auto x = Utils::randomInt(32);
-    auto r = Utils::randomInt(32);
+    auto x = RandomUtils::randomInt(32);
+    auto r = RandomUtils::randomInt(32);
     auto c = PedersenCommitment::commit(curve, x, G, r, H);
     EXPECT_TRUE(PedersenCommitment::verify(curve, c, x, G, r, H));
   }

@@ -12,7 +12,7 @@
 #include "Integer.hpp"
 
 #include "./RandomGenerator.hpp"
-#include "../wrappers/IntegerImpl.hpp"
+#include "./IntegerImpl.hpp"
 
 using namespace std;
 using namespace cryptoplus;
@@ -20,7 +20,7 @@ using namespace cryptoplus;
 namespace cryptoplus
 {
 
-class RandomUtils
+class Random
 {
 public:
   // Random Integer with Max Integer

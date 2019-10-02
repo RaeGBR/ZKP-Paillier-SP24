@@ -11,7 +11,7 @@ describe("Crypto Library - KeyPair", () => {
     Module({ wasmBinaryFile: "../../build/wasm/js/cryptoplus.wasm" }).then(
       result => {
         wasm = result;
-        curve = wasm.EC.SECP256K1();
+        curve = wasm.ECCurve.SECP256K1();
         done();
       }
     );
@@ -74,13 +74,13 @@ describe("Crypto Library - KeyPair", () => {
     });
 
     it("Seed & Random KeyPair", () => {
-      curve = wasm.EC.SECP256K1();
+      curve = wasm.ECCurve.SECP256K1();
       const seed = wasm.Utils.stringToBinary("123");
       const longSeed = wasm.Utils.stringToBinary(
         "I'm a very long string, that very long very long very long very long very long very long very long very long very long"
       );
-      const k1 = wasm.KeyPair.createRandomKey(curve);
-      const k2 = wasm.KeyPair.createRandomKey(curve);
+      const k1 = wasm.KeyPair.create(curve);
+      const k2 = wasm.KeyPair.create(curve);
       const k3 = wasm.KeyPair.createWithSeed(curve, seed);
       const k4 = wasm.KeyPair.createWithSeed(curve, seed);
       const k5 = wasm.KeyPair.createWithSeed(curve, longSeed);
@@ -96,7 +96,7 @@ describe("Crypto Library - KeyPair", () => {
 
   describe("KeyPair Predict & Process", () => {
     it("KeyPair with Seed is predictable", () => {
-      curve = wasm.EC.SECP256K1();
+      curve = wasm.ECCurve.SECP256K1();
       const seed = wasm.Utils.stringToBinary("Hello, my name is Alex");
 
       const pair = wasm.KeyPair.createWithSeed(curve, seed);
@@ -117,8 +117,8 @@ describe("Crypto Library - KeyPair", () => {
     });
 
     it("KeyPair Mathematic", () => {
-      curve = wasm.EC.SECP256K1();
-      const pair = wasm.KeyPair.createRandomKey(curve);
+      curve = wasm.ECCurve.SECP256K1();
+      const pair = wasm.KeyPair.create(curve);
       const x = pair.getPrivateElement();
       const y = pair.getPublicElement();
       const gx = curve.getG().mul(curve, x);
@@ -127,7 +127,7 @@ describe("Crypto Library - KeyPair", () => {
     });
 
     it("Generate Public Key from Private Key", () => {
-      curve = wasm.EC.SECP256K1();
+      curve = wasm.ECCurve.SECP256K1();
       const seed = wasm.Utils.stringToBinary("Hello, my name is Alex :)");
       const pair = wasm.KeyPair.createWithSeed(curve, seed);
       const valid = wasm.KeyPair.createWithPrivateKey(

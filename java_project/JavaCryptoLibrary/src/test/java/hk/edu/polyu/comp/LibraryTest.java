@@ -10,8 +10,10 @@ import java.io.File;
 
 import org.junit.Test;
 
-import polyu.cryptoplus.EC;
+import polyu.cryptoplus.CryptoUtils;
+import polyu.cryptoplus.ECCurve;
 import polyu.cryptoplus.KeyPair;
+import polyu.cryptoplus.RandomUtils;
 import polyu.cryptoplus.Utils;
 
 public class LibraryTest {
@@ -28,26 +30,26 @@ public class LibraryTest {
 	public void testOtherCryptoFunctions() {
 		// AES Encryption
 		int AES_KEY_LEN = 16;
-		byte[] aesKey = Utils.random(AES_KEY_LEN);
-		byte[] iv = Utils.random(AES_KEY_LEN);
+		byte[] aesKey = RandomUtils.random(AES_KEY_LEN);
+		byte[] iv = RandomUtils.random(AES_KEY_LEN);
 		byte[] data = Utils.stringToBinary("testing");
-		byte[] encrypted = Utils.aesEncrypt(aesKey, iv, data);
-		byte[] decrypted = Utils.aesDecrypt(aesKey, iv, encrypted);
+		byte[] encrypted = CryptoUtils.aesEncrypt(aesKey, iv, data);
+		byte[] decrypted = CryptoUtils.aesDecrypt(aesKey, iv, encrypted);
 
 		assertEquals(Utils.binaryToString(decrypted), "testing");
 
 		// EC Encryption
-		EC curve = EC.SECP256K1();
+		ECCurve curve = ECCurve.SECP256K1();
 
-		KeyPair keypair = KeyPair.createRandomKey(curve);
-		encrypted = Utils.ecEncrypt(curve, keypair.getPublicKey(), data);
-		decrypted = Utils.ecDecrypt(curve, keypair.getPrivateKey(), encrypted);
+		KeyPair keypair = KeyPair.create(curve);
+		encrypted = CryptoUtils.ecEncrypt(curve, keypair.getPublicKey(), data);
+		decrypted = CryptoUtils.ecDecrypt(curve, keypair.getPrivateKey(), encrypted);
 
 		assertEquals(Utils.binaryToString(decrypted), "testing");
 
 		// EC Signature
-		byte[] signature = Utils.calcSignature(curve, keypair.getPrivateKey(), data);
-		boolean isValid = Utils.verifySignature(curve, keypair.getPublicKey(), data, signature);
+		byte[] signature = CryptoUtils.ecGenerateSignature(curve, keypair.getPrivateKey(), data);
+		boolean isValid = CryptoUtils.ecVerifySignature(curve, keypair.getPublicKey(), data, signature);
 
 		assertTrue(isValid);
 	}

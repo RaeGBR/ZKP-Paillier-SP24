@@ -8,8 +8,8 @@ using namespace cryptoplus;
 EMSCRIPTEN_BINDINGS(KeyPair)
 {
   emscripten::class_<KeyPair>("KeyPair")
-      .smart_ptr_constructor("KeyPair", &KeyPair::createRandomKey)
-      .class_function("createRandomKey", &KeyPair::createRandomKey)
+      .smart_ptr_constructor("KeyPair", &KeyPair::create)
+      .class_function("create", &KeyPair::create)
       .class_function("createWithSeed", &KeyPair::createWithSeed)
       .class_function("createWithPrivateKey", &KeyPair::createWithPrivateKey)
       .function("getCurve", &KeyPair::getCurve)

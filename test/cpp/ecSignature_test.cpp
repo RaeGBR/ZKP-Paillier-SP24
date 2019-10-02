@@ -1,18 +1,18 @@
 #include "gtest/gtest.h"
 
 #include "Utils.hpp"
-#include "EC.hpp"
+#include "ECCurve.hpp"
 #include "KeyPair.hpp"
-#include "lib/utils/ECSignature.hpp"
+#include "lib/ec/ECSignature.hpp"
 
 using namespace cryptoplus;
 using namespace std;
 
 namespace
 {
-TEST(ECSignature, verifySignature)
+TEST(ECSignature, ecVerifySignature)
 {
-  auto curve = EC::SECP256K1();
+  auto curve = ECCurve::SECP256K1();
   string message = "foo";
   auto messageBin = Utils::stringToBinary(message);
   vector<uint8_t> seed = {0x48, 0x41, 0x48, 0x41, 0x48, 0x41};

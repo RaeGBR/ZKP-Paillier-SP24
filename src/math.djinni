@@ -1,0 +1,31 @@
+Integer = interface +c {
+  static create(num: string, radix: i32): Integer;
+  static createWithString(num: string): Integer;
+  static createWithBinary(num: binary): Integer;
+  static createWithBinaryString(num: string): Integer;
+  static createWithNumber(num: i32): Integer;
+  static ZERO(): Integer;
+  static ONE(): Integer;
+  static TWO(): Integer;
+  static pow2(n: i32): Integer;
+
+  eq(b: Integer): bool;
+  gt(b: Integer): bool;
+  gte(b: Integer): bool;
+  lt(b: Integer): bool;
+  lte(b: Integer): bool;
+  add(b: Integer): Integer;
+  sub(b: Integer): Integer;
+  mul(b: Integer): Integer;
+  mod(n: Integer): Integer;
+  inv(n: Integer): Integer;
+  compare(n: Integer): i32;
+  modMul(b: Integer, n: Integer): Integer;
+  modPow(b: Integer, n: Integer): Integer;
+  modSqrt(n: Integer): Integer;
+  toString(): string;
+  toHex(): string;
+  toBinary(): binary;
+  toBinaryString(): string;
+  toNumber(): i32;
+}

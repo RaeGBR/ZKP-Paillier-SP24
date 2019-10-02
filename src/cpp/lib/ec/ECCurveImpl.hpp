@@ -2,11 +2,12 @@
 
 #include "../namespace.hpp"
 
-#include "EC.hpp"
+#include "ECCurve.hpp"
 #include "Integer.hpp"
-#include "IntegerImpl.hpp"
+#include "../math/IntegerImpl.hpp"
 #include "ECPoint.hpp"
 #include "ECPointImpl.hpp"
+#include "./ECPointGenerator.hpp"
 
 #include "eccrypto.h"
 #include "ecp.h"
@@ -20,7 +21,7 @@ namespace cryptoplus
 /**
  * Elliptic Curve Class
  */
-class ECImpl : public EC
+class ECCurveImpl : public ECCurve, public enable_shared_from_this<ECCurveImpl>
 {
 private:
   shared_ptr<CryptoPP::ECP> _curve;
@@ -35,7 +36,7 @@ private:
 
 public:
   // Constructor
-  ECImpl(
+  ECCurveImpl(
       shared_ptr<Integer> P, shared_ptr<Integer> A, shared_ptr<Integer> B,
       shared_ptr<Integer> N, shared_ptr<ECPoint> G, CryptoPP::OID oid);
 
@@ -45,6 +46,7 @@ public:
   std::shared_ptr<Integer> getB();
   std::shared_ptr<Integer> getN();
   std::shared_ptr<ECPoint> getG();
+  std::shared_ptr<ECPoint> computeGenerator(const std::vector<uint8_t> &seed);
   std::shared_ptr<ECPoint> inv(const std::shared_ptr<ECPoint> &a);
   std::shared_ptr<ECPoint> add(const std::shared_ptr<ECPoint> &a, const std::shared_ptr<ECPoint> &b);
   std::shared_ptr<ECPoint> sub(const std::shared_ptr<ECPoint> &a, const std::shared_ptr<ECPoint> &b);

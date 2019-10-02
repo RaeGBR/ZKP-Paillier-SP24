@@ -2,17 +2,17 @@
 
 #include "lib/namespace.hpp"
 
-#include "lib/wrappers/ECImpl.hpp"
-#include "lib/wrappers/KeyPairImpl.hpp"
-#include "lib/wrappers/ECPointImpl.hpp"
-#include "lib/wrappers/IntegerImpl.hpp"
+#include "lib/ec/ECCurveImpl.hpp"
+#include "lib/ec/ECKeyPairImpl.hpp"
+#include "lib/ec/ECPointImpl.hpp"
+#include "lib/math/IntegerImpl.hpp"
 #include "lib/utils/HexUtils.hpp"
 
 namespace
 {
 TEST(ECWrapper, ECPointGenerateThenEncodeDecode)
 {
-  auto curve = EC::SECP256K1();
+  auto curve = ECCurve::SECP256K1();
   string seed = "123";
   auto pair = KeyPair::createWithSeed(curve, HexUtils::stringToBinary(seed));
 

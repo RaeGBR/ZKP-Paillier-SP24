@@ -2,12 +2,12 @@
 
 #include "lib/namespace.hpp"
 
-#include "EC.hpp"
+#include "ECCurve.hpp"
 
-#include "lib/wrappers/IntegerImpl.hpp"
-#include "lib/wrappers/ECImpl.hpp"
-#include "lib/wrappers/ECPointImpl.hpp"
-#include "lib/wrappers/KeyPairImpl.hpp"
+#include "lib/math/IntegerImpl.hpp"
+#include "lib/ec/ECCurveImpl.hpp"
+#include "lib/ec/ECPointImpl.hpp"
+#include "lib/ec/ECKeyPairImpl.hpp"
 
 using namespace std;
 using namespace cryptoplus;
@@ -16,7 +16,7 @@ namespace
 {
 TEST(ECWrapper, CurveSecp256k1)
 {
-  auto curve = EC::SECP256K1();
+  auto curve = ECCurve::SECP256K1();
 
   EXPECT_EQ(curve->getP()->toHex(), "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F");
   EXPECT_EQ(curve->getA()->toString(), "0");
@@ -28,7 +28,7 @@ TEST(ECWrapper, CurveSecp256k1)
 
 TEST(ECWrapper, ECPointAddMul)
 {
-  auto curve = EC::SECP256K1();
+  auto curve = ECCurve::SECP256K1();
   auto G = curve->getG();
   shared_ptr<ECPoint> ggg = curve->add(curve->add(G, G), G);
   shared_ptr<ECPoint> g3 = curve->mul(Integer::createWithString("3"), G);
@@ -44,7 +44,7 @@ TEST(ECWrapper, ECPointAddMul)
 
 TEST(ECWrapper, EC_point_inv_sub)
 {
-  auto curve = EC::SECP256K1();
+  auto curve = ECCurve::SECP256K1();
   auto G = curve->getG();
   auto gi = curve->inv(G);
   auto g3 = curve->mul(Integer::createWithString("3"), G);
@@ -68,7 +68,7 @@ TEST(ECWrapper, EC_point_inv_sub)
 
 TEST(ECWrapper, ECPointEncodeDecode)
 {
-  auto curve = EC::SECP256K1();
+  auto curve = ECCurve::SECP256K1();
   auto g1 = curve->decodePoint(Utils::hexToBinary("0279BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798"));
   auto g2 = curve->decodePoint(Utils::hexToBinary("0479BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8"));
 
@@ -83,7 +83,7 @@ TEST(ECWrapper, ECPointEncodeDecode)
 
 TEST(ECWrapper, ECPointGenerateThenEncodeDecode)
 {
-  auto curve = EC::SECP256K1();
+  auto curve = ECCurve::SECP256K1();
   string seed = "123";
   auto pair = KeyPair::createWithSeed(curve, vector<uint8_t>(seed.begin(), seed.end()));
 

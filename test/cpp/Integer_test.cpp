@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 
 #include "Integer.hpp"
-#include "lib/wrappers/IntegerImpl.hpp"
+#include "lib/math/IntegerImpl.hpp"
 
 using namespace std;
 using namespace cryptoplus;

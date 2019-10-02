@@ -23,10 +23,11 @@ CPP_INCLUDES := \
 	$(CRYPTOPP_DIR) \
 	$(DJINNI_GEN_DIR) \
 	$(CPP_DIR)
-CPP_TARGET := \
-	$(CPP_DIR)/lib/wrappers/*.o \
-	$(CPP_DIR)/lib/algo/*.o \
-	$(CPP_DIR)/lib/utils/*.o \
+CPP_TARGET := $(wildcard \
+	${CPP_DIR}/*.o \
+	${CPP_DIR}/**/*.o \
+	${CPP_DIR}/**/**/*.o \
+)
 
 TEST_FILES := $(wildcard ${SRC_DIR}/*.cpp)
 TEST_LIST := $(patsubst ${SRC_DIR}/%.cpp,%,${TEST_FILES})

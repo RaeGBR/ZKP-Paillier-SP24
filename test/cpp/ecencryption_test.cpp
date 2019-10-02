@@ -3,8 +3,10 @@
 #include "aes.h"
 
 #include "Utils.hpp"
+#include "CryptoUtils.hpp"
+#include "RandomUtils.hpp"
 
-#include "lib/utils/AESEncryption.hpp"
+#include "lib/basic/AESEncryption.hpp"
 namespace
 {
 string s1 = "foo bar baz";
@@ -34,19 +36,19 @@ TEST(AESEncryption, longEncryption)
 
 TEST(AESEncryption, encryptAndDecryptThroughUtils)
 {
-  const vector<uint8_t> k1 = Utils::random(CryptoPP::AES::DEFAULT_KEYLENGTH);
-  const vector<uint8_t> i1 = Utils::random(CryptoPP::AES::DEFAULT_KEYLENGTH);
+  const vector<uint8_t> k1 = RandomUtils::random(CryptoPP::AES::DEFAULT_KEYLENGTH);
+  const vector<uint8_t> i1 = RandomUtils::random(CryptoPP::AES::DEFAULT_KEYLENGTH);
   const vector<uint8_t> s1bin = Utils::stringToBinary(s1);
 
-  vector<uint8_t> cypherText = Utils::aesEncrypt(k1, i1, s1bin);
-  vector<uint8_t> decypherText = Utils::aesDecrypt(k1, i1, cypherText);
+  vector<uint8_t> cypherText = CryptoUtils::aesEncrypt(k1, i1, s1bin);
+  vector<uint8_t> decypherText = CryptoUtils::aesDecrypt(k1, i1, cypherText);
   ASSERT_EQ(decypherText, s1bin);
 
   const vector<uint8_t> k2 = Utils::hexToBinary("7632b66a3e3eaa3327d34fe0370f2ad5");
   const vector<uint8_t> i2 = Utils::hexToBinary("7632b66a3e3eaa3327d34fe0370f2ad5");
   const vector<uint8_t> ans = Utils::hexToBinary("7172080E0D45407D8E239B9BECC85B76");
-  cypherText = Utils::aesEncrypt(k2, i2, s1bin);
-  decypherText = Utils::aesDecrypt(k2, i2, cypherText);
+  cypherText = CryptoUtils::aesEncrypt(k2, i2, s1bin);
+  decypherText = CryptoUtils::aesDecrypt(k2, i2, cypherText);
   ASSERT_EQ(cypherText, ans);
   ASSERT_EQ(decypherText, s1bin);
 }

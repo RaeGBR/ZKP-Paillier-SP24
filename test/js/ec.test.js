@@ -15,7 +15,7 @@ describe('Crypto Library - Elliptic Curve', () => {
   });
 
   it('SECP256K1 Curve', () => {
-    curve = wasm.EC.SECP256K1();
+    curve = wasm.ECCurve.SECP256K1();
 
     assert.equal(curve.getP().toHex(), 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F');
     assert.equal(curve.getA().toString(), '0');
@@ -26,7 +26,7 @@ describe('Crypto Library - Elliptic Curve', () => {
   });
 
   it('ECPoint Arithmetic', () => {
-    curve = wasm.EC.SECP256K1();
+    curve = wasm.ECCurve.SECP256K1();
     const G = curve.getG();
 
     const p1 = curve.add(curve.add(G, G), G);
@@ -41,7 +41,7 @@ describe('Crypto Library - Elliptic Curve', () => {
   });
 
   it('ECPoint Encoding & Decoding', () => {
-    curve = wasm.EC.SECP256K1();
+    curve = wasm.ECCurve.SECP256K1();
     const g1 = curve.decodePoint(wasm.Utils.hexToBinary('0279BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798'));
     const g2 = curve.decodePoint(wasm.Utils.hexToBinary('0479BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8'));
 
@@ -58,7 +58,7 @@ describe('Crypto Library - Elliptic Curve', () => {
   });
 
   it('Generate ECPoint', () => {
-    curve = wasm.EC.SECP256K1();
+    curve = wasm.ECCurve.SECP256K1();
     const pair = wasm.KeyPair.createWithSeed(curve, wasm.Utils.stringToBinary('123'));
 
     // Check The Point is constant first

@@ -16,4 +16,5 @@ using json = nlohmann::json;
 typedef std::vector<uint8_t> binary_t;
 
 #include "Utils.hpp"
-#include "utils/UtilsImpl.hpp"
+#include "HashUtils.hpp"
+#include "./utils/HexUtils.hpp"

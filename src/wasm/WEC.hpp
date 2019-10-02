@@ -1,27 +1,27 @@
 #pragma once
 
-#include "EC.hpp"
+#include "ECCurve.hpp"
 
 using namespace cryptoplus;
 
 #include <emscripten/bind.h>
-EMSCRIPTEN_BINDINGS(EC)
+EMSCRIPTEN_BINDINGS(ECCurve)
 {
-  emscripten::class_<EC>("EC")
-      .smart_ptr_constructor("EC", &EC::create)
-      .class_function("create", &EC::create)
-      .class_function("SECP256K1", &EC::SECP256K1)
-      .class_function("getPublicElement", &EC::getPublicElement)
-      .class_function("getPrivateElement", &EC::getPrivateElement)
-      .function("getP", &EC::getP)
-      .function("getA", &EC::getA)
-      .function("getB", &EC::getB)
-      .function("getN", &EC::getN)
-      .function("getG", &EC::getG)
-      .function("add", &EC::add)
-      .function("mul", &EC::mul)
-      .function("multiply", &EC::multiply)
-      .function("verify", &EC::verify)
-      .function("encodePoint", &EC::encodePoint)
-      .function("decodePoint", &EC::decodePoint);
+  emscripten::class_<ECCurve>("ECCurve")
+      .smart_ptr_constructor("ECCurve", &ECCurve::create)
+      .class_function("create", &ECCurve::create)
+      .class_function("SECP256K1", &ECCurve::SECP256K1)
+      .class_function("getPublicElement", &ECCurve::getPublicElement)
+      .class_function("getPrivateElement", &ECCurve::getPrivateElement)
+      .function("getP", &ECCurve::getP)
+      .function("getA", &ECCurve::getA)
+      .function("getB", &ECCurve::getB)
+      .function("getN", &ECCurve::getN)
+      .function("getG", &ECCurve::getG)
+      .function("add", &ECCurve::add)
+      .function("mul", &ECCurve::mul)
+      .function("multiply", &ECCurve::multiply)
+      .function("verify", &ECCurve::verify)
+      .function("encodePoint", &ECCurve::encodePoint)
+      .function("decodePoint", &ECCurve::decodePoint);
 }

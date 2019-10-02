@@ -2,7 +2,7 @@
 
 #include "lib/namespace.hpp"
 #include "lib/utils/HexUtils.hpp"
-#include "lib/utils/HashUtils.hpp"
+#include "HashUtils.hpp"
 #include "lib/algo/MerkleTree.hpp"
 
 namespace
@@ -11,12 +11,12 @@ namespace
 binary_t v1 = Utils::hexToBinary("1");
 binary_t v2 = Utils::hexToBinary("2");
 binary_t v3 = Utils::hexToBinary("3");
-binary_t h1 = HashUtils::calcHash(v1);
-binary_t h2 = HashUtils::calcHash(v2);
-binary_t h3 = HashUtils::calcHash(v3);
-binary_t h12 = HashUtils::calcHash(HexUtils::concat(h1, h2));
-binary_t h34 = HashUtils::calcHash(h3);
-binary_t h1234 = HashUtils::calcHash(HexUtils::concat(h12, h34));
+binary_t h1 = HashUtils::sha256(v1);
+binary_t h2 = HashUtils::sha256(v2);
+binary_t h3 = HashUtils::sha256(v3);
+binary_t h12 = HashUtils::sha256(HexUtils::concat(h1, h2));
+binary_t h34 = HashUtils::sha256(h3);
+binary_t h1234 = HashUtils::sha256(HexUtils::concat(h12, h34));
 
 binary_t empty = Utils::stringToBinary("");
 

@@ -1,98 +1,29 @@
-Integer = interface +c {
-  static create(num: string, radix: i32): Integer;
-  static createWithString(num: string): Integer;
-  static createWithBinary(num: binary): Integer;
-  static createWithBinaryString(num: string): Integer;
-  static createWithNumber(num: i32): Integer;
-  static ZERO(): Integer;
-  static ONE(): Integer;
-  static TWO(): Integer;
-  static pow2(n: i32): Integer;
+@import "./math.djinni"
+@import "./ec.djinni"
 
-  eq(b: Integer): bool;
-  gt(b: Integer): bool;
-  gte(b: Integer): bool;
-  lt(b: Integer): bool;
-  lte(b: Integer): bool;
-  add(b: Integer): Integer;
-  sub(b: Integer): Integer;
-  mul(b: Integer): Integer;
-  mod(n: Integer): Integer;
-  inv(n: Integer): Integer;
-  compare(n: Integer): i32;
-  modMul(b: Integer, n: Integer): Integer;
-  modPow(b: Integer, n: Integer): Integer;
-  modSqrt(n: Integer): Integer;
-  toString(): string;
-  toHex(): string;
-  toBinary(): binary;
-  toBinaryString(): string;
-  toNumber(): i32;
+HashUtils = interface +c {
+  static sha256(message: binary): binary;
 }
 
-ECPoint = interface +c {
-  static create(x: Integer, y: Integer): ECPoint;
-
-  getX(): Integer;
-  getY(): Integer;
-  setX(num: Integer);
-  setY(num: Integer);
-  eq(b: ECPoint): bool;
-  inv(curve: EC): ECPoint;
-  add(curve: EC, b: ECPoint): ECPoint;
-  sub(curve: EC, b: ECPoint): ECPoint;
-  mul(curve: EC, b: Integer): ECPoint;
-}
-
-EC = interface +c {
-  static create(p: Integer, a: Integer, b: Integer, n: Integer, g: ECPoint): EC;
-  static SECP256K1(): EC;
-  static getPublicElement(publicKey: binary): ECPoint;
-  static getPrivateElement(privateKey: binary): Integer;
-
-  getP(): Integer;
-  getA(): Integer;
-  getB(): Integer;
-  getN(): Integer;
-  getG(): ECPoint;
-
-  inv(a: ECPoint): ECPoint;
-  add(a: ECPoint, b: ECPoint): ECPoint;
-  sub(a: ECPoint, b: ECPoint): ECPoint;
-  mul(a: Integer, b: ECPoint): ECPoint;
-  multiply(a: Integer, b: ECPoint): ECPoint;
-  verify(p: ECPoint): bool;
-  encodePoint(p: ECPoint, compressed: bool): binary;
-  decodePoint(encoded: binary): ECPoint;
-}
-
-KeyPair = interface +c {
-  static createRandomKey(curve: EC): KeyPair;
-  static createWithSeed(curve: EC, seed: binary): KeyPair;
-  static createWithPrivateKey(curve: EC, privateKey: binary): KeyPair;
-
-  getCurve(): EC;
-  getPrivateKey(): binary;
-  getPublicKey(): binary;
-  getPublicElement(): ECPoint;
-  getPrivateElement(): Integer;
-  eq(b: KeyPair): bool;
-}
-
-Utils = interface +c {
-  static calcHash(message: binary): binary;
+RandomUtils = interface +c {
   static random(byteLength: i32): binary;
   static randomWithSeed(byteLength: i32, seed: binary): binary;
   static randomHex(byteLength: i32): string;
   static randomHexWithSeed(byteLength: i32, seed: binary): string;
   static randomInt(byteLength: i32): Integer;
   static randomIntWithSeed(byteLength: i32, seed: binary): Integer;
-  static calcSignature(curve: EC, privateKey: binary, message: binary): binary;
-  static verifySignature(curve: EC, publicKey: binary, message: binary, signature: binary): bool;
-  static ecEncrypt(curve: EC, publicKey: binary, plaintext: binary): binary;
-  static ecDecrypt(curve: EC, privateKey: binary, cyphertext: binary): binary;
+}
+
+CryptoUtils = interface +c {
+  static ecGenerateSignature(curve: ECCurve, privateKey: binary, message: binary): binary;
+  static ecVerifySignature(curve: ECCurve, publicKey: binary, message: binary, signature: binary): bool;
+  static ecEncrypt(curve: ECCurve, publicKey: binary, plaintext: binary): binary;
+  static ecDecrypt(curve: ECCurve, privateKey: binary, cyphertext: binary): binary;
   static aesEncrypt(key: binary, iv: binary, plainText: binary): binary;
   static aesDecrypt(key: binary, iv: binary, encryptedText: binary): binary;
+}
+
+Utils = interface +c {
   static binaryToString(bytes: binary): string;
   static binaryToHex(bytes: binary): string;
   static binaryConcat(a: binary, b: binary): binary;

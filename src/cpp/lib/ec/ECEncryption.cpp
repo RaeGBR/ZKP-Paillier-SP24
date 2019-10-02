@@ -1,6 +1,6 @@
 #include "ECEncryption.hpp"
 
-vector<uint8_t> ECEncryption::encrypt(const shared_ptr<EC> &curve, const vector<uint8_t> &publicKey, const vector<uint8_t> &plaintext)
+vector<uint8_t> ECEncryption::encrypt(const shared_ptr<ECCurve> &curve, const vector<uint8_t> &publicKey, const vector<uint8_t> &plaintext)
 {
   // Retrieve Public Key from Hex Value
   CryptoPP::StringSource pubString(publicKey.data(), publicKey.size(), true);
@@ -18,7 +18,7 @@ vector<uint8_t> ECEncryption::encrypt(const shared_ptr<EC> &curve, const vector<
   return HexUtils::stringToBinary(cipher);
 }
 
-vector<uint8_t> ECEncryption::decrypt(const shared_ptr<EC> &curve, const vector<uint8_t> &privateKey, const vector<uint8_t> &cyphertext)
+vector<uint8_t> ECEncryption::decrypt(const shared_ptr<ECCurve> &curve, const vector<uint8_t> &privateKey, const vector<uint8_t> &cyphertext)
 {
   // Retrieve Private Key from Hex Value
   CryptoPP::StringSource privString(privateKey.data(), privateKey.size(), true);

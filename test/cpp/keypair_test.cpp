@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 
-#include "EC.hpp"
+#include "ECCurve.hpp"
 #include "KeyPair.hpp"
-#include "lib/wrappers/KeyPairImpl.hpp"
+#include "lib/ec/ECKeyPairImpl.hpp"
 #include "Utils.hpp"
 
 using namespace std;
@@ -14,7 +14,7 @@ namespace
 TEST(KeyPair, GEN_KEY)
 {
   // Normal Seed
-  auto curve = EC::SECP256K1();
+  auto curve = ECCurve::SECP256K1();
   vector<uint8_t> seed = {0x48, 0x41, 0x48, 0x41, 0x48, 0x41};
 
   auto pair1 = KeyPair::createWithSeed(curve, seed);
@@ -44,9 +44,9 @@ TEST(KeyPair, GEN_KEY)
 
 TEST(KeyPair, GEN_KEY_Java_Ver)
 {
-  auto curve = EC::SECP256K1();
-  auto k1 = KeyPair::createRandomKey(curve);
-  auto k2 = KeyPair::createRandomKey(curve);
+  auto curve = ECCurve::SECP256K1();
+  auto k1 = KeyPair::create(curve);
+  auto k2 = KeyPair::create(curve);
   string seed1 = "123";
   string seed2 = "I'm a very long string, that very long very long very long very long very long very long very long very long very long";
   auto k3 = KeyPair::createWithSeed(curve, vector<uint8_t>(seed1.begin(), seed1.end()));
@@ -64,7 +64,7 @@ TEST(KeyPair, GEN_KEY_Java_Ver)
 TEST(KeyPair, Predictable)
 {
   // Normal Seed
-  auto curve = EC::SECP256K1();
+  auto curve = ECCurve::SECP256K1();
   string seed = "Hello, my name is Alex";
 
   auto pair = KeyPair::createWithSeed(curve, vector<uint8_t>(seed.begin(), seed.end()));
@@ -81,8 +81,8 @@ TEST(KeyPair, Predictable)
 
 TEST(KeyPair, KeyPairMathTest)
 {
-  auto curve = EC::SECP256K1();
-  auto pair = KeyPair::createRandomKey(curve);
+  auto curve = ECCurve::SECP256K1();
+  auto pair = KeyPair::create(curve);
   auto x = pair->getPrivateElement();
   auto y = pair->getPublicElement();
   auto gx = curve->getG()->mul(curve, x);
@@ -92,7 +92,7 @@ TEST(KeyPair, KeyPairMathTest)
 
 TEST(KeyPair, PublicKey_From_PrivateKey)
 {
-  auto curve = EC::SECP256K1();
+  auto curve = ECCurve::SECP256K1();
   string seed = "Hello, my name is Alex :)";
 
   auto pair = KeyPair::createWithSeed(curve, vector<uint8_t>(seed.begin(), seed.end()));

@@ -1,72 +1,36 @@
 #include "RandomUtils.hpp"
 
-shared_ptr<Integer> RandomUtils::genInteger(vector<uint8_t> input, const vector<uint8_t> &seed)
+#include "../namespace.hpp"
+
+#include "../math/RandomGenerator.hpp"
+#include "../math/Random.hpp"
+
+vector<uint8_t> RandomUtils::random(int32_t byteLength)
 {
-  string hex = Integer::createWithBinary(input)->toHex();
-  CryptoPP::Integer max(hex.c_str());
-
-  if (seed.size() == 0)
-  {
-    // No Seed
-    RandomGenerator prng;
-    return make_shared<IntegerImpl>(CryptoPP::Integer(prng, CryptoPP::Integer::Zero(), max));
-  }
-  else
-  {
-    // With Seed
-    CryptoPP::byte *s = (CryptoPP::byte *)seed.data();
-    RandomGenerator rng(s, (size_t)seed.size());
-
-    return make_shared<IntegerImpl>(CryptoPP::Integer(rng, CryptoPP::Integer::Zero(), max));
-  }
+  return Random::genBinary(byteLength);
 }
 
-shared_ptr<Integer> RandomUtils::genInteger(int byteLength, bool prime, const vector<uint8_t> &seed)
+vector<uint8_t> RandomUtils::randomWithSeed(int32_t byteLength, const vector<uint8_t> &seed)
 {
-  CryptoPP::Integer x;
-  int length = byteLength * 8;
-
-  CryptoPP::AlgorithmParameters params;
-  // Set Bit Length
-  if (!prime)
-    params = CryptoPP::MakeParameters("BitLength", length);
-  // Set Prime
-  else
-    params = CryptoPP::MakeParameters("BitLength", length)("RandomNumberType", CryptoPP::Integer::PRIME);
-
-  if (seed.size() == 0)
-  {
-    // No Seed
-    RandomGenerator prng;
-    x.GenerateRandom(prng, params);
-    return make_shared<IntegerImpl>(x);
-  }
-  else
-  {
-    // With Seed
-    CryptoPP::byte *s = (CryptoPP::byte *)seed.data();
-    RandomGenerator rng(s, (size_t)seed.size());
-
-    x.GenerateRandom(rng, params);
-    return make_shared<IntegerImpl>(x);
-  }
+  return Random::genBinary(byteLength, seed);
 }
 
-vector<uint8_t> RandomUtils::genBinary(int byteLength, const vector<uint8_t> &seed)
+string RandomUtils::randomHex(int32_t byteLength)
 {
-  auto retInt = RandomUtils::genInteger(byteLength, false, seed);
-  auto retBin = retInt->toBinary();
-  size_t len = retBin.size();
-  if (len == byteLength)
-    return retBin;
-
-  vector<uint8_t> newBin(byteLength - len, 0x0);
-  newBin.insert(newBin.end(), retBin.begin(), retBin.end());
-  return newBin;
+  return Random::genHex(byteLength);
 }
 
-string RandomUtils::genHex(int byteLength, const vector<uint8_t> &seed)
+string RandomUtils::randomHexWithSeed(int32_t byteLength, const vector<uint8_t> &seed)
 {
-  auto ret = RandomUtils::genBinary(byteLength, seed);
-  return Utils::binaryToHex(ret);
+  return Random::genHex(byteLength, seed);
+}
+
+shared_ptr<Integer> RandomUtils::randomInt(int32_t byteLength)
+{
+  return Random::genInteger(byteLength, false);
+}
+
+shared_ptr<Integer> RandomUtils::randomIntWithSeed(int32_t byteLength, const vector<uint8_t> &seed)
+{
+  return Random::genInteger(byteLength, false, seed);
 }

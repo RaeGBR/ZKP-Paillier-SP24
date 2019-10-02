@@ -11,13 +11,13 @@
 #include "hex.h"
 
 #include "KeyPair.hpp"
-#include "EC.hpp"
-#include "ECImpl.hpp"
+#include "ECCurve.hpp"
+#include "ECCurveImpl.hpp"
 #include "ECPoint.hpp"
 #include "Integer.hpp"
 #include "Utils.hpp"
 
-#include "../utils/RandomGenerator.hpp"
+#include "../math/RandomGenerator.hpp"
 
 using namespace std;
 
@@ -31,17 +31,17 @@ namespace cryptoplus
 class KeyPairImpl : public KeyPair
 {
 private:
-  shared_ptr<EC> curve;
+  shared_ptr<ECCurve> curve;
   vector<uint8_t> privateKey;
   vector<uint8_t> publicKey;
 
 public:
   // Constructor
-  KeyPairImpl(const shared_ptr<EC> &curve, const vector<uint8_t> &seed);
-  KeyPairImpl(const shared_ptr<EC> &curve, const vector<uint8_t> &privateKey, const vector<uint8_t> &publicKey);
+  KeyPairImpl(const shared_ptr<ECCurve> &curve, const vector<uint8_t> &seed);
+  KeyPairImpl(const shared_ptr<ECCurve> &curve, const vector<uint8_t> &privateKey, const vector<uint8_t> &publicKey);
 
   // Interface
-  std::shared_ptr<EC> getCurve();
+  std::shared_ptr<ECCurve> getCurve();
   vector<uint8_t> getPrivateKey();
   vector<uint8_t> getPublicKey();
   std::shared_ptr<ECPoint> getPublicElement();

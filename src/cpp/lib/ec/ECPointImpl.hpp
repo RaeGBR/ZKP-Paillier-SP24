@@ -7,8 +7,8 @@
 
 #include "ECPoint.hpp"
 #include "Integer.hpp"
-#include "IntegerImpl.hpp"
-#include "EC.hpp"
+#include "../math/IntegerImpl.hpp"
+#include "ECCurve.hpp"
 
 using namespace std;
 
@@ -36,10 +36,10 @@ public:
   void setX(const std::shared_ptr<Integer> &num);
   void setY(const std::shared_ptr<Integer> &num);
   bool eq(const std::shared_ptr<ECPoint> &b);
-  std::shared_ptr<ECPoint> inv(const std::shared_ptr<EC> &curve);
-  std::shared_ptr<ECPoint> add(const std::shared_ptr<EC> &curve, const std::shared_ptr<ECPoint> &b);
-  std::shared_ptr<ECPoint> sub(const std::shared_ptr<EC> &curve, const std::shared_ptr<ECPoint> &b);
-  std::shared_ptr<ECPoint> mul(const std::shared_ptr<EC> &curve, const std::shared_ptr<Integer> &b);
+  std::shared_ptr<ECPoint> inv(const std::shared_ptr<ECCurve> &curve);
+  std::shared_ptr<ECPoint> add(const std::shared_ptr<ECCurve> &curve, const std::shared_ptr<ECPoint> &b);
+  std::shared_ptr<ECPoint> sub(const std::shared_ptr<ECCurve> &curve, const std::shared_ptr<ECPoint> &b);
+  std::shared_ptr<ECPoint> mul(const std::shared_ptr<ECCurve> &curve, const std::shared_ptr<Integer> &b);
 
   // Internal Function
   shared_ptr<CryptoPP::ECPPoint> getPoint();

@@ -58,25 +58,25 @@ bool ECPointImpl::eq(const shared_ptr<ECPoint> &b)
          getY()->eq(b->getY());
 }
 
-shared_ptr<ECPoint> ECPointImpl::inv(const shared_ptr<EC> &curve)
+shared_ptr<ECPoint> ECPointImpl::inv(const shared_ptr<ECCurve> &curve)
 {
   auto a = make_shared<ECPointImpl>(getPoint());
   return curve->inv(a);
 }
 
-shared_ptr<ECPoint> ECPointImpl::add(const shared_ptr<EC> &curve, const shared_ptr<ECPoint> &b)
+shared_ptr<ECPoint> ECPointImpl::add(const shared_ptr<ECCurve> &curve, const shared_ptr<ECPoint> &b)
 {
   auto a = make_shared<ECPointImpl>(getPoint());
   return curve->add(a, b);
 }
 
-shared_ptr<ECPoint> ECPointImpl::sub(const shared_ptr<EC> &curve, const shared_ptr<ECPoint> &b)
+shared_ptr<ECPoint> ECPointImpl::sub(const shared_ptr<ECCurve> &curve, const shared_ptr<ECPoint> &b)
 {
   auto a = make_shared<ECPointImpl>(getPoint());
   return curve->sub(a, b);
 }
 
-shared_ptr<ECPoint> ECPointImpl::mul(const shared_ptr<EC> &curve, const shared_ptr<Integer> &b)
+shared_ptr<ECPoint> ECPointImpl::mul(const shared_ptr<ECCurve> &curve, const shared_ptr<Integer> &b)
 {
   auto a = make_shared<ECPointImpl>(getPoint());
   return curve->mul(b, a);

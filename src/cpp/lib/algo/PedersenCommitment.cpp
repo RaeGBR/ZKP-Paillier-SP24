@@ -1,7 +1,7 @@
 #include "PedersenCommitment.hpp"
 
 shared_ptr<ECPoint> PedersenCommitment::commit(
-    const shared_ptr<EC> &curve,
+    const shared_ptr<ECCurve> &curve,
     const shared_ptr<Integer> &x,
     const shared_ptr<ECPoint> &g,
     const shared_ptr<Integer> &r,
@@ -13,7 +13,7 @@ shared_ptr<ECPoint> PedersenCommitment::commit(
 }
 
 bool PedersenCommitment::verify(
-    const shared_ptr<EC> &curve,
+    const shared_ptr<ECCurve> &curve,
     const shared_ptr<ECPoint> &c,
     const shared_ptr<Integer> &x,
     const shared_ptr<ECPoint> &g,

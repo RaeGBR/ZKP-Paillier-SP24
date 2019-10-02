@@ -1,4 +1,4 @@
-#include "ECImpl.hpp"
+#include "ECCurveImpl.hpp"
 
 // #include <stdexcept>
 
@@ -6,17 +6,17 @@ using namespace std;
 using namespace cryptoplus;
 
 // Djinni Wrapper
-shared_ptr<cryptoplus::EC> cryptoplus::EC::create(
+shared_ptr<ECCurve> ECCurve::create(
     const shared_ptr<Integer> &p, const shared_ptr<Integer> &a, const shared_ptr<Integer> &b,
     const shared_ptr<Integer> &n, const shared_ptr<ECPoint> &g)
 {
   // TODO: How to pass the OID?
-  return make_shared<ECImpl>(p, a, b, n, g, CryptoPP::ASN1::secp256k1());
+  return make_shared<ECCurveImpl>(p, a, b, n, g, CryptoPP::ASN1::secp256k1());
 }
 
-shared_ptr<cryptoplus::EC> cryptoplus::EC::SECP256K1()
+shared_ptr<ECCurve> ECCurve::SECP256K1()
 {
-  return cryptoplus::EC::create(
+  return ECCurve::create(
       Integer::createWithString("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2Fh"),
       Integer::createWithString("0"),
       Integer::createWithString("7"),
@@ -26,7 +26,7 @@ shared_ptr<cryptoplus::EC> cryptoplus::EC::SECP256K1()
           Integer::createWithString("483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8h")));
 }
 
-shared_ptr<ECPoint> cryptoplus::EC::getPublicElement(const binary_t &publicKey)
+shared_ptr<ECPoint> ECCurve::getPublicElement(const binary_t &publicKey)
 {
   // Turn Keys into CryptoPP Key Instance
   string publicKeyString = Utils::binaryToString(publicKey);
@@ -39,7 +39,7 @@ shared_ptr<ECPoint> cryptoplus::EC::getPublicElement(const binary_t &publicKey)
   return make_shared<ECPointImpl>(ePublicKey.GetPublicElement());
 }
 
-shared_ptr<Integer> cryptoplus::EC::getPrivateElement(const binary_t &privateKey)
+shared_ptr<Integer> ECCurve::getPrivateElement(const binary_t &privateKey)
 {
   string privateKeyString = Utils::binaryToString(privateKey);
   CryptoPP::ECIES<CryptoPP::ECP>::PrivateKey ePrivateKey;
@@ -53,7 +53,7 @@ shared_ptr<Integer> cryptoplus::EC::getPrivateElement(const binary_t &privateKey
 }
 
 // Class Implement
-ECImpl::ECImpl(
+ECCurveImpl::ECCurveImpl(
     shared_ptr<Integer> P, shared_ptr<Integer> A, shared_ptr<Integer> B,
     shared_ptr<Integer> N, shared_ptr<ECPoint> G, CryptoPP::OID oid)
 {
@@ -70,32 +70,37 @@ ECImpl::ECImpl(
   _oid = oid;
 }
 
-shared_ptr<Integer> ECImpl::getP()
+shared_ptr<Integer> ECCurveImpl::getP()
 {
   return _P;
 }
 
-shared_ptr<Integer> ECImpl::getA()
+shared_ptr<Integer> ECCurveImpl::getA()
 {
   return _A;
 }
 
-shared_ptr<Integer> ECImpl::getB()
+shared_ptr<Integer> ECCurveImpl::getB()
 {
   return _B;
 }
 
-shared_ptr<Integer> ECImpl::getN()
+shared_ptr<Integer> ECCurveImpl::getN()
 {
   return _N;
 }
 
-shared_ptr<ECPoint> ECImpl::getG()
+shared_ptr<ECPoint> ECCurveImpl::getG()
 {
   return _G;
 }
 
-shared_ptr<ECPoint> ECImpl::inv(const shared_ptr<ECPoint> &a)
+shared_ptr<ECPoint> ECCurveImpl::computeGenerator(const vector<uint8_t> &seed)
+{
+  return ECPointGenerator::generate(shared_from_this(), seed, true);
+}
+
+shared_ptr<ECPoint> ECCurveImpl::inv(const shared_ptr<ECPoint> &a)
 {
   auto _a = dynamic_pointer_cast<ECPointImpl>(a);
   return make_shared<ECPointImpl>(
@@ -103,7 +108,7 @@ shared_ptr<ECPoint> ECImpl::inv(const shared_ptr<ECPoint> &a)
           *(_a->getPoint())));
 }
 
-shared_ptr<ECPoint> ECImpl::add(const shared_ptr<ECPoint> &a, const shared_ptr<ECPoint> &b)
+shared_ptr<ECPoint> ECCurveImpl::add(const shared_ptr<ECPoint> &a, const shared_ptr<ECPoint> &b)
 {
   auto _a = dynamic_pointer_cast<ECPointImpl>(a);
   auto _b = dynamic_pointer_cast<ECPointImpl>(b);
@@ -113,31 +118,31 @@ shared_ptr<ECPoint> ECImpl::add(const shared_ptr<ECPoint> &a, const shared_ptr<E
           *(_b->getPoint())));
 }
 
-shared_ptr<ECPoint> ECImpl::sub(const shared_ptr<ECPoint> &a, const shared_ptr<ECPoint> &b)
+shared_ptr<ECPoint> ECCurveImpl::sub(const shared_ptr<ECPoint> &a, const shared_ptr<ECPoint> &b)
 {
   auto _b = inv(b);
   return add(a, _b);
 }
 
-shared_ptr<ECPoint> ECImpl::mul(const shared_ptr<Integer> &a, const shared_ptr<ECPoint> &b)
+shared_ptr<ECPoint> ECCurveImpl::mul(const shared_ptr<Integer> &a, const shared_ptr<ECPoint> &b)
 {
   auto _a = dynamic_pointer_cast<IntegerImpl>(a);
   auto _b = dynamic_pointer_cast<ECPointImpl>(b);
   return make_shared<ECPointImpl>(_curve->Multiply(*(_a->getValue()), *(_b->getPoint())));
 }
 
-shared_ptr<ECPoint> ECImpl::multiply(const shared_ptr<Integer> &a, const shared_ptr<ECPoint> &b)
+shared_ptr<ECPoint> ECCurveImpl::multiply(const shared_ptr<Integer> &a, const shared_ptr<ECPoint> &b)
 {
   return mul(a, b);
 }
 
-bool ECImpl::verify(const shared_ptr<ECPoint> &p)
+bool ECCurveImpl::verify(const shared_ptr<ECPoint> &p)
 {
   auto _p = dynamic_pointer_cast<ECPointImpl>(p);
   return _curve->VerifyPoint(*(_p->getPoint()));
 }
 
-binary_t ECImpl::encodePoint(const shared_ptr<ECPoint> &p, bool compressed)
+binary_t ECCurveImpl::encodePoint(const shared_ptr<ECPoint> &p, bool compressed)
 {
   auto _p = dynamic_pointer_cast<ECPointImpl>(p);
   size_t size = _curve->EncodedPointSize(compressed);
@@ -154,7 +159,7 @@ binary_t ECImpl::encodePoint(const shared_ptr<ECPoint> &p, bool compressed)
   return Utils::stringToBinary(encodedPoint);
 }
 
-shared_ptr<ECPoint> ECImpl::decodePoint(const binary_t &encoded)
+shared_ptr<ECPoint> ECCurveImpl::decodePoint(const binary_t &encoded)
 {
   CryptoPP::ECPPoint result;
   CryptoPP::byte *b = (CryptoPP::byte *)encoded.data();
@@ -167,12 +172,12 @@ shared_ptr<ECPoint> ECImpl::decodePoint(const binary_t &encoded)
   return make_shared<ECPointImpl>(result);
 }
 
-shared_ptr<CryptoPP::ECP> ECImpl::getCurve()
+shared_ptr<CryptoPP::ECP> ECCurveImpl::getCurve()
 {
   return _curve;
 }
 
-CryptoPP::OID ECImpl::getOID()
+CryptoPP::OID ECCurveImpl::getOID()
 {
   return _oid;
 }

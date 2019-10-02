@@ -1,9 +1,9 @@
 #include "ECSignature.hpp"
 
-vector<uint8_t> ECSignature::sign(const shared_ptr<EC> &curve, const vector<uint8_t> &privateKey, const vector<uint8_t> &message)
+vector<uint8_t> ECSignature::sign(const shared_ptr<ECCurve> &curve, const vector<uint8_t> &privateKey, const vector<uint8_t> &message)
 {
-  auto _curve = dynamic_pointer_cast<ECImpl>(curve);
-  auto skEl = EC::getPrivateElement(privateKey);
+  auto _curve = dynamic_pointer_cast<ECCurveImpl>(curve);
+  auto skEl = ECCurve::getPrivateElement(privateKey);
   auto _skEl = dynamic_pointer_cast<IntegerImpl>(skEl);
 
   // Initialize Private Key Instance
@@ -32,10 +32,10 @@ vector<uint8_t> ECSignature::sign(const shared_ptr<EC> &curve, const vector<uint
   // return HexUtils::stringToBinary(signature);
 }
 
-bool ECSignature::verify(const shared_ptr<EC> &curve, const vector<uint8_t> &publicKey, const vector<uint8_t> &message, const vector<uint8_t> &signature)
+bool ECSignature::verify(const shared_ptr<ECCurve> &curve, const vector<uint8_t> &publicKey, const vector<uint8_t> &message, const vector<uint8_t> &signature)
 {
-  auto _curve = dynamic_pointer_cast<ECImpl>(curve);
-  auto pkEl = EC::getPublicElement(publicKey);
+  auto _curve = dynamic_pointer_cast<ECCurveImpl>(curve);
+  auto pkEl = ECCurve::getPublicElement(publicKey);
   auto _pkEl = dynamic_pointer_cast<ECPointImpl>(pkEl);
 
   // Initialize Public Key Instance

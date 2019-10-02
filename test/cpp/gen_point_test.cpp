@@ -1,11 +1,11 @@
 #include "gtest/gtest.h"
 
 #include "Integer.hpp"
-#include "EC.hpp"
+#include "ECCurve.hpp"
 #include "ECPoint.hpp"
 #include "Utils.hpp"
 
-#include "lib/utils/ECPointGenerator.hpp"
+#include "lib/ec/ECPointGenerator.hpp"
 
 using namespace std;
 using namespace cryptoplus;
@@ -13,9 +13,9 @@ using namespace cryptoplus;
 namespace
 {
 
-auto curve = EC::SECP256K1();
-string seed1 = "I AM HELLO";
-string seed2 = "I AM HELLO2";
+auto curve = ECCurve::SECP256K1();
+auto seed1 = Utils::stringToBinary("I AM HELLO");
+auto seed2 = Utils::stringToBinary("I AM HELLO2");
 auto pt1 = ECPointGenerator::generate(curve, seed1, true);
 
 TEST(ECPointGenerator, Compute)

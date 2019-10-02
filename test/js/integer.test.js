@@ -11,7 +11,7 @@ describe("Crypto Library - Integer", () => {
     Module({ wasmBinaryFile: "../../build/wasm/js/cryptoplus.wasm" }).then(
       result => {
         wasm = result;
-        curve = wasm.EC.SECP256K1();
+        curve = wasm.ECCurve.SECP256K1();
         done();
       }
     );

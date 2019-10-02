@@ -12,7 +12,7 @@ bool MerkleTree::validate(int index, binary_t value, vector<binary_t> proofs, bi
     return false;
 
   int currentIndex = index;
-  binary_t currentHash = HashUtils::calcHash(value);
+  binary_t currentHash = HashUtils::sha256(value);
 
   for (int i = 0; i < proofs.size(); i++)
   {
@@ -20,7 +20,7 @@ bool MerkleTree::validate(int index, binary_t value, vector<binary_t> proofs, bi
     bool isLeft = currentIndex % 2 == 0;
     // calculate a propagate up
     binary_t combined = isLeft ? HexUtils::concat(currentHash, neighbour) : HexUtils::concat(neighbour, currentHash);
-    currentHash = HashUtils::calcHash(combined);
+    currentHash = HashUtils::sha256(combined);
     currentIndex = currentIndex / 2;
   }
   return HexUtils::eq(currentHash, rootHash);
@@ -82,7 +82,7 @@ vector<binary_t> MerkleTree::getHashedParents(const vector<binary_t> &children)
     // Method 2 : Single Leaf -> Hash (itself + itself)
     // if (++i < children.size()) b = children[i++];
     binary_t data = HexUtils::concat(a, b); // HashUtils::Hash(a, b)
-    binary_t hash = HashUtils::calcHash(data);
+    binary_t hash = HashUtils::sha256(data);
     // printf("hash(%s, %s)=>%s \n", a.c_str(), b.c_str(), hash.c_str());
     result.push_back(hash);
   }
@@ -106,7 +106,7 @@ void MerkleTree::add(binary_t data, bool compile)
   values.push_back(data);
   precompute();
   // RESIZE THE TREE with Pre-calculated Tree Level!!!!!!!!!!!!!
-  this->tree[0].push_back(HashUtils::calcHash(data));
+  this->tree[0].push_back(HashUtils::sha256(data));
   if (compile)
     this->compile();
 }

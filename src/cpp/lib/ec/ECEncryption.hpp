@@ -14,9 +14,9 @@
 #include "modes.h"
 #include "filters.h"
 
-#include "EC.hpp"
+#include "ECCurve.hpp"
 
-#include "HexUtils.hpp"
+#include "../utils/HexUtils.hpp"
 
 using namespace std;
 using namespace cryptoplus;
@@ -27,8 +27,8 @@ namespace cryptoplus
 class ECEncryption
 {
 public:
-  static vector<uint8_t> encrypt(const shared_ptr<EC> &curve, const vector<uint8_t> &publicKey, const vector<uint8_t> &plaintext);
-  static vector<uint8_t> decrypt(const shared_ptr<EC> &curve, const vector<uint8_t> &privateKey, const vector<uint8_t> &cyphertext);
+  static vector<uint8_t> encrypt(const shared_ptr<ECCurve> &curve, const vector<uint8_t> &publicKey, const vector<uint8_t> &plaintext);
+  static vector<uint8_t> decrypt(const shared_ptr<ECCurve> &curve, const vector<uint8_t> &privateKey, const vector<uint8_t> &cyphertext);
 };
 
 } // namespace cryptoplus

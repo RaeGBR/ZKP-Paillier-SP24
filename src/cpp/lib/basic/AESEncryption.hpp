@@ -13,9 +13,9 @@
 #include "modes.h"
 #include "filters.h"
 
-#include "EC.hpp"
+#include "ECCurve.hpp"
 
-#include "HexUtils.hpp"
+#include "../utils/HexUtils.hpp"
 
 using namespace std;
 using namespace cryptoplus;

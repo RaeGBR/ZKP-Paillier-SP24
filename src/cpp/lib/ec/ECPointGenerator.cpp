@@ -1,6 +1,6 @@
 #include "ECPointGenerator.hpp"
 
-shared_ptr<Integer> ECPointGenerator::findY(const shared_ptr<EC> &curve, shared_ptr<Integer> x)
+shared_ptr<Integer> ECPointGenerator::findY(const shared_ptr<ECCurve> &curve, shared_ptr<Integer> x)
 {
   try
   {
@@ -15,14 +15,14 @@ shared_ptr<Integer> ECPointGenerator::findY(const shared_ptr<EC> &curve, shared_
   }
 }
 
-shared_ptr<ECPoint> ECPointGenerator::compute(const shared_ptr<EC> &curve, shared_ptr<Integer> x)
+shared_ptr<ECPoint> ECPointGenerator::compute(const shared_ptr<ECCurve> &curve, shared_ptr<Integer> x)
 {
   auto y = ECPointGenerator::findY(curve, x);
   bool valid = curve->verify(ECPoint::create(x, y));
   // Hash until find a point
   while (!valid || Integer::ZERO()->eq(y))
   {
-    binary_t hash = HashUtils::calcHash(x->toBinary());
+    binary_t hash = HashUtils::sha256(x->toBinary());
     x = Integer::createWithBinary(hash);
     x = x->mod(curve->getP());
     y = ECPointGenerator::findY(curve, x);
@@ -31,10 +31,10 @@ shared_ptr<ECPoint> ECPointGenerator::compute(const shared_ptr<EC> &curve, share
   return ECPoint::create(x, y);
 }
 
-shared_ptr<ECPoint> ECPointGenerator::generate(const shared_ptr<EC> &curve, const string &seed, bool isPositive)
+shared_ptr<ECPoint> ECPointGenerator::generate(const shared_ptr<ECCurve> &curve, const binary_t &seed, bool isPositive)
 {
-  string hash = HashUtils::calcHash(seed).append("h");
-  auto x = Integer::createWithString(hash);
+  binary_t hash = HashUtils::sha256(seed);
+  auto x = Integer::createWithBinary(hash);
   x = x->mod(curve->getP());
   auto point = ECPointGenerator::compute(curve, x);
 

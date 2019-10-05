@@ -21,6 +21,7 @@ CryptoUtils = interface +c {
   static ecDecrypt(curve: ECCurve, privateKey: binary, cyphertext: binary): binary;
   static aesEncrypt(key: binary, iv: binary, plainText: binary): binary;
   static aesDecrypt(key: binary, iv: binary, encryptedText: binary): binary;
+  static merkleTreeRootHash(values: list<binary>): binary;
 }
 
 Utils = interface +c {

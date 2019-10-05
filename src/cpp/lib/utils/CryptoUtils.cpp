@@ -2,11 +2,10 @@
 
 #include "../namespace.hpp"
 
+#include "../algo/MerkleTree.hpp"
 #include "../basic/AESEncryption.hpp"
-
 #include "../ec/ECEncryption.hpp"
 #include "../ec/ECSignature.hpp"
-
 #include "./HexUtils.hpp"
 
 vector<uint8_t> CryptoUtils::ecGenerateSignature(const shared_ptr<ECCurve> &curve, const vector<uint8_t> &privateKey, const vector<uint8_t> &message)
@@ -39,4 +38,10 @@ vector<uint8_t> CryptoUtils::aesDecrypt(const vector<uint8_t> &key, const vector
 {
   string ret = AESEncryption::aesDecrypt(HexUtils::binaryToString(key), HexUtils::binaryToString(iv), HexUtils::binaryToString(encryptedText));
   return HexUtils::stringToBinary(ret);
+}
+
+vector<uint8_t> CryptoUtils::merkleTreeRootHash(const vector<vector<uint8_t>> &values)
+{
+  MerkleTree tree = MerkleTree(values);
+  return tree.getRootHash();
 }

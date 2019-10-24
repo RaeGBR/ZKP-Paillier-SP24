@@ -1,0 +1,15 @@
+[submodule "deps/djinni"]
+	path = deps/djinni
+	url = https://github.com/dropbox/djinni.git
+[submodule "deps/gyp"]
+	path = deps/gyp
+	url = https://chromium.googlesource.com/external/gyp.git
+[submodule "deps/cryptopp"]
+	path = deps/cryptopp
+	url = https://github.com/weidai11/cryptopp
+[submodule "deps/googletest"]
+	path = deps/googletest
+	url = https://github.com/abseil/googletest
+[submodule "deps/cryptopp-android"]
+	path = deps/cryptopp-android
+	url = http://github.com/noloader/cryptopp-android.git

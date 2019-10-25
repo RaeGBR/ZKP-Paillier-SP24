@@ -20,6 +20,7 @@ Integer = interface +c {
   mod(n: Integer): Integer;
   inv(n: Integer): Integer;
   compare(n: Integer): i32;
+  gcd(n: Integer): Integer;
   modMul(b: Integer, n: Integer): Integer;
   modPow(b: Integer, n: Integer): Integer;
   modSqrt(n: Integer): Integer;

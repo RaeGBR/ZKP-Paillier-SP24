@@ -49,6 +49,7 @@ public:
   std::shared_ptr<Integer> modPow(const std::shared_ptr<Integer> &b, const std::shared_ptr<Integer> &n);
   std::shared_ptr<Integer> modSqrt(const std::shared_ptr<Integer> &n);
   int32_t compare(const std::shared_ptr<Integer> &n);
+  std::shared_ptr<Integer> gcd(const std::shared_ptr<Integer> &n);
 
   string toString();
   string toHex();

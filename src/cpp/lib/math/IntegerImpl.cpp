@@ -193,6 +193,12 @@ int32_t IntegerImpl::compare(const shared_ptr<Integer> &n)
   return _value->Compare(*(_n->getValue()));
 }
 
+shared_ptr<Integer> IntegerImpl::gcd(const shared_ptr<Integer> &n)
+{
+  auto _n = dynamic_pointer_cast<IntegerImpl>(n);
+  return make_shared<IntegerImpl>(CryptoPP::Integer::Gcd((*_value), (*_n->getValue())));
+}
+
 string IntegerImpl::toString()
 {
   ostringstream out;

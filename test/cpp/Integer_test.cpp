@@ -201,4 +201,22 @@ TEST(IntegerWrapper, GreaterThanEqual)
   EXPECT_FALSE(a->gte(b));
 }
 
+TEST(IntegerWrapper, GCD)
+{
+  shared_ptr<Integer> a = make_shared<IntegerImpl>("37", 10);
+  shared_ptr<Integer> b = make_shared<IntegerImpl>("600", 10);
+  shared_ptr<Integer> c = make_shared<IntegerImpl>("20", 10);
+  shared_ptr<Integer> d = make_shared<IntegerImpl>("100", 10);
+  shared_ptr<Integer> e = make_shared<IntegerImpl>("624129", 10);
+  shared_ptr<Integer> f = make_shared<IntegerImpl>("2061517", 10);
+
+  EXPECT_EQ(Integer::ZERO()->gcd(Integer::ZERO())->toString(), "0");
+  EXPECT_EQ(Integer::ONE()->gcd(Integer::ONE())->toString(), "1");
+  EXPECT_EQ(Integer::ZERO()->gcd(Integer::ONE())->toString(), "1");
+  EXPECT_EQ(a->gcd(a)->toString(), a->toString());
+  EXPECT_EQ(a->gcd(b)->toString(), "1");
+  EXPECT_EQ(c->gcd(d)->toString(), "20");
+  EXPECT_EQ(e->gcd(f)->toString(), "18913");
+}
+
 } // namespace

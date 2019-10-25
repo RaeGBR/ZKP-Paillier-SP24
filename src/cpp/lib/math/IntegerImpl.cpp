@@ -225,6 +225,15 @@ vector<uint8_t> IntegerImpl::toBinary()
   return Utils::hexToBinary(toHex());
 }
 
+vector<uint8_t> IntegerImpl::toFixedBinary(const int32_t length)
+{
+  auto bin = toBinary();
+  for (int i = length - bin.size() ; i > 0 ; i--) {
+    bin.insert(bin.begin(), 0);
+  }
+  return bin;
+}
+
 string IntegerImpl::toBinaryString()
 {
   string out;

@@ -219,4 +219,28 @@ TEST(IntegerWrapper, GCD)
   EXPECT_EQ(e->gcd(f)->toString(), "18913");
 }
 
+TEST(IntegerWrapper, ToFixedBinary)
+{
+  string hex = "1234";
+  string str = "4660";
+  vector<uint8_t> b{0x00, 0x00, 0x00, 0x00, 0x00, 0x12, 0x34};
+  auto a = Integer::createWithString(hex);
+
+  EXPECT_EQ(a->toHex(), hex);
+
+  EXPECT_EQ(make_shared<IntegerImpl>(a->toFixedBinary(4))->toHex(), hex);
+  EXPECT_EQ(make_shared<IntegerImpl>(a->toFixedBinary(10))->toHex(), hex);
+  EXPECT_EQ(make_shared<IntegerImpl>(a->toFixedBinary(13))->toHex(), hex);
+  EXPECT_EQ(make_shared<IntegerImpl>(a->toFixedBinary(15))->toHex(), hex);
+  EXPECT_EQ(make_shared<IntegerImpl>(a->toFixedBinary(20))->toHex(), hex);
+
+  auto bin = a->toBinary();
+  int32_t l = 7;
+  for (int i = l - bin.size() ; i > 0 ; i--) {
+    bin.insert(bin.begin(), 0);
+  }
+  EXPECT_EQ(bin, b);
+  EXPECT_EQ(a->toFixedBinary(7), b);
+}
+
 } // namespace

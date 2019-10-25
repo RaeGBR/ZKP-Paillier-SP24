@@ -54,6 +54,7 @@ public:
   string toString();
   string toHex();
   binary_t toBinary();
+  binary_t toFixedBinary(const int32_t length);
   int32_t toNumber();
   string toBinaryString();
 

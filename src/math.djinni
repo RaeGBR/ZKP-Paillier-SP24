@@ -27,6 +27,7 @@ Integer = interface +c {
   toString(): string;
   toHex(): string;
   toBinary(): binary;
+  toFixedBinary(length: i32): binary;
   toBinaryString(): string;
   toNumber(): i32;
 }

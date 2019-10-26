@@ -93,6 +93,20 @@ TEST(IntegerWrapper, Multiply)
   ASSERT_TRUE(a->mul(b)->eq(c));
 }
 
+TEST(IntegerWrapper, Division)
+{
+  shared_ptr<Integer> a = make_shared<IntegerImpl>("40", 10);
+  shared_ptr<Integer> b = make_shared<IntegerImpl>("10", 10);
+  shared_ptr<Integer> c = make_shared<IntegerImpl>("4", 10);
+
+  shared_ptr<Integer> d = make_shared<IntegerImpl>("35", 10);
+  shared_ptr<Integer> e = make_shared<IntegerImpl>("10", 10);
+  shared_ptr<Integer> f = make_shared<IntegerImpl>("3", 10);
+
+  ASSERT_TRUE(a->div(b)->eq(c));
+  ASSERT_TRUE(d->div(e)->eq(f));
+}
+
 TEST(IntegerWrapper, Mod)
 {
   shared_ptr<Integer> a = make_shared<IntegerImpl>("130", 10);

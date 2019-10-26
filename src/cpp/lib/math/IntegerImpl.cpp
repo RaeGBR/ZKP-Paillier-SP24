@@ -155,6 +155,12 @@ shared_ptr<Integer> IntegerImpl::mul(const shared_ptr<Integer> &b)
   return make_shared<IntegerImpl>((*_value) * (*_b->getValue()));
 }
 
+shared_ptr<Integer> IntegerImpl::div(const shared_ptr<Integer> &b)
+{
+  auto _b = dynamic_pointer_cast<IntegerImpl>(b);
+  return make_shared<IntegerImpl>((*_value) / (*_b->getValue()));
+}
+
 shared_ptr<Integer> IntegerImpl::mod(const shared_ptr<Integer> &b)
 {
   auto _b = dynamic_pointer_cast<IntegerImpl>(b);

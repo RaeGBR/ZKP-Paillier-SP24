@@ -1,5 +1,7 @@
 OS := $(shell uname -s)
 CLANG_VERSION ?= $(shell clang --version | grep version | sed 's/[^0-9]*\([0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}\).*/\1/')
+CLANG_BASE_DIR ?= $(shell clang --version | grep InstalledDir | sed 's/InstalledDir: \(.*\)\/bin/\1/')
+CLANG_SDK_PATH ?= $(CLANG_BASE_DIR)/lib/clang/$(CLANG_VERSION)/lib/darwin
 ROOT_DIR ?= ../..
 SRC_DIR ?= .
 PROJ_NAME ?= libcryptoplus
@@ -35,7 +37,7 @@ TEST_LIST := $(patsubst ${SRC_DIR}/%.cpp,%,${TEST_FILES})
 FLAGS := -std=c++11 -isystem ${GTEST_DIR}/include -pthread
 COVERAGE_FLAG:=
 ifeq ($(OS),Darwin)
-	COVERAGE_FLAG = -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/$(CLANG_VERSION)/lib/darwin \
+	COVERAGE_FLAG = -L$(CLANG_SDK_PATH) \
 	-lclang_rt.profile_osx
 else
 	COVERAGE_FLAG = -lgcov

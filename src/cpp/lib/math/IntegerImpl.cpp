@@ -4,6 +4,10 @@
 using namespace std;
 using namespace cryptoplus;
 
+shared_ptr<Integer> _ZERO = make_shared<IntegerImpl>(CryptoPP::Integer::Zero());
+shared_ptr<Integer> _ONE = make_shared<IntegerImpl>(CryptoPP::Integer::One());
+shared_ptr<Integer> _TWO = make_shared<IntegerImpl>(CryptoPP::Integer::Two());
+
 // Djinni Wrapper
 shared_ptr<Integer> Integer::create(const string &num, int32_t radix)
 {
@@ -33,17 +37,17 @@ shared_ptr<Integer> Integer::createWithNumber(int32_t num)
 
 shared_ptr<Integer> Integer::ZERO()
 {
-  return make_shared<IntegerImpl>("0");
+  return _ZERO;
 }
 
 shared_ptr<Integer> Integer::ONE()
 {
-  return make_shared<IntegerImpl>("1");
+  return _ONE;
 }
 
 shared_ptr<Integer> Integer::TWO()
 {
-  return make_shared<IntegerImpl>("2");
+  return _TWO;
 }
 
 shared_ptr<Integer> Integer::pow2(int32_t n)

@@ -1,0 +1,71 @@
+image: polyubtc/wasm-lib-runner
+
+stages:
+  - djinni
+  - build
+  - report
+
+djinni:
+  stage: djinni
+  script:
+    - git submodule update --init --recursive
+    - make djinni_build
+  artifacts:
+    name: Djinni build and interface generate
+    expire_in: 1 week
+    paths:
+      - deps/
+      - generated-src/
+
+build:cppJni:
+  stage: build
+  script:
+    - make cryptopp_os
+    - make gtest_build
+    - make cpp_clean
+    - make cpp_build
+    - make cpp_test
+    - make cpp_coverage
+    - make pack_cpp
+    - make jni_clean
+    - make jni_jar_build
+  dependencies:
+    - djinni
+  artifacts:
+    name: C++ and JNI build
+    expire_in: 1 week
+    paths:
+      - build/cpp/cryptoplus
+      - build/jni/cryptoplus
+      - test/cpp/build/coverage
+      - test/cpp/build/cryptoplustest.xml
+
+build:wasm:
+  stage: build
+  script:
+    - source /emsdk/emsdk_set_env.sh
+    - make cryptopp_wasm
+    - make wasm_js_build
+    - make wasm_js_test
+  dependencies:
+    - djinni
+  artifacts:
+    name: WebAsembly build
+    expire_in: 1 week
+    paths:
+      - build/wasm/js
+      - build/wasm/test
+
+report:test:
+  stage: report
+  script:
+    - echo "Reporting...";
+  dependencies:
+    - build:cppJni
+    - build:wasm
+  artifacts:
+    name: C++ Unit Test Report
+    reports:
+      junit:
+        - test/cpp/build/cryptoplustest.xml
+        - build/wasm/test/report.xml

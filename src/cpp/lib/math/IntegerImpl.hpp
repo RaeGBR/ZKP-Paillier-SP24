@@ -5,6 +5,7 @@
 #include <sstream>
 #include <iostream>
 #include "integer.h"
+#include "algebra.h"
 #include "nbtheory.h"
 
 #include "Integer.hpp"
@@ -43,6 +44,7 @@ public:
   std::shared_ptr<Integer> add(const std::shared_ptr<Integer> &b);
   std::shared_ptr<Integer> sub(const std::shared_ptr<Integer> &b);
   std::shared_ptr<Integer> mul(const std::shared_ptr<Integer> &b);
+  std::shared_ptr<Integer> pow(const std::shared_ptr<Integer> &b);
   std::shared_ptr<Integer> mod(const std::shared_ptr<Integer> &n);
   std::shared_ptr<Integer> inv(const std::shared_ptr<Integer> &n);
   std::shared_ptr<Integer> modMul(const std::shared_ptr<Integer> &b, const std::shared_ptr<Integer> &n);

@@ -17,6 +17,7 @@ Integer = interface +c {
   add(b: Integer): Integer;
   sub(b: Integer): Integer;
   mul(b: Integer): Integer;
+  pow(b: Integer): Integer;
   mod(n: Integer): Integer;
   inv(n: Integer): Integer;
   compare(n: Integer): i32;

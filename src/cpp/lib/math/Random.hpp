@@ -23,8 +23,8 @@ namespace cryptoplus
 class Random
 {
 public:
-  // Random Integer with Max Integer
-  static shared_ptr<Integer> genInteger(vector<uint8_t> input, const vector<uint8_t> &seed = vector<uint8_t>());
+  // Random Integer with Max Integer (inclusive)
+  static shared_ptr<Integer> genInteger(vector<uint8_t> max, const vector<uint8_t> &seed = vector<uint8_t>());
 
   // Random Integer
   static shared_ptr<Integer> genInteger(int byteLength, bool prime = false, const vector<uint8_t> &seed = vector<uint8_t>());
@@ -34,6 +34,12 @@ public:
 
   // Random Binary
   static vector<uint8_t> genBinary(int byteLength, const vector<uint8_t> &seed = vector<uint8_t>());
+
+  // Get a list of deterministic random numbers
+  static vector<shared_ptr<Integer>> getGenerators(uint32_t n, const shared_ptr<Integer> &modulus);
+
+  // Get a list of random numbers
+  static vector<shared_ptr<Integer>> getRandoms(uint32_t n, const shared_ptr<Integer> &modulus);
 };
 
 } // namespace cryptoplus

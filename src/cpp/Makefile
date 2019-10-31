@@ -53,9 +53,9 @@ all: clean library
 
 clean:
 	@echo "\033[33mClean cpp project...\033[0m"
-	rm -rf $(CPP_OUT) $(SRC_DIR)/lib/*.o $(SRC_DIR)/lib/**/*.o
-	rm -rf $(CPP_OUT) $(SRC_DIR)/lib/*.gcno $(SRC_DIR)/lib/**/*.gcno
-	rm -rf $(CPP_OUT) $(SRC_DIR)/lib/*.gcda $(SRC_DIR)/lib/**/*.gcda
+	rm -rf $(CPP_OUT) $(SRC_DIR)/**/*.o $(SRC_DIR)/**/**/*.o
+	rm -rf $(CPP_OUT) $(SRC_DIR)/**/*.gcno $(SRC_DIR)/**/**/*.gcno
+	rm -rf $(CPP_OUT) $(SRC_DIR)/**/*.gcda $(SRC_DIR)/**/**/*.gcda
 	rm -rf $(DJINNI_GEN_DIR)/**/*.o
 
 library:

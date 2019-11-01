@@ -107,9 +107,6 @@ TEST(Random, getRandoms)
 
   EXPECT_EQ(gs1.size(), n);
   EXPECT_EQ(gs2.size(), n);
-  EXPECT_NE(gs1[0]->toString(), gs2[0]->toString());
-  EXPECT_NE(gs1[1]->toString(), gs2[1]->toString());
-  EXPECT_NE(gs1[2]->toString(), gs2[2]->toString());
 }
 
 TEST(Random, getRandoms_all_numbers_in_group)

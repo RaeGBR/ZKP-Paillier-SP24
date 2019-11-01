@@ -1,9 +1,9 @@
 #include "./Matrix.hpp"
 
-shared_ptr<Matrix> Matrix::identity(uint32_t size)
+shared_ptr<Matrix> Matrix::identity(size_t size)
 {
   auto I = make_shared<Matrix>(size, size);
-  for (uint32_t i = 0; i < size; i++)
+  for (size_t i = 0; i < size; i++)
   {
     I->values[i][i] = Integer::ONE();
   }
@@ -11,14 +11,14 @@ shared_ptr<Matrix> Matrix::identity(uint32_t size)
 }
 
 shared_ptr<Matrix> Matrix::powerVector(const shared_ptr<Integer> &x,
-                                       uint32_t n,
+                                       size_t n,
                                        const shared_ptr<Integer> &modulus)
 {
   bool isMod = !Integer::ZERO()->eq(modulus);
 
   auto ret = make_shared<Matrix>(1, n);
   ret->values[0][0] = Integer::ONE();
-  for (uint32_t i = 1; i < n; i++)
+  for (size_t i = 1; i < n; i++)
   {
     if (isMod)
     {
@@ -32,17 +32,17 @@ shared_ptr<Matrix> Matrix::powerVector(const shared_ptr<Integer> &x,
   return ret;
 }
 
-Matrix::Matrix(uint32_t m, uint32_t n)
+Matrix::Matrix(size_t m, size_t n)
 {
   if (m <= 0 || n <= 0)
     throw invalid_argument("m and n cannot be zero");
 
   this->m = m;
   this->n = n;
-  for (uint32_t i = 0; i < m; i++)
+  for (size_t i = 0; i < m; i++)
   {
     values.push_back(vector<shared_ptr<Integer>>(n));
-    for (uint32_t j = 0; j < n; j++)
+    for (size_t j = 0; j < n; j++)
     {
       values[i][j] = Integer::ZERO();
     }
@@ -58,7 +58,7 @@ Matrix::Matrix(const vector<vector<shared_ptr<Integer>>> &values)
   if (n <= 0)
     throw invalid_argument("m and n cannot be zero");
 
-  for (uint32_t i = 0; i < m; i++)
+  for (size_t i = 0; i < m; i++)
   {
     this->values.push_back(vector<shared_ptr<Integer>>(values[i].begin(), values[i].end()));
   }
@@ -67,9 +67,9 @@ Matrix::Matrix(const vector<vector<shared_ptr<Integer>>> &values)
 shared_ptr<Matrix> Matrix::t()
 {
   auto b = make_shared<Matrix>(n, m);
-  for (uint32_t i = 0; i < m; i++)
+  for (size_t i = 0; i < m; i++)
   {
-    for (uint32_t j = 0; j < n; j++)
+    for (size_t j = 0; j < n; j++)
     {
       b->values[j][i] = this->values[i][j];
     }
@@ -86,9 +86,9 @@ shared_ptr<Matrix> Matrix::add(const shared_ptr<Matrix> &b, const shared_ptr<Int
   bool isMod = !Integer::ZERO()->eq(modulus);
 
   auto ret = make_shared<Matrix>(m, n);
-  for (uint32_t i = 0; i < m; i++)
+  for (size_t i = 0; i < m; i++)
   {
-    for (uint32_t j = 0; j < n; j++)
+    for (size_t j = 0; j < n; j++)
     {
       ret->values[i][j] = this->values[i][j]->add(b->values[i][j]);
       if (isMod)
@@ -105,9 +105,9 @@ shared_ptr<Matrix> Matrix::mul(const shared_ptr<Integer> &b, const shared_ptr<In
   bool isMod = !Integer::ZERO()->eq(modulus);
 
   auto ret = make_shared<Matrix>(m, n);
-  for (uint32_t i = 0; i < m; i++)
+  for (size_t i = 0; i < m; i++)
   {
-    for (uint32_t j = 0; j < n; j++)
+    for (size_t j = 0; j < n; j++)
     {
       if (isMod)
       {
@@ -131,11 +131,11 @@ shared_ptr<Matrix> Matrix::dot(const shared_ptr<Matrix> &b, const shared_ptr<Int
   bool isMod = !Integer::ZERO()->eq(modulus);
 
   auto ret = make_shared<Matrix>(m, p);
-  for (uint32_t i = 0; i < m; i++)
+  for (size_t i = 0; i < m; i++)
   {
-    for (uint32_t j = 0; j < p; j++)
+    for (size_t j = 0; j < p; j++)
     {
-      for (uint32_t r = 0; r < n; r++)
+      for (size_t r = 0; r < n; r++)
       {
         if (isMod)
         {
@@ -160,7 +160,7 @@ void Matrix::appendRow(const vector<shared_ptr<Integer>> &row)
     throw invalid_argument("matrix dimension not match for append row");
 
   m++;
-  for (uint32_t i = 0; i < n; i++)
+  for (size_t i = 0; i < n; i++)
   {
     values.push_back(vector<shared_ptr<Integer>>(row.begin(), row.end()));
   }
@@ -172,7 +172,7 @@ void Matrix::appendCol(const vector<shared_ptr<Integer>> &col)
     throw invalid_argument("matrix dimension not match for append row");
 
   n++;
-  for (uint32_t i = 0; i < m; i++)
+  for (size_t i = 0; i < m; i++)
   {
     values[i].push_back(col[i]);
   }
@@ -183,13 +183,51 @@ shared_ptr<Matrix> Matrix::clone()
   return make_shared<Matrix>(values);
 }
 
+shared_ptr<Matrix> Matrix::group(size_t newN)
+{
+  if (m != 1)
+    throw invalid_argument("only allow group from vector to matrix");
+
+  size_t newM = (n % newN) == 0 ? n / newN : (n / newN) + 1;
+  auto ret = make_shared<Matrix>(newM, newN);
+
+  for (size_t i = 0; i < n; i++)
+  {
+    size_t x = i / newN;
+    size_t y = i % newN;
+    (*ret)[x][y] = this->values[0][i];
+  }
+
+  return ret;
+}
+
+bool Matrix::eq(const shared_ptr<Matrix> &b)
+{
+  if (this->m != b->m || this->n != b->n || this->values.size() != b->values.size())
+    return false;
+
+  for (size_t i = 0; i < this->values.size(); i++)
+  {
+    if (this->values[i].size() != b->values[i].size())
+      return false;
+
+    for (size_t j = 0; j < this->values[i].size(); j++)
+    {
+      if (!this->values[i][j]->eq(b->values[i][j]))
+        return false;
+    }
+  }
+
+  return true;
+}
+
 json Matrix::toJson()
 {
   json output = json::array();
-  for (uint32_t i = 0; i < m; i++)
+  for (size_t i = 0; i < m; i++)
   {
     output[i] = json::array();
-    for (uint32_t j = 0; j < n; j++)
+    for (size_t j = 0; j < n; j++)
     {
       output[i][j] = values[i][j]->toString();
     }

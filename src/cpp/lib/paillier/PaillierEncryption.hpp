@@ -43,8 +43,12 @@ public:
   // Interface
   std::shared_ptr<Integer> encrypt(const std::shared_ptr<Integer> &m);
   std::shared_ptr<Integer> decrypt(const std::shared_ptr<Integer> &c);
-  std::shared_ptr<Integer> add(const std::shared_ptr<Integer> &c1, const std::shared_ptr<Integer> &c2);
-  std::shared_ptr<Integer> mul(const std::shared_ptr<Integer> &c1, const std::shared_ptr<Integer> &m2);
+
+  // If ciphers = false -> c2 is data not cipher
+  std::shared_ptr<Integer> add(const std::shared_ptr<Integer> &c1, const std::shared_ptr<Integer> &c2, bool ciphers);
+
+  // E(c1)^k = c1 * k
+  std::shared_ptr<Integer> mul(const std::shared_ptr<Integer> &c1, const std::shared_ptr<Integer> &k);
 };
 
 }

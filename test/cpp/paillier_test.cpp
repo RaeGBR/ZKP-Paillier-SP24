@@ -26,4 +26,17 @@ TEST(Paillier, KeyGeneration)
   EXPECT_TRUE(c1->getPublicKey()->gcd(c1->getPrivateKey())->eq(Integer::ONE()));
 }
 
+TEST(Paillier, EncryptionDecryption)
+{
+  int byteLength = 32;
+  auto m = Integer::createWithString("30.");
+
+  auto crypto = PaillierEncryption::generate(byteLength);
+
+  for (int i = 0 ; i < 50 ; i++) {
+    auto c = crypto->encrypt(m);
+    EXPECT_EQ(crypto->decrypt(c)->toString(), m->toString());
+  }
+}
+
 }

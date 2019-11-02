@@ -84,4 +84,16 @@ shared_ptr<Integer> PaillierEncryption::getPublicKey()
   return n;
 }
 
+std::shared_ptr<Integer> PaillierEncryption::encrypt(const std::shared_ptr<Integer> &m) {
+  auto r = Random::genInteger(this->byteLength, false)->mod(this->n);
+  auto rn = r->modPow(this->n, this->n2);
+
+  // c = (nm + 1) * r^n mod n^2
+  return this->n->mul(m)->add(Integer::ONE())->mul(rn)->mod(this->n2);
+}
+
+std::shared_ptr<Integer> PaillierEncryption::decrypt(const std::shared_ptr<Integer> &c) {
+  return c->modPow(this->lambda, this->n2)->sub(Integer::ONE())->div(this->n)->mul(this->mu)->mod(this->n);
+}
+
 }

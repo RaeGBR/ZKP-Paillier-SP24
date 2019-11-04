@@ -26,6 +26,7 @@ public:
   size_t n;
 
   Matrix(size_t m, size_t n);                                // All zero matrix
+  Matrix(const vector<shared_ptr<Integer>> &values);         // Initialized with defaults
   Matrix(const vector<vector<shared_ptr<Integer>>> &values); // Initialized with defaults
 
   shared_ptr<Matrix> t();

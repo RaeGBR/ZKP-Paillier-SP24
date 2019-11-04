@@ -49,6 +49,10 @@ Matrix::Matrix(size_t m, size_t n)
   }
 }
 
+Matrix::Matrix(const vector<shared_ptr<Integer>> &values) : Matrix(vector<vector<shared_ptr<Integer>>>{values})
+{
+}
+
 Matrix::Matrix(const vector<vector<shared_ptr<Integer>>> &values)
 {
   m = values.size();
@@ -60,6 +64,8 @@ Matrix::Matrix(const vector<vector<shared_ptr<Integer>>> &values)
 
   for (size_t i = 0; i < m; i++)
   {
+    if (values[i].size() != n)
+      throw invalid_argument("matrix initial values does not fit the matrix size");
     this->values.push_back(vector<shared_ptr<Integer>>(values[i].begin(), values[i].end()));
   }
 }

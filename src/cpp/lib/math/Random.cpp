@@ -71,24 +71,11 @@ string Random::genHex(int byteLength, const vector<uint8_t> &seed)
   return Utils::binaryToHex(ret);
 }
 
-vector<shared_ptr<Integer>> Random::getGenerators(uint32_t n, const shared_ptr<Integer> &modulus)
+vector<shared_ptr<Integer>> Random::getRandoms(size_t n, const shared_ptr<Integer> &modulus)
 {
   vector<shared_ptr<Integer>> ret;
   auto max = modulus->sub(Integer::ONE())->toBinary();
-  for (uint32_t i = 0; i < n; i++)
-  {
-    auto seed = HexUtils::stringToBinary(to_string(i));
-    auto rand = Random::genInteger(max, seed);
-    ret.push_back(rand);
-  }
-  return ret;
-}
-
-vector<shared_ptr<Integer>> Random::getRandoms(uint32_t n, const shared_ptr<Integer> &modulus)
-{
-  vector<shared_ptr<Integer>> ret;
-  auto max = modulus->sub(Integer::ONE())->toBinary();
-  for (uint32_t i = 0; i < n; i++)
+  for (size_t i = 0; i < n; i++)
   {
     auto rand = Random::genInteger(max, {});
     ret.push_back(rand);

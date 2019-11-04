@@ -35,11 +35,8 @@ public:
   // Random Binary
   static vector<uint8_t> genBinary(int byteLength, const vector<uint8_t> &seed = vector<uint8_t>());
 
-  // Get a list of deterministic random numbers
-  static vector<shared_ptr<Integer>> getGenerators(uint32_t n, const shared_ptr<Integer> &modulus);
-
   // Get a list of random numbers
-  static vector<shared_ptr<Integer>> getRandoms(uint32_t n, const shared_ptr<Integer> &modulus);
+  static vector<shared_ptr<Integer>> getRandoms(size_t n, const shared_ptr<Integer> &modulus);
 };
 
 } // namespace cryptoplus

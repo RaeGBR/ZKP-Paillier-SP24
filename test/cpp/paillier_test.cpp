@@ -39,4 +39,42 @@ TEST(Paillier, EncryptionDecryption)
   }
 }
 
+TEST(Paillier, HomomorphicAddition)
+{
+  int byteLength = 32;
+  auto m1 = make_shared<IntegerImpl>("30", 10);
+  auto m2 = make_shared<IntegerImpl>("32", 10);
+
+  auto crypto = PaillierEncryption::generate(byteLength);
+
+  EXPECT_EQ(crypto->decrypt(crypto->add(crypto->encrypt(m1), m2, false))->toString(), "62");
+  EXPECT_EQ(crypto->decrypt(crypto->add(crypto->encrypt(m1), crypto->encrypt(m2), true))->toString(), "62");
+
+  for (int i = 0 ; i < 50 ; i++) {
+    auto ma = Random::genInteger(32);
+    auto mb = Random::genInteger(32);
+    auto sum = ma->add(mb)->mod(crypto->getPublicKey());
+    EXPECT_EQ(crypto->decrypt(crypto->add(crypto->encrypt(ma), mb, false))->toString(), sum->toString());
+    EXPECT_EQ(crypto->decrypt(crypto->add(crypto->encrypt(ma), crypto->encrypt(mb), true))->toString(), sum->toString());
+  }
+}
+
+TEST(Paillier, HomomorphicMultiplication)
+{
+  int byteLength = 32;
+  auto m1 = make_shared<IntegerImpl>("30", 10);
+  auto m2 = make_shared<IntegerImpl>("32", 10);
+
+  auto crypto = PaillierEncryption::generate(byteLength);
+
+  EXPECT_EQ(crypto->decrypt(crypto->mul(crypto->encrypt(m1), m2))->toString(), "960");
+
+  for (int i = 0 ; i < 50 ; i++) {
+    auto ma = Random::genInteger(32);
+    auto mb = Random::genInteger(32);
+    auto prod = ma->mul(mb)->mod(crypto->getPublicKey());
+
+    EXPECT_EQ(crypto->decrypt(crypto->mul(crypto->encrypt(ma), mb))->toString(), prod->toString());
+  }
+}
 }

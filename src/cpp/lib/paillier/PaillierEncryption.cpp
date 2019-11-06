@@ -96,4 +96,16 @@ std::shared_ptr<Integer> PaillierEncryption::decrypt(const std::shared_ptr<Integ
   return c->modPow(this->lambda, this->n2)->sub(Integer::ONE())->div(this->n)->mul(this->mu)->mod(this->n);
 }
 
+// If ciphers = false -> c2 is data not cipher
+std::shared_ptr<Integer> PaillierEncryption::add(const std::shared_ptr<Integer> &c1, const std::shared_ptr<Integer> &c2, bool ciphers) {
+  if (ciphers) {
+    return c1->mul(c2)->mod(this->n2);
+  } else {
+    return c1->mul(g->modPow(c2, this->n2))->mod(this->n2);
+  }
+}
+
+// E(c1)^k = c1 * k
+std::shared_ptr<Integer> PaillierEncryption::mul(const std::shared_ptr<Integer> &c1, const std::shared_ptr<Integer> &k) {
+  return c1->modPow(k, this->n2);
 }

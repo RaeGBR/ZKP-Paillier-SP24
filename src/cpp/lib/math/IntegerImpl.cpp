@@ -159,6 +159,12 @@ shared_ptr<Integer> IntegerImpl::mul(const shared_ptr<Integer> &b)
   return make_shared<IntegerImpl>((*_value) * (*_b->getValue()));
 }
 
+shared_ptr<Integer> IntegerImpl::div(const shared_ptr<Integer> &b)
+{
+  auto _b = dynamic_pointer_cast<IntegerImpl>(b);
+  return make_shared<IntegerImpl>((*_value) / (*_b->getValue()));
+}
+
 shared_ptr<Integer> IntegerImpl::pow(const shared_ptr<Integer> &b)
 {
   auto _b = dynamic_pointer_cast<IntegerImpl>(b);
@@ -203,6 +209,12 @@ int32_t IntegerImpl::compare(const shared_ptr<Integer> &n)
   return _value->Compare(*(_n->getValue()));
 }
 
+shared_ptr<Integer> IntegerImpl::gcd(const shared_ptr<Integer> &n)
+{
+  auto _n = dynamic_pointer_cast<IntegerImpl>(n);
+  return make_shared<IntegerImpl>(CryptoPP::Integer::Gcd((*_value), (*_n->getValue())));
+}
+
 string IntegerImpl::toString()
 {
   ostringstream out;
@@ -227,6 +239,15 @@ string IntegerImpl::toHex()
 vector<uint8_t> IntegerImpl::toBinary()
 {
   return Utils::hexToBinary(toHex());
+}
+
+vector<uint8_t> IntegerImpl::toFixedBinary(const int32_t length)
+{
+  auto bin = toBinary();
+  for (int i = length - bin.size() ; i > 0 ; i--) {
+    bin.insert(bin.begin(), 0);
+  }
+  return bin;
 }
 
 string IntegerImpl::toBinaryString()

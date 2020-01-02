@@ -93,6 +93,20 @@ TEST(IntegerWrapper, Multiply)
   ASSERT_TRUE(a->mul(b)->eq(c));
 }
 
+TEST(IntegerWrapper, Division)
+{
+  shared_ptr<Integer> a = make_shared<IntegerImpl>("40", 10);
+  shared_ptr<Integer> b = make_shared<IntegerImpl>("10", 10);
+  shared_ptr<Integer> c = make_shared<IntegerImpl>("4", 10);
+
+  shared_ptr<Integer> d = make_shared<IntegerImpl>("35", 10);
+  shared_ptr<Integer> e = make_shared<IntegerImpl>("10", 10);
+  shared_ptr<Integer> f = make_shared<IntegerImpl>("3", 10);
+
+  ASSERT_TRUE(a->div(b)->eq(c));
+  ASSERT_TRUE(d->div(e)->eq(f));
+}
+
 TEST(IntegerWrapper, Mod)
 {
   shared_ptr<Integer> a = make_shared<IntegerImpl>("130", 10);
@@ -199,6 +213,48 @@ TEST(IntegerWrapper, GreaterThanEqual)
 
   EXPECT_TRUE(b->gte(a));
   EXPECT_FALSE(a->gte(b));
+}
+
+TEST(IntegerWrapper, GCD)
+{
+  shared_ptr<Integer> a = make_shared<IntegerImpl>("37", 10);
+  shared_ptr<Integer> b = make_shared<IntegerImpl>("600", 10);
+  shared_ptr<Integer> c = make_shared<IntegerImpl>("20", 10);
+  shared_ptr<Integer> d = make_shared<IntegerImpl>("100", 10);
+  shared_ptr<Integer> e = make_shared<IntegerImpl>("624129", 10);
+  shared_ptr<Integer> f = make_shared<IntegerImpl>("2061517", 10);
+
+  EXPECT_EQ(Integer::ZERO()->gcd(Integer::ZERO())->toString(), "0");
+  EXPECT_EQ(Integer::ONE()->gcd(Integer::ONE())->toString(), "1");
+  EXPECT_EQ(Integer::ZERO()->gcd(Integer::ONE())->toString(), "1");
+  EXPECT_EQ(a->gcd(a)->toString(), a->toString());
+  EXPECT_EQ(a->gcd(b)->toString(), "1");
+  EXPECT_EQ(c->gcd(d)->toString(), "20");
+  EXPECT_EQ(e->gcd(f)->toString(), "18913");
+}
+
+TEST(IntegerWrapper, ToFixedBinary)
+{
+  string hex = "1234";
+  string str = "4660";
+  vector<uint8_t> b{0x00, 0x00, 0x00, 0x00, 0x00, 0x12, 0x34};
+  auto a = Integer::createWithString(hex);
+
+  EXPECT_EQ(a->toHex(), hex);
+
+  EXPECT_EQ(make_shared<IntegerImpl>(a->toFixedBinary(4))->toHex(), hex);
+  EXPECT_EQ(make_shared<IntegerImpl>(a->toFixedBinary(10))->toHex(), hex);
+  EXPECT_EQ(make_shared<IntegerImpl>(a->toFixedBinary(13))->toHex(), hex);
+  EXPECT_EQ(make_shared<IntegerImpl>(a->toFixedBinary(15))->toHex(), hex);
+  EXPECT_EQ(make_shared<IntegerImpl>(a->toFixedBinary(20))->toHex(), hex);
+
+  auto bin = a->toBinary();
+  int32_t l = 7;
+  for (int i = l - bin.size() ; i > 0 ; i--) {
+    bin.insert(bin.begin(), 0);
+  }
+  EXPECT_EQ(bin, b);
+  EXPECT_EQ(a->toFixedBinary(7), b);
 }
 
 } // namespace

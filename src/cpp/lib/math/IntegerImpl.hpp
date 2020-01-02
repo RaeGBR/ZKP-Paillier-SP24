@@ -44,6 +44,7 @@ public:
   std::shared_ptr<Integer> add(const std::shared_ptr<Integer> &b);
   std::shared_ptr<Integer> sub(const std::shared_ptr<Integer> &b);
   std::shared_ptr<Integer> mul(const std::shared_ptr<Integer> &b);
+  std::shared_ptr<Integer> div(const std::shared_ptr<Integer> &n);
   std::shared_ptr<Integer> pow(const std::shared_ptr<Integer> &b);
   std::shared_ptr<Integer> mod(const std::shared_ptr<Integer> &n);
   std::shared_ptr<Integer> inv(const std::shared_ptr<Integer> &n);
@@ -51,10 +52,12 @@ public:
   std::shared_ptr<Integer> modPow(const std::shared_ptr<Integer> &b, const std::shared_ptr<Integer> &n);
   std::shared_ptr<Integer> modSqrt(const std::shared_ptr<Integer> &n);
   int32_t compare(const std::shared_ptr<Integer> &n);
+  std::shared_ptr<Integer> gcd(const std::shared_ptr<Integer> &n);
 
   string toString();
   string toHex();
   binary_t toBinary();
+  binary_t toFixedBinary(const int32_t length);
   int32_t toNumber();
   string toBinaryString();
 

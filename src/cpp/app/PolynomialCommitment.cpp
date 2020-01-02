@@ -124,13 +124,13 @@ vector<shared_ptr<Integer>> PolynomialCommitment::eval(
   auto Z = make_shared<Matrix>(zx);
 
   // t_ = Z * T
-  auto t_ = Z->dot(T, p);
+  auto t_ = Z->mul(T, p);
 
   // r_ = Z * r
   auto r_ = make_shared<Matrix>(ri);
   r_ = r_->t();
 
-  r_ = Z->dot(r_, p);
+  r_ = Z->mul(r_, p);
 
   // return result vector
   vector<shared_ptr<Integer>> ret((*t_)[0].begin(), (*t_)[0].end());
@@ -191,6 +191,6 @@ shared_ptr<Integer> PolynomialCommitment::calcV(
   vector<shared_ptr<Integer>> t_(pe.begin(), pe.end() - 1);
   auto t = make_shared<Matrix>(t_);
   auto X = Matrix::powerVector(x, n)->t();
-  auto v = t->dot(X, p);
+  auto v = t->mul(X, p);
   return (*v)[0][0];
 }

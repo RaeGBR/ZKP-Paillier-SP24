@@ -32,7 +32,7 @@ public:
   shared_ptr<Matrix> t();
   shared_ptr<Matrix> add(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus = Integer::ZERO());
   shared_ptr<Matrix> mul(const shared_ptr<Integer> &b, const shared_ptr<Integer> &modulus = Integer::ZERO());
-  shared_ptr<Matrix> dot(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus = Integer::ZERO());
+  shared_ptr<Matrix> mul(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus = Integer::ZERO());
   void appendRow(const vector<shared_ptr<Integer>> &row);
   void appendCol(const vector<shared_ptr<Integer>> &col);
 

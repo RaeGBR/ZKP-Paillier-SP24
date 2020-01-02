@@ -191,7 +191,7 @@ TEST(Matrix, ModMul)
   EXPECT_EQ(c->toString(), "[[\"0\",\"2\",\"4\"],[\"0\",\"2\",\"4\"]]");
 }
 
-TEST(Matrix, Dot)
+TEST(Matrix, CrossProduct)
 {
   const size_t m = 2;
   const size_t n = 3;
@@ -210,13 +210,13 @@ TEST(Matrix, Dot)
     }
   }
 
-  auto c = a->dot(b);
+  auto c = a->mul(b);
   EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\"],[\"4\",\"5\",\"6\"]]");
   EXPECT_EQ(b->toString(), "[[\"7\",\"8\"],[\"9\",\"10\"],[\"11\",\"12\"]]");
   EXPECT_EQ(c->toString(), "[[\"58\",\"64\"],[\"139\",\"154\"]]");
 }
 
-TEST(Matrix, ModDot)
+TEST(Matrix, ModCrossProduct)
 {
   const size_t m = 2;
   const size_t n = 3;
@@ -236,7 +236,7 @@ TEST(Matrix, ModDot)
     }
   }
 
-  auto c = a->dot(b, modulus);
+  auto c = a->mul(b, modulus);
   EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\"],[\"4\",\"5\",\"6\"]]");
   EXPECT_EQ(b->toString(), "[[\"7\",\"8\"],[\"9\",\"10\"],[\"11\",\"12\"]]");
   EXPECT_EQ(c->toString(), "[[\"2\",\"1\"],[\"6\",\"0\"]]");

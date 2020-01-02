@@ -128,10 +128,10 @@ shared_ptr<Matrix> Matrix::mul(const shared_ptr<Integer> &b, const shared_ptr<In
   return ret;
 }
 
-shared_ptr<Matrix> Matrix::dot(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus)
+shared_ptr<Matrix> Matrix::mul(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus)
 {
   if (n != b->m)
-    throw invalid_argument("matrix dimension not match for dot product");
+    throw invalid_argument("matrix dimension not match for cross product");
 
   auto p = b->n;
   bool isMod = !Integer::ZERO()->eq(modulus);

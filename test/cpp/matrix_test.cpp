@@ -242,6 +242,75 @@ TEST(Matrix, ModCrossProduct)
   EXPECT_EQ(c->toString(), "[[\"2\",\"1\"],[\"6\",\"0\"]]");
 }
 
+TEST(Matrix, Dot)
+{
+  const size_t m = 2;
+  const size_t n = 3;
+  auto a = make_shared<Matrix>(m, n);
+  auto b = make_shared<Matrix>(m, n);
+  for (size_t i = 0; i < m; i++)
+  {
+    for (size_t j = 0; j < n; j++)
+    {
+      (*a)[i][j] = Integer::create(to_string(i * n + j), 10);
+      (*b)[i][j] = Integer::create(to_string(i * n + j + 1), 10);
+    }
+  }
+
+  auto c = a->dot(b);
+  EXPECT_EQ(a->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
+  EXPECT_EQ(b->toString(), "[[\"1\",\"2\",\"3\"],[\"4\",\"5\",\"6\"]]");
+  EXPECT_EQ(c->toString(), "[[\"8\",\"17\"],[\"26\",\"62\"]]");
+
+  auto d = make_shared<Matrix>(1, n);
+  auto e = make_shared<Matrix>(1, n);
+  for (size_t i = 0; i < n; i++)
+  {
+    (*d)[0][i] = Integer::create(to_string(i + 1), 10);
+    (*e)[0][i] = Integer::create(to_string(i + 1), 10);
+  }
+
+  auto f = d->dot(e);
+  EXPECT_EQ(d->toString(), "[[\"1\",\"2\",\"3\"]]");
+  EXPECT_EQ(e->toString(), "[[\"1\",\"2\",\"3\"]]");
+  EXPECT_EQ(f->toString(), "[[\"14\"]]");
+}
+
+TEST(Matrix, ModDot)
+{
+  const size_t m = 2;
+  const size_t n = 3;
+  const auto modulus = Integer::createWithString("7");
+  auto a = make_shared<Matrix>(m, n);
+  auto b = make_shared<Matrix>(m, n);
+  for (size_t i = 0; i < m; i++)
+  {
+    for (size_t j = 0; j < n; j++)
+    {
+      (*a)[i][j] = Integer::create(to_string(i * n + j), 10);
+      (*b)[i][j] = Integer::create(to_string(i * n + j + 1), 10);
+    }
+  }
+
+  auto c = a->dot(b, modulus);
+  EXPECT_EQ(a->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
+  EXPECT_EQ(b->toString(), "[[\"1\",\"2\",\"3\"],[\"4\",\"5\",\"6\"]]");
+  EXPECT_EQ(c->toString(), "[[\"1\",\"3\"],[\"5\",\"6\"]]");
+
+  auto d = make_shared<Matrix>(1, n);
+  auto e = make_shared<Matrix>(1, n);
+  for (size_t i = 0; i < n; i++)
+  {
+    (*d)[0][i] = Integer::create(to_string(i + 1), 10);
+    (*e)[0][i] = Integer::create(to_string(i + 1), 10);
+  }
+
+  auto f = d->dot(e, modulus);
+  EXPECT_EQ(d->toString(), "[[\"1\",\"2\",\"3\"]]");
+  EXPECT_EQ(e->toString(), "[[\"1\",\"2\",\"3\"]]");
+  EXPECT_EQ(f->toString(), "[[\"0\"]]");
+}
+
 TEST(Matrix, AppendRow)
 {
   const size_t m = 2;

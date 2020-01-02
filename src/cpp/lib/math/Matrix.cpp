@@ -160,6 +160,15 @@ shared_ptr<Matrix> Matrix::mul(const shared_ptr<Matrix> &b, const shared_ptr<Int
   return ret;
 }
 
+shared_ptr<Matrix> Matrix::dot(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus)
+{
+  if (m != b->m || n != b->n)
+    throw invalid_argument("matrix dimension not match for cross product");
+
+  auto t = b->t();
+  return this->mul(t, modulus);
+}
+
 void Matrix::appendRow(const vector<shared_ptr<Integer>> &row)
 {
   if (row.size() != n)

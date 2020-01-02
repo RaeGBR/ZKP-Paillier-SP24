@@ -9,7 +9,8 @@ using namespace cryptoplus;
 
 namespace cryptoplus
 {
-class PaillierEncryption {
+class PaillierEncryption
+{
 
 private:
   int32_t byteLength;
@@ -17,8 +18,8 @@ private:
   shared_ptr<Integer> lambda; // lambda = (p-1)(q-1) mod n
   shared_ptr<Integer> mu;     // mu = lambda^-1 mod n
 
-  shared_ptr<Integer> n;  // n = p*q
-  shared_ptr<Integer> g;  // g = (n+1) mod n^2
+  shared_ptr<Integer> n; // n = p*q
+  shared_ptr<Integer> g; // g = (n+1) mod n^2
 
   // Cache for faster computation
   shared_ptr<Integer> n2; // n^2
@@ -32,7 +33,10 @@ public:
   // Generate a new Keypair with Seed
   PaillierEncryption(int byteLength, vector<uint8_t> seed);
 
-  // Import KeyPair From Lambda and N
+  // Import KeyPair From N (public key), can perform encrypt
+  PaillierEncryption(const std::shared_ptr<Integer> &N);
+
+  // Import KeyPair From Lambda and N (private & public key), can perform encrypt, decrypt
   PaillierEncryption(const std::shared_ptr<Integer> &N, const std::shared_ptr<Integer> &lamda);
 
   // Export Private Key
@@ -51,4 +55,4 @@ public:
   std::shared_ptr<Integer> mul(const std::shared_ptr<Integer> &c1, const std::shared_ptr<Integer> &k);
 };
 
-}
+} // namespace cryptoplus

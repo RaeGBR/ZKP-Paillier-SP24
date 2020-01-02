@@ -64,8 +64,13 @@ PaillierEncryption::PaillierEncryption(int byteLength, vector<uint8_t> seed) {
   this->mu = this->lambda->inv(this->n);
 }
 
-// Import KeyPair From Lambda
-PaillierEncryption::PaillierEncryption(const std::shared_ptr<Integer> &N, const std::shared_ptr<Integer> &lamda) {
+// Import KeyPair From N (public key), can perform encrypt
+PaillierEncryption::PaillierEncryption(const std::shared_ptr<Integer> &N)
+    : PaillierEncryption::PaillierEncryption(N, Integer::ONE()) {}
+
+// Import KeyPair From Lambda and N (private & public key), can perform encrypt, decrypt
+PaillierEncryption::PaillierEncryption(const std::shared_ptr<Integer> &N, const std::shared_ptr<Integer> &lamda)
+{
   this->n = N;
   this->byteLength = this->n->toBinary().size();
   this->lambda = lamda;

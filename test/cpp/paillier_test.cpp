@@ -39,6 +39,24 @@ TEST(Paillier, EncryptionDecryption)
   }
 }
 
+TEST(Paillier, EncryptionDecryption2)
+{
+  int byteLength = 32;
+  auto m = Integer::createWithString("30.");
+
+  auto crypto = PaillierEncryption::generate(byteLength);
+  auto pk = crypto->getPublicKey();
+  auto sk = crypto->getPrivateKey();
+
+  auto encryptor = make_shared<PaillierEncryption>(pk);
+  auto decryptor = make_shared<PaillierEncryption>(pk, sk);
+
+  auto c = encryptor->encrypt(m);
+  auto r = decryptor->decrypt(c);
+
+  EXPECT_TRUE(m->eq(r));
+}
+
 TEST(Paillier, HomomorphicAddition)
 {
   int byteLength = 32;
@@ -77,4 +95,4 @@ TEST(Paillier, HomomorphicMultiplication)
     EXPECT_EQ(crypto->decrypt(crypto->mul(crypto->encrypt(ma), mb))->toString(), prod->toString());
   }
 }
-}
+} // namespace

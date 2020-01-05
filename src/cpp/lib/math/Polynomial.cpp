@@ -58,7 +58,7 @@ shared_ptr<Matrix> Polynomial::get(int i)
 
 void Polynomial::clean()
 {
-  auto zero = make_shared<Matrix>(1, 1)->t();
+  auto zero = make_shared<Matrix>(1, 1);
 
   // Delete all Zeros until non-zero Coefficient found from Smallest Degree
   bool foundSmallest = false;
@@ -153,7 +153,7 @@ bool Polynomial::erase(int i)
     return true;
   }
 
-  auto zero = make_shared<Matrix>(1, 1)->t();
+  auto zero = make_shared<Matrix>(1, 1);
 
   // If this is the only coefficient
   // then delete the only one coefficient
@@ -197,7 +197,7 @@ shared_ptr<Polynomial> Polynomial::add(const shared_ptr<Polynomial> &b, const sh
   auto ret = make_shared<Polynomial>();
 
   bool isMod = !Integer::ZERO()->eq(modulus);
-  auto zero = make_shared<Matrix>(1, 1)->t();
+  auto zero = make_shared<Matrix>(1, 1);
 
   //  a = [a1 00 a2 a3]  = a1*x^3 + a2*x + a3
   //  b =    [b1 00 b2]  = b1*x^2 + b2
@@ -235,12 +235,14 @@ shared_ptr<Polynomial> Polynomial::mul(const shared_ptr<Integer> &b, const share
 {
   auto ret = this->clone();
 
-  auto zero = make_shared<Matrix>(1, 1)->t();
+  auto zero = make_shared<Matrix>(1, 1);
   bool isMod = !Integer::ZERO()->eq(modulus);
 
   for (int i = ret->getSmallestDegree() ; i <= ret->getLargestDegree() ; i++) {
-    if (ret->get(i)->eq(zero) && isMod) ret->put(ret->get(i)->add(0, modulus), i);
-    else ret->put(ret->get(i)->mul(b,  modulus), i);
+    auto mi = ret->get(i);
+    if (mi->eq(zero)) {
+      if (isMod) ret->put(mi->add(make_shared<Matrix>(mi->m, mi->n), modulus), i);
+    } else ret->put(mi->mul(b,  modulus), i);
   }
   return ret;
 }
@@ -253,7 +255,7 @@ shared_ptr<Polynomial> Polynomial::mul(const shared_ptr<Matrix> &b, const shared
 {
   auto ret = this->clone();
 
-  auto zero = make_shared<Matrix>(1, 1)->t();
+  auto zero = make_shared<Matrix>(1, 1);
   bool isMod = !Integer::ZERO()->eq(modulus);
 
   for (int i = ret->getSmallestDegree() ; i <= ret->getLargestDegree() ; i++) {

@@ -289,11 +289,83 @@ TEST(Polynomial, Add) {
   EXPECT_EQ(ps->get(-1)->toString(), zero->toString());
   EXPECT_EQ(ps->get(-2)->toString(), zero->toString());
   EXPECT_EQ(ps->get(-3)->toString(), "[[\"0\",\"2\",\"4\"],[\"1\",\"3\",\"0\"]]");
-
-  printf("%s\n", ps->toString().c_str());
 }
 
 // Scalar Mul
+TEST(Polynomial, Scalar_Multiplication)
+{
+  const size_t m = 2;
+  const size_t n = 3;
+  auto a = make_shared<Matrix>(m, n);
+  for (size_t i = 0; i < m; i++)
+  {
+    for (size_t j = 0; j < n; j++)
+    {
+      (*a)[i][j] = Integer::createWithString(to_string(i * n + j));
+    }
+  }
+  EXPECT_EQ(a->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
+  
+  auto b = make_shared<Matrix>(m, n);
+  for (size_t i = 0; i < m; i++)
+  {
+    for (size_t j = 0; j < n; j++)
+    {
+      (*b)[i][j] = Integer::createWithString(to_string(j));
+    }
+  }
+  EXPECT_EQ(b->toString(), "[[\"0\",\"1\",\"2\"],[\"0\",\"1\",\"2\"]]");
+
+  auto zero = make_shared<Matrix>(1, 1);
+  EXPECT_EQ(zero->toString(), "[[\"0\"]]");
+
+  // p(a) = b * x^3 + a * x^1
+  auto pa = make_shared<Polynomial>();
+  pa->put(a, 1);
+  pa->put(b, 3);
+
+  // p(s) = 5b * x^3 + 5a * x^1
+  auto ps = pa->mul(Integer::createWithNumber(5));
+  EXPECT_EQ(ps->getLargestDegree(), 3);
+  EXPECT_EQ(ps->getSmallestDegree(), 1);
+  EXPECT_EQ(ps->get(3)->toString(), "[[\"0\",\"5\",\"10\"],[\"0\",\"5\",\"10\"]]");
+  EXPECT_EQ(ps->get(2)->toString(), zero->toString());
+  EXPECT_EQ(ps->get(1)->toString(), "[[\"0\",\"5\",\"10\"],[\"15\",\"20\",\"25\"]]");
+
+  // try with modulus
+  ps = pa->mul(Integer::createWithNumber(5), Integer::createWithNumber(12));
+  EXPECT_EQ(ps->getLargestDegree(), 3);
+  EXPECT_EQ(ps->getSmallestDegree(), 1);
+  EXPECT_EQ(ps->get(3)->toString(), "[[\"0\",\"5\",\"10\"],[\"0\",\"5\",\"10\"]]");
+  EXPECT_EQ(ps->get(2)->toString(), zero->toString());
+  EXPECT_EQ(ps->get(1)->toString(), "[[\"0\",\"5\",\"10\"],[\"3\",\"8\",\"1\"]]");
+
+  // try with negative coefficient
+  // p(a) = b * x^3 + a * x^1 + (b+a) * x^-2
+  pa->put(b->add(a), -2);
+
+  ps = pa->mul(Integer::createWithNumber(5));
+  EXPECT_EQ(ps->getLargestDegree(), 3);
+  EXPECT_EQ(ps->getSmallestDegree(), -2);
+  EXPECT_EQ(ps->get(3)->toString(), "[[\"0\",\"5\",\"10\"],[\"0\",\"5\",\"10\"]]");
+  EXPECT_EQ(ps->get(2)->toString(), zero->toString());
+  EXPECT_EQ(ps->get(1)->toString(), "[[\"0\",\"5\",\"10\"],[\"15\",\"20\",\"25\"]]");
+  EXPECT_EQ(ps->get(0)->toString(), zero->toString());
+  EXPECT_EQ(ps->get(-1)->toString(), zero->toString());
+  EXPECT_EQ(ps->get(-2)->toString(), "[[\"0\",\"10\",\"20\"],[\"15\",\"25\",\"35\"]]");
+
+  // with modulus
+  ps = pa->mul(Integer::createWithNumber(5), Integer::createWithNumber(12));
+  EXPECT_EQ(ps->getLargestDegree(), 3);
+  EXPECT_EQ(ps->getSmallestDegree(), -2);
+  EXPECT_EQ(ps->get(3)->toString(), "[[\"0\",\"5\",\"10\"],[\"0\",\"5\",\"10\"]]");
+  EXPECT_EQ(ps->get(2)->toString(), zero->toString());
+  EXPECT_EQ(ps->get(1)->toString(), "[[\"0\",\"5\",\"10\"],[\"3\",\"8\",\"1\"]]");
+  EXPECT_EQ(ps->get(0)->toString(), zero->toString());
+  EXPECT_EQ(ps->get(-1)->toString(), zero->toString());
+  EXPECT_EQ(ps->get(-2)->toString(), "[[\"0\",\"10\",\"8\"],[\"3\",\"1\",\"11\"]]");
+  
+}
 
 // Cross Prod.
 

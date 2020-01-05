@@ -77,8 +77,6 @@ public:
   // a(x) * b(x) = (a1*b1) * x + (a1*b2 + a2*b1) * x^2 + (a2*b2) * x^3
   shared_ptr<Polynomial> mul(const shared_ptr<Polynomial> &b, const shared_ptr<Integer> modulus = Integer::ZERO());
 
-  bool eq(const shared_ptr<Polynomial> &b);
-
   json toJson();
   string toString();
 };

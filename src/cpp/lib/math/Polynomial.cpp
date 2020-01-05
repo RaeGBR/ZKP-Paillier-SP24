@@ -195,3 +195,21 @@ shared_ptr<Polynomial> Polynomial::mul(const shared_ptr<Polynomial> &b, const sh
 
  return ret;
 }
+
+json Polynomial::toJson()
+{
+  json output = json::array();
+  int index = 0;
+  for (int i = this->getSmallestDegree() ; i <= this->getLargestDegree() ; i++) {
+    auto output = this->get(i)->toJson();
+    output[index]["degree"] = i;
+    output[index]["matrix"] = output;
+  }
+
+  return output;
+}
+
+string Polynomial::toString()
+{
+  return this->toJson().dump();
+}

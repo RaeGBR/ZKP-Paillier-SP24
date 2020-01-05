@@ -96,6 +96,7 @@ bool Polynomial::erase(int i)
   }
 
   values[i] = Matrix(1, 1).t();
+  return true;
 }
 
 // eg.    a(x) = a1 * x + a2 * x^3

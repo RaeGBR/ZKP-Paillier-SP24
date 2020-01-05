@@ -240,9 +240,8 @@ shared_ptr<Polynomial> Polynomial::mul(const shared_ptr<Integer> &b, const share
 
   for (int i = ret->getSmallestDegree() ; i <= ret->getLargestDegree() ; i++) {
     auto mi = ret->get(i);
-    if (mi->eq(zero)) {
-      if (isMod) ret->put(mi->add(make_shared<Matrix>(mi->m, mi->n), modulus), i);
-    } else ret->put(mi->mul(b,  modulus), i);
+    if (mi->eq(zero)) continue;
+    else ret->put(mi->mul(b,  modulus), i);
   }
   return ret;
 }
@@ -256,11 +255,11 @@ shared_ptr<Polynomial> Polynomial::mul(const shared_ptr<Matrix> &b, const shared
   auto ret = this->clone();
 
   auto zero = make_shared<Matrix>(1, 1);
-  bool isMod = !Integer::ZERO()->eq(modulus);
 
   for (int i = ret->getSmallestDegree() ; i <= ret->getLargestDegree() ; i++) {
-    if (ret->get(i)->eq(zero) && isMod) ret->put(ret->get(i)->add(0, modulus), i);
-    else ret->put(ret->get(i)->mul(b, modulus), i);
+    auto mi = ret->get(i);
+    if (mi->eq(zero)) continue;
+    else ret->put(mi->mul(b, modulus), i);
   }
   return ret;
 }
@@ -271,8 +270,13 @@ shared_ptr<Polynomial> Polynomial::mul(const shared_ptr<Matrix> &b, const shared
 shared_ptr<Polynomial> Polynomial::dot(const shared_ptr<Matrix> &b, const shared_ptr<Integer> modulus)
 {
   auto ret = this->clone();
+
+  auto zero = make_shared<Matrix>(1, 1);
+
   for (int i = ret->getSmallestDegree() ; i <= ret->getLargestDegree() ; i++) {
-    ret->put(ret->get(i)->dot(b, modulus), i);
+    auto mi = ret->get(i);
+    if (mi->eq(zero)) continue;
+    else ret->put(mi->dot(b, modulus), i);
   }
   return ret;
 }

@@ -457,5 +457,62 @@ TEST(Polynomial, Dot_Product)
 }
 
 // Mul. Poly
+TEST(Polynomial, Polynomial_Multiplication)
+{
+  const size_t m = 2;
+  const size_t n = 3;
+  const size_t p = 2;
+  auto a = make_shared<Matrix>(m, n);
+  auto b = make_shared<Matrix>(n, p);
+  for (size_t i = 0; i < m; i++)
+  {
+    for (size_t j = 0; j < n; j++)
+    {
+      (*a)[i][j] = Integer::createWithString(to_string(i * n + j + 1));
+      for (size_t k = 0; k < p; k++)
+      {
+        (*b)[j][k] = Integer::create(to_string(m * n + j * p + k + 1), 10);
+      }
+    }
+  }
+
+  EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\"],[\"4\",\"5\",\"6\"]]");
+  EXPECT_EQ(b->toString(), "[[\"7\",\"8\"],[\"9\",\"10\"],[\"11\",\"12\"]]");
+
+  auto zero = make_shared<Matrix>(1, 1);
+  EXPECT_EQ(zero->toString(), "[[\"0\"]]");
+
+  // p(a) = a * x^2 + a * x^-2
+  auto pa = make_shared<Polynomial>();
+  pa->put(a, 2);
+  pa->put(a, -2);
+
+  // p(b) = b * x^2 + b * x^0
+  auto pb = make_shared<Polynomial>();
+  pb->put(b, 2);
+  pb->put(b, 0);
+
+  // p(s) = (ab) * x^4 + (ab) * x^2 + (ab) * x^0 + (ab) * x^-2
+  auto ps = pa->mul(pb);
+  printf("%s\n", ps->toString().c_str());
+
+  EXPECT_EQ(ps->get(4)->toString(), "[[\"58\",\"64\"],[\"139\",\"154\"]]");
+  EXPECT_EQ(ps->get(3)->toString(), zero->toString());
+  EXPECT_EQ(ps->get(2)->toString(), "[[\"58\",\"64\"],[\"139\",\"154\"]]");
+  EXPECT_EQ(ps->get(1)->toString(), zero->toString());
+  EXPECT_EQ(ps->get(0)->toString(), "[[\"58\",\"64\"],[\"139\",\"154\"]]");
+  EXPECT_EQ(ps->get(-1)->toString(), zero->toString());
+  EXPECT_EQ(ps->get(-2)->toString(), "[[\"58\",\"64\"],[\"139\",\"154\"]]");
+
+  // try with modulus
+  ps = pa->mul(pb, Integer::createWithNumber(7));
+  EXPECT_EQ(ps->get(4)->toString(), "[[\"2\",\"1\"],[\"6\",\"0\"]]");
+  EXPECT_EQ(ps->get(3)->toString(), zero->toString());
+  EXPECT_EQ(ps->get(2)->toString(), "[[\"2\",\"1\"],[\"6\",\"0\"]]");
+  EXPECT_EQ(ps->get(1)->toString(), zero->toString());
+  EXPECT_EQ(ps->get(0)->toString(), "[[\"2\",\"1\"],[\"6\",\"0\"]]");
+  EXPECT_EQ(ps->get(-1)->toString(), zero->toString());
+  EXPECT_EQ(ps->get(-2)->toString(), "[[\"2\",\"1\"],[\"6\",\"0\"]]");
+}
 
 }

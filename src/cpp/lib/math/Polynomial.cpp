@@ -290,14 +290,20 @@ shared_ptr<Polynomial> Polynomial::mul(const shared_ptr<Polynomial> &b, const sh
 {
  auto ret = make_shared<Polynomial>();
 
+ auto zero = make_shared<Matrix>(1, 1);
+
  for (int i = this->getSmallestDegree() ; i <= this->getLargestDegree() ; i++) {
    for (int j = b->getSmallestDegree() ; j <= b->getLargestDegree() ; j++) {
-     int degree = i + j;
-     auto origin = ret->get(degree);
-     auto adding = this->get(i)->mul(b->get(j), modulus);
+    if (this->get(i)->eq(zero) || b->get(j)->eq(zero)) continue;
 
-     // ret[degree] += a[i] * b[i]
-     if (!origin) adding = origin->add(adding, modulus);
+    int degree = i + j;
+    auto origin = ret->get(degree);
+
+    auto adding = this->get(i)->mul(b->get(j), modulus);
+
+    // ret[degree] += a[i] * b[i]
+    if (origin) adding = origin->add(adding, modulus);
+    ret->put(adding, degree);
    }
  }
 

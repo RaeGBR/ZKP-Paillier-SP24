@@ -196,9 +196,8 @@ shared_ptr<Polynomial> Polynomial::add(const shared_ptr<Polynomial> &b, const sh
   // we initial a polynomial first
   auto ret = make_shared<Polynomial>();
 
-  ret->lsd = smallest;
-
   bool isMod = !Integer::ZERO()->eq(modulus);
+  auto zero = make_shared<Matrix>(1, 1)->t();
 
   //  a = [a1 00 a2 a3]  = a1*x^3 + a2*x + a3
   //  b =    [b1 00 b2]  = b1*x^2 + b2
@@ -206,13 +205,22 @@ shared_ptr<Polynomial> Polynomial::add(const shared_ptr<Polynomial> &b, const sh
   //    = [a1 b1 a2 (a3+b2)]
   for (int i = largest ; i >= smallest ; i--) {
     // need to check is ai & bi are within  modulus ?
-    shared_ptr<Matrix> ai = isMod ? this->get(i)->add(0, modulus) : this->get(i);
-    shared_ptr<Matrix> bi = isMod ? b->get(i)->add(0, modulus) : b->get(i);
+    shared_ptr<Matrix> ai = this->get(i);
+    shared_ptr<Matrix> bi = b->get(i);
+
+    if (isMod) {
+      if (ai) ai = ai->add(make_shared<Matrix>(ai->m, ai->n), modulus);
+      if (bi) bi = bi->add(make_shared<Matrix>(bi->m, bi->n), modulus);
+    }
     
     // bi should have the degree if ai is null
     if (!ai) ret->put(bi, i);
     // ai should have the degree if bi is null
     else if (!bi) ret->put(ai, i);
+    // bi should have the degree if ai is zero
+    else if (ai->eq(zero)) ret->put(bi, i);
+    // ai should have the degree if bi is zero
+    else if (bi->eq(zero)) ret->put(ai, i);
     // add ai & bi
     else ret->put(ai->add(bi,  modulus), i);
   }
@@ -226,8 +234,13 @@ shared_ptr<Polynomial> Polynomial::add(const shared_ptr<Polynomial> &b, const sh
 shared_ptr<Polynomial> Polynomial::mul(const shared_ptr<Integer> &b, const shared_ptr<Integer> modulus)
 {
   auto ret = this->clone();
+
+  auto zero = make_shared<Matrix>(1, 1)->t();
+  bool isMod = !Integer::ZERO()->eq(modulus);
+
   for (int i = ret->getSmallestDegree() ; i <= ret->getLargestDegree() ; i++) {
-    ret->put(ret->get(i)->mul(b,  modulus), i);
+    if (ret->get(i)->eq(zero) && isMod) ret->put(ret->get(i)->add(0, modulus), i);
+    else ret->put(ret->get(i)->mul(b,  modulus), i);
   }
   return ret;
 }
@@ -239,8 +252,13 @@ shared_ptr<Polynomial> Polynomial::mul(const shared_ptr<Integer> &b, const share
 shared_ptr<Polynomial> Polynomial::mul(const shared_ptr<Matrix> &b, const shared_ptr<Integer> modulus)
 {
   auto ret = this->clone();
+
+  auto zero = make_shared<Matrix>(1, 1)->t();
+  bool isMod = !Integer::ZERO()->eq(modulus);
+
   for (int i = ret->getSmallestDegree() ; i <= ret->getLargestDegree() ; i++) {
-    ret->put(ret->get(i)->mul(b, modulus), i);
+    if (ret->get(i)->eq(zero) && isMod) ret->put(ret->get(i)->add(0, modulus), i);
+    else ret->put(ret->get(i)->mul(b, modulus), i);
   }
   return ret;
 }

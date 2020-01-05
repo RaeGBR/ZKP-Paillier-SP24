@@ -217,6 +217,81 @@ TEST(Polynomial, Clone) {
 }
 
 // Add
+TEST(Polynomial, Add) {
+  const size_t m = 2;
+  const size_t n = 3;
+  auto a = make_shared<Matrix>(m, n);
+  for (size_t i = 0; i < m; i++)
+  {
+    for (size_t j = 0; j < n; j++)
+    {
+      (*a)[i][j] = Integer::createWithString(to_string(i * n + j));
+    }
+  }
+  EXPECT_EQ(a->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
+  
+  auto b = make_shared<Matrix>(m, n);
+  for (size_t i = 0; i < m; i++)
+  {
+    for (size_t j = 0; j < n; j++)
+    {
+      (*b)[i][j] = Integer::createWithString(to_string(j));
+    }
+  }
+  EXPECT_EQ(b->toString(), "[[\"0\",\"1\",\"2\"],[\"0\",\"1\",\"2\"]]");
+
+  auto zero = make_shared<Matrix>(1, 1);
+  EXPECT_EQ(zero->toString(), "[[\"0\"]]");
+
+  // p(a) = b * x^3 + a * x^1
+  auto pa = make_shared<Polynomial>();
+  pa->put(a, 1);
+  pa->put(b, 3);
+
+  // p(b) = a * x^2 + b * x^1
+  auto pb = make_shared<Polynomial>();
+  pb->put(b, 1);
+  pb->put(a, 2);
+
+  // p(s) = b * x^3 + a * x^2 + (a+b) * x^1
+  auto ps = pa->add(pb);
+
+  EXPECT_EQ(ps->getLargestDegree(), 3);
+  EXPECT_EQ(ps->getSmallestDegree(), 1);
+  EXPECT_EQ(ps->get(3)->toString(), b->toString());
+  EXPECT_EQ(ps->get(2)->toString(), a->toString());
+  EXPECT_EQ(ps->get(1)->toString(), "[[\"0\",\"2\",\"4\"],[\"3\",\"5\",\"7\"]]");
+
+  // Try to add with Negative Coefficients
+  pa->put(a, -3);
+  pb->put(a, -3);
+  ps = pa->add(pb);
+
+  EXPECT_EQ(ps->getLargestDegree(), 3);
+  EXPECT_EQ(ps->getSmallestDegree(), -3);
+  EXPECT_EQ(ps->get(3)->toString(), b->toString());
+  EXPECT_EQ(ps->get(2)->toString(), a->toString());
+  EXPECT_EQ(ps->get(1)->toString(), "[[\"0\",\"2\",\"4\"],[\"3\",\"5\",\"7\"]]");
+  EXPECT_EQ(ps->get(0)->toString(), zero->toString());
+  EXPECT_EQ(ps->get(-1)->toString(), zero->toString());
+  EXPECT_EQ(ps->get(-2)->toString(), zero->toString());
+  EXPECT_EQ(ps->get(-3)->toString(), "[[\"0\",\"2\",\"4\"],[\"6\",\"8\",\"10\"]]");
+
+  // Try with Modulus
+  ps = pa->add(pb, Integer::createWithNumber(5));
+
+  EXPECT_EQ(ps->getLargestDegree(), 3);
+  EXPECT_EQ(ps->getSmallestDegree(), -3);
+  EXPECT_EQ(ps->get(3)->toString(), b->toString());
+  EXPECT_EQ(ps->get(2)->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"0\"]]");
+  EXPECT_EQ(ps->get(1)->toString(), "[[\"0\",\"2\",\"4\"],[\"3\",\"0\",\"2\"]]");
+  EXPECT_EQ(ps->get(0)->toString(), zero->toString());
+  EXPECT_EQ(ps->get(-1)->toString(), zero->toString());
+  EXPECT_EQ(ps->get(-2)->toString(), zero->toString());
+  EXPECT_EQ(ps->get(-3)->toString(), "[[\"0\",\"2\",\"4\"],[\"1\",\"3\",\"0\"]]");
+
+  printf("%s\n", ps->toString().c_str());
+}
 
 // Scalar Mul
 

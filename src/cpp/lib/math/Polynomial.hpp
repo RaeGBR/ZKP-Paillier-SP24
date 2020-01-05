@@ -17,6 +17,10 @@ namespace cryptoplus
 
 class Polynomial
 {
+private:
+  // Clean the Polynomial Zeros
+  void clean();
+
 public:
 
   /**

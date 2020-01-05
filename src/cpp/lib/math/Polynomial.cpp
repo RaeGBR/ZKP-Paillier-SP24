@@ -4,6 +4,7 @@
 Polynomial::Polynomial()
 {
   this->lsd = 0; 
+  values.push_back(make_shared<Matrix>(1, 1)->t());
 }
 
 // D is the least significant degree
@@ -55,6 +56,37 @@ shared_ptr<Matrix> Polynomial::get(int i)
   return values[index];
 }
 
+void Polynomial::clean()
+{
+  auto zero = make_shared<Matrix>(1, 1)->t();
+
+  // Delete all Zeros until non-zero Coefficient found from Smallest Degree
+  bool foundSmallest = false;
+  int largest = getLargestDegree();
+  for (int i = getSmallestDegree() ; i <= largest && !foundSmallest ; i++) {
+    if (!get(i)->eq(zero)) {
+      foundSmallest = true;
+    } else {
+      values.pop_back();
+      this->lsd = this->lsd + 1;
+    }
+  }
+
+  // Delete all Zeros until non-zero Coefficient found from Largest Degree
+  bool foundLargest = false;
+  for (int i = getLargestDegree() ; i >= getSmallestDegree() && !foundLargest ; i--) {
+    if (!get(i)->eq(zero)) { foundLargest = true; }
+    else { values.erase(values.begin()); }
+  }
+
+  if (foundSmallest || foundLargest) return;
+
+  // All Coefficients are zero -> initial values[0] as zero
+  values.clear();
+  values.push_back(make_shared<Matrix>(1, 1)->t());
+  this->lsd = 0;
+}
+
 void Polynomial::put(const shared_ptr<Matrix> c, int i)
 {
   int size = values.size();
@@ -85,32 +117,68 @@ void Polynomial::put(const shared_ptr<Matrix> c, int i)
     values.push_back(c);
     // set least significant degree
     this->lsd = i;
+
+    // Clean all Zeros from Smallest & Largest
+    clean();
   } else { // larger than largest -> push at front
     /*
       Poly 3 4 5 6 7 8 9
       Vec. 6 5 4 3 2 1 0
-      s = 6; d = 3;
-      i = 10 -> push = i - (d + s) = 1
-      i = 12 -> push = 12 - 3 + 6 = 3
+      s = 7; d = 3;
+      i = 10 -> push = i - (d + s) = 0
+      i = 12 -> push = 12 - (3 + 7) = 2
     */
-    int adds = i - this->lsd + size;
+    int adds = i - (this->lsd + size);
     // Push Zero between the largest
     for (int i = 0 ; i < adds ; i++) {
       values.insert(values.begin(), Matrix(1, 1).t());
     }
     values.insert(values.begin(), c);
+
+    // Clean all Zeros from Smallest & Largest
+    clean();
   }
 }
 
-// Erase will just put a zero matrix to the degree
+// Erase will just put a zero matrix to the degree, delete if it's largest / smallest
 bool Polynomial::erase(int i)
 {
   // Out of Bound Erase
   if (i < getSmallestDegree() || i > getLargestDegree()) {
     return false;
   }
+  // In Range Erase
+  else if (i > getSmallestDegree() && i < getLargestDegree()) {
+    put(Matrix(1, 1).t(), i);
+    return true;
+  }
 
-  values[i] = Matrix(1, 1).t();
+  auto zero = make_shared<Matrix>(1, 1)->t();
+
+  // If this is the only coefficient
+  // then delete the only one coefficient
+  if (getSmallestDegree() == getLargestDegree()) {
+    // All Coefficients are zero -> initial values[0] as zero
+    values.clear();
+    values.push_back(make_shared<Matrix>(1, 1)->t());
+    this->lsd = 0;
+    return true;
+    return true;
+  }
+
+  // Delete smallest degree
+  if (i == getSmallestDegree()) {
+    values.pop_back();
+    this->lsd = this->lsd + 1;
+  }
+  // Delete Largest Degree
+  else {
+    values.erase(values.begin());
+  }
+
+  // Clean all Zeros from Smallest & Largest
+  clean();
+
   return true;
 }
 

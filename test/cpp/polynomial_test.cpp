@@ -415,7 +415,46 @@ TEST(Polynomial, Cross_Product)
 }
 
 // Dot Prod.
+TEST(Polynomial, Dot_Product)
+{
+  const size_t m = 2;
+  const size_t n = 3;
+  auto a = make_shared<Matrix>(m, n);
+  auto b = make_shared<Matrix>(m, n);
+  for (size_t i = 0; i < m; i++)
+  {
+    for (size_t j = 0; j < n; j++)
+    {
+      (*a)[i][j] = Integer::create(to_string(i * n + j), 10);
+      (*b)[i][j] = Integer::create(to_string(i * n + j + 1), 10);
+    }
+  }
+  EXPECT_EQ(a->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
+  EXPECT_EQ(b->toString(), "[[\"1\",\"2\",\"3\"],[\"4\",\"5\",\"6\"]]");
 
+  auto zero = make_shared<Matrix>(1, 1);
+  EXPECT_EQ(zero->toString(), "[[\"0\"]]");
+
+   // p(a) = a * x^2  + a * x^-3
+  auto pa = make_shared<Polynomial>();
+  pa->put(a, -2);
+  pa->put(a, 2);
+
+  auto ps = pa->dot(b);
+  EXPECT_EQ(ps->get(2)->toString(), "[[\"8\",\"17\"],[\"26\",\"62\"]]");
+  EXPECT_EQ(ps->get(1)->toString(), zero->toString());
+  EXPECT_EQ(ps->get(0)->toString(), zero->toString());
+  EXPECT_EQ(ps->get(-1)->toString(), zero->toString());
+  EXPECT_EQ(ps->get(-2)->toString(), "[[\"8\",\"17\"],[\"26\",\"62\"]]");
+
+  // try with modulus
+  ps = pa->dot(b, Integer::createWithNumber(7));
+  EXPECT_EQ(ps->get(2)->toString(),  "[[\"1\",\"3\"],[\"5\",\"6\"]]");
+  EXPECT_EQ(ps->get(1)->toString(), zero->toString());
+  EXPECT_EQ(ps->get(0)->toString(), zero->toString());
+  EXPECT_EQ(ps->get(-1)->toString(), zero->toString());
+  EXPECT_EQ(ps->get(-2)->toString(),  "[[\"1\",\"3\"],[\"5\",\"6\"]]");
+}
 
 // Mul. Poly
 

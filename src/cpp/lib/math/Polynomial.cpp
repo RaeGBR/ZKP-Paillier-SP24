@@ -29,40 +29,55 @@ int Polynomial::getSmallestDegree() {
   s + d = 9
 */
 int Polynomial::getLargestDegree() {
-  return this->lsd + static_cast<int>(values.size());
+  if (this->values.size() > 0) {
+    return this->lsd + this->values.size() - 1;
+  } else {
+    return this->lsd;
+  }
 }
 
 shared_ptr<Matrix> Polynomial::get(int i)
 {
-  int size = static_cast<int>(values.size());
-  if (i > size || i < this->lsd) return nullptr;
+  int size = values.size();
+  if (i > this->getLargestDegree() || i < this->getSmallestDegree()) return nullptr;
 
-  return values[i];
+  //-1 0 1 2 3
+  // 4 3 2 1 0
+  // get 0 : (5-1) + -1 - 0 = 3
+  // get 1 : (5-1) + -1 - 1 = 2
+  // get -1 : (5-1) + -1 - -1 = 4
+
+  // 3 4 5 6 7 8
+  // 5 4 3 2 1 0
+  // get 3: (6-1) + 3 - 3 = 5
+  // get 8: (6-1) + 3 - 8 = 0
+  int index = (size - 1) + this->lsd - i;
+  return values[index];
 }
 
 void Polynomial::put(const shared_ptr<Matrix> c, int i)
 {
-  int size = static_cast<int>(values.size());
+  int size = values.size();
   // within range -> set vector
   if (i >= getSmallestDegree() && i <= getLargestDegree()) {
     /*
       Poly 3 4 5 6 7 8 9
       Vec. 6 5 4 3 2 1 0
-      s = 6; d = 3;
+      s = 7; d = 3;
       i = 5 -> v = 4 -> s - (i - d) = 6 - (5 - 3) = 4
       i = 8 -> v = 1 -> s - (i - d) = 6 - (8 - 3) = 1
     */
-    int index = size + this->lsd - i;
+    int index = (size - 1) + this->lsd - i;
     values[index] = c;
   } else if (i < getSmallestDegree()) { // smaller than smallest -> push more
     /*
       Poly 3 4 5 6 7 8 9
       Vec. 6 5 4 3 2 1 0
-      s = 6; d = 3;
+      s = 7; d = 3;
       i = 2 -> v = s + d - i -> v = 7 -> push c to 7
       i = -2 -> v = 6 + 3 + 2 = 11 -> push c to 11 & 0 between i to d
     */
-    int index = size + this->lsd - i;
+    int index = (size - 1) + this->lsd - i;
     // Push Zero between the smallest 
     for(int i = size ; i < index ; i++) {
       values.push_back(Matrix(1, 1).t());
@@ -202,9 +217,11 @@ json Polynomial::toJson()
   json output = json::array();
   int index = 0;
   for (int i = this->getSmallestDegree() ; i <= this->getLargestDegree() ; i++) {
-    auto output = this->get(i)->toJson();
-    output[index]["degree"] = i;
-    output[index]["matrix"] = output;
+    json element = json::object();
+    auto matrix = this->get(i)->toJson();
+    element["degree"] = i;
+    element["matrix"] = matrix;
+    output.push_back(element);
   }
 
   return output;

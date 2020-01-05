@@ -1,16 +1,9 @@
 #include "./Polynomial.hpp"
+#include <algorithm>    // std::min
 
 Polynomial::Polynomial()
 {
   this->lsd = 0; 
-}
-
-Polynomial::Polynomial(const shared_ptr<Polynomial> &poly)
-{
-  this->lsd = poly->lsd;
-  for (size_t i = 0 ; i < poly->values.size() ; i++) {
-    values[i] = poly->values[i];
-  }
 }
 
 // D is the least significant degree
@@ -18,6 +11,11 @@ Polynomial::Polynomial(const vector<shared_ptr<Matrix>> ci, int d)
 {
   this->lsd = d;
   values = ci;
+}
+
+shared_ptr<Polynomial> Polynomial::clone()
+{
+  return make_shared<Polynomial>(values, lsd);
 }
 
 int Polynomial::getSmallestDegree() {
@@ -100,3 +98,100 @@ bool Polynomial::erase(int i)
   values[i] = Matrix(1, 1).t();
 }
 
+// eg.    a(x) = a1 * x + a2 * x^3
+//        b(x) = b1 * x + b2 * x^2
+// a(x) + b(x) = (a1+b1) * x + b2 * x^2 + a2 * x^3
+shared_ptr<Polynomial> Polynomial::add(const shared_ptr<Polynomial> &b, const shared_ptr<Integer>  modulus)
+{
+  // Get the LSD from 2 polynomials
+  int smallest = min(this->getSmallestDegree(), b->getSmallestDegree());
+
+  // Get the MSD from 2 polynomials
+  int largest  = max(this->getLargestDegree(), b->getLargestDegree());
+
+  // we initial a polynomial first
+  auto ret = make_shared<Polynomial>();
+
+  ret->lsd = smallest;
+
+  bool isMod = !Integer::ZERO()->eq(modulus);
+
+  //  a = [a1 00 a2 a3]  = a1*x^3 + a2*x + a3
+  //  b =    [b1 00 b2]  = b1*x^2 + b2
+  //    = a1*x^3 + b1*x^2 + a2*x + (a3+b3)
+  //    = [a1 b1 a2 (a3+b2)]
+  for (int i = largest ; i >= smallest ; i--) {
+    // need to check is ai & bi are within  modulus ?
+    shared_ptr<Matrix> ai = isMod ? this->get(i)->add(0, modulus) : this->get(i);
+    shared_ptr<Matrix> bi = isMod ? b->get(i)->add(0, modulus) : b->get(i);
+    
+    // bi should have the degree if ai is null
+    if (!ai) ret->put(bi, i);
+    // ai should have the degree if bi is null
+    else if (!bi) ret->put(ai, i);
+    // add ai & bi
+    else ret->put(ai->add(bi,  modulus), i);
+  }
+
+  return ret;
+}
+
+// Scalar multiplication for all matrix coefficients
+// eg. a(x) = a1 * x + a2 * x^3
+// b * a(x) = (b*a1) * x + (b*a2) * x^3
+shared_ptr<Polynomial> Polynomial::mul(const shared_ptr<Integer> &b, const shared_ptr<Integer> modulus)
+{
+  auto ret = this->clone();
+  for (int i = ret->getSmallestDegree() ; i <= ret->getLargestDegree() ; i++) {
+    ret->put(ret->get(i)->mul(b,  modulus), i);
+  }
+  return ret;
+}
+
+// Cross product for all matrix coefficients with a vector
+// eg. a(x) = a1 * x + a2 * x^3
+// b * a(x) = (b*a1) * x + (b*a2) * x^3
+// b is a vector
+shared_ptr<Polynomial> Polynomial::mul(const shared_ptr<Matrix> &b, const shared_ptr<Integer> modulus)
+{
+  auto ret = this->clone();
+  for (int i = ret->getSmallestDegree() ; i <= ret->getLargestDegree() ; i++) {
+    ret->put(ret->get(i)->mul(b, modulus), i);
+  }
+  return ret;
+}
+
+// Dot product for all matrix coefficients
+// eg. a(x) = a1 * x + a2 * x^3
+// b . a(x) = (b.a1) * x + (b.a2) * x^3
+shared_ptr<Polynomial> Polynomial::dot(const shared_ptr<Matrix> &b, const shared_ptr<Integer> modulus)
+{
+  auto ret = this->clone();
+  for (int i = ret->getSmallestDegree() ; i <= ret->getLargestDegree() ; i++) {
+    ret->put(ret->get(i)->dot(b, modulus), i);
+  }
+  return ret;
+}
+
+// Multiply two polynomial
+// eg.    a(x) = a1 * x + a2 * x^2
+//        b(x) = b1     + b2 * x
+// a(x) * b(x) = (a1*b1) * x + (a1*b2) * x^2 + (a2*b1) * x^2 + (a2*b2) * x^3
+// a(x) * b(x) = (a1*b1) * x + (a1*b2 + a2*b1) * x^2 + (a2*b2) * x^3
+shared_ptr<Polynomial> Polynomial::mul(const shared_ptr<Polynomial> &b, const shared_ptr<Integer> modulus)
+{
+ auto ret = make_shared<Polynomial>();
+
+ for (int i = this->getSmallestDegree() ; i <= this->getLargestDegree() ; i++) {
+   for (int j = b->getSmallestDegree() ; j <= b->getLargestDegree() ; j++) {
+     int degree = i + j;
+     auto origin = ret->get(degree);
+     auto adding = this->get(i)->mul(b->get(j), modulus);
+
+     // ret[degree] += a[i] * b[i]
+     if (!origin) adding = origin->add(adding, modulus);
+   }
+ }
+
+ return ret;
+}

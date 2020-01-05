@@ -29,8 +29,10 @@ public:
   int lsd;                              // Least Significant Degree
 
   Polynomial();                                           // All Zero Polynomial
-  Polynomial(const shared_ptr<Polynomial> &poly);         // Clone the Polynomial
   Polynomial(const vector<shared_ptr<Matrix>> ci, int d); // Create the Polynomial
+
+  // clone the Polynomial
+  shared_ptr<Polynomial> clone();
 
   // get term ci * x^i, return nullptr if not exists
   shared_ptr<Matrix> get(int i);
@@ -51,29 +53,29 @@ public:
   // eg.    a(x) = a1 * x + a2 * x^3
   //        b(x) = b1 * x + b2 * x^2
   // a(x) + b(x) = (a1+b1) * x + b2 * x^2 + a2 * x^3
-  shared_ptr<Polynomial> add(const shared_ptr<Polynomial> &b, const shared_ptr<Integer> modules = Integer::ZERO());
+  shared_ptr<Polynomial> add(const shared_ptr<Polynomial> &b, const shared_ptr<Integer> modulus = Integer::ZERO());
 
   // pure function, scalar multiplication for all matrix coefficients
   // eg. a(x) = a1 * x + a2 * x^3
   // b * a(x) = (b*a1) * x + (b*a2) * x^3
-  shared_ptr<Polynomial> mul(const shared_ptr<Integer> &b, const shared_ptr<Integer> modules = Integer::ZERO());
+  shared_ptr<Polynomial> mul(const shared_ptr<Integer> &b, const shared_ptr<Integer> modulus = Integer::ZERO());
 
   // pure function, cross product for all matrix coefficients
   // eg. a(x) = a1 * x + a2 * x^3
   // b * a(x) = (b*a1) * x + (b*a2) * x^3
-  shared_ptr<Polynomial> mul(const shared_ptr<Matrix> &b, const shared_ptr<Integer> modules = Integer::ZERO());
+  shared_ptr<Polynomial> mul(const shared_ptr<Matrix> &b, const shared_ptr<Integer> modulus = Integer::ZERO());
 
   // pure function, dot product for all matrix coefficients
   // eg. a(x) = a1 * x + a2 * x^3
   // b . a(x) = (b.a1) * x + (b.a2) * x^3
-  shared_ptr<Polynomial> dot(const shared_ptr<Matrix> &b, const shared_ptr<Integer> modules = Integer::ZERO());
+  shared_ptr<Polynomial> dot(const shared_ptr<Matrix> &b, const shared_ptr<Integer> modulus = Integer::ZERO());
 
   // pure function, multiply 2 polynomial
   // eg.    a(x) = a1 * x + a2 * x^2
   //        b(x) = b1     + b2 * x
   // a(x) * b(x) = (a1*b1) * x + (a1*b2) * x^2 + (a2*b1) * x^2 + (a2*b2) * x^3
   // a(x) * b(x) = (a1*b1) * x + (a1*b2 + a2*b1) * x^2 + (a2*b2) * x^3
-  shared_ptr<Polynomial> mul(const shared_ptr<Polynomial> &b, const shared_ptr<Integer> modules = Integer::ZERO());
+  shared_ptr<Polynomial> mul(const shared_ptr<Polynomial> &b, const shared_ptr<Integer> modulus = Integer::ZERO());
 
   bool eq(const shared_ptr<Polynomial> &b);
 

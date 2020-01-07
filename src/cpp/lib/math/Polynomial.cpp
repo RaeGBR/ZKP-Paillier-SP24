@@ -4,7 +4,7 @@
 Polynomial::Polynomial()
 {
   this->lsd = 0; 
-  values.push_back(make_shared<Matrix>(1, 1)->t());
+  values.push_back(make_shared<Matrix>(1, 1));
 }
 
 // D is the least significant degree
@@ -83,7 +83,7 @@ void Polynomial::clean()
 
   // All Coefficients are zero -> initial values[0] as zero
   values.clear();
-  values.push_back(make_shared<Matrix>(1, 1)->t());
+  values.push_back(make_shared<Matrix>(1, 1));
   this->lsd = 0;
 }
 
@@ -160,7 +160,7 @@ bool Polynomial::erase(int i)
   if (getSmallestDegree() == getLargestDegree()) {
     // All Coefficients are zero -> initial values[0] as zero
     values.clear();
-    values.push_back(make_shared<Matrix>(1, 1)->t());
+    values.push_back(make_shared<Matrix>(1, 1));
     this->lsd = 0;
     return true;
     return true;

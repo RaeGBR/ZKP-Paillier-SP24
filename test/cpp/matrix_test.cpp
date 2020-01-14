@@ -89,6 +89,26 @@ TEST(Matrix, Group)
   EXPECT_EQ(c->toString(), "[[\"0\",\"1\"],[\"2\",\"3\"],[\"4\",\"0\"]]");
 }
 
+TEST(Matrix, Group_to_big_matrix)
+{
+  const size_t m = 1;
+  const size_t n = 5;
+  auto a = make_shared<Matrix>(m, n);
+  for (size_t i = 0; i < m; i++)
+  {
+    for (size_t j = 0; j < n; j++)
+    {
+      (*a)[i][j] = Integer::createWithString(to_string(i * n + j));
+    }
+  }
+
+  auto b = a->group(3, 3);
+  auto c = a->group(4, 2);
+  EXPECT_EQ(a->toString(), "[[\"0\",\"1\",\"2\",\"3\",\"4\"]]");
+  EXPECT_EQ(b->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"0\"],[\"0\",\"0\",\"0\"]]");
+  EXPECT_EQ(c->toString(), "[[\"0\",\"1\",\"2\",\"3\"],[\"4\",\"0\",\"0\",\"0\"]]");
+}
+
 TEST(Matrix, Tansposition)
 {
   const size_t m = 2;

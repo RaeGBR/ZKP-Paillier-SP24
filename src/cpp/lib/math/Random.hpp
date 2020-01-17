@@ -23,7 +23,10 @@ namespace cryptoplus
 class Random
 {
 public:
-  // Random Integer with Max Integer (inclusive)
+  // Random Integer with Max Integer (exclusive: 0 to max -1)
+  static shared_ptr<Integer> genInteger(const shared_ptr<Integer> &max, const vector<uint8_t> &seed = vector<uint8_t>());
+
+  // Random Integer with Max Integer (exclusive: 0 to max -1)
   static shared_ptr<Integer> genInteger(vector<uint8_t> max, const vector<uint8_t> &seed = vector<uint8_t>());
 
   // Random Integer

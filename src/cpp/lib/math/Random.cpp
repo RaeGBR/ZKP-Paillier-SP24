@@ -1,8 +1,13 @@
 #include "Random.hpp"
 
+shared_ptr<Integer> Random::genInteger(const shared_ptr<Integer> &max, const vector<uint8_t> &seed)
+{
+  return genInteger(max->toBinary(), seed);
+}
+
 shared_ptr<Integer> Random::genInteger(vector<uint8_t> _max, const vector<uint8_t> &seed)
 {
-  string hex = Integer::createWithBinary(_max)->toHex();
+  string hex = Integer::createWithBinary(_max)->sub(Integer::ONE())->toHex();
   CryptoPP::Integer max(hex.c_str());
 
   if (seed.size() == 0)
@@ -74,10 +79,9 @@ string Random::genHex(int byteLength, const vector<uint8_t> &seed)
 vector<shared_ptr<Integer>> Random::getRandoms(size_t n, const shared_ptr<Integer> &modulus)
 {
   vector<shared_ptr<Integer>> ret;
-  auto max = modulus->sub(Integer::ONE())->toBinary();
   for (size_t i = 0; i < n; i++)
   {
-    auto rand = Random::genInteger(max, {});
+    auto rand = Random::genInteger(modulus, {});
     ret.push_back(rand);
   }
   return ret;

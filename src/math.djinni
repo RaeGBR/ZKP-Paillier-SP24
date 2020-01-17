@@ -26,6 +26,7 @@ Integer = interface +c {
   modMul(b: Integer, n: Integer): Integer;
   modPow(b: Integer, n: Integer): Integer;
   modSqrt(n: Integer): Integer;
+  isPrime(): bool;
   toString(): string;
   toHex(): string;
   toBinary(): binary;

@@ -53,6 +53,7 @@ public:
   std::shared_ptr<Integer> modSqrt(const std::shared_ptr<Integer> &n);
   int32_t compare(const std::shared_ptr<Integer> &n);
   std::shared_ptr<Integer> gcd(const std::shared_ptr<Integer> &n);
+  bool isPrime();
 
   string toString();
   string toHex();

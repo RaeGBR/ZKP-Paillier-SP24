@@ -215,6 +215,11 @@ shared_ptr<Integer> IntegerImpl::gcd(const shared_ptr<Integer> &n)
   return make_shared<IntegerImpl>(CryptoPP::Integer::Gcd((*_value), (*_n->getValue())));
 }
 
+bool IntegerImpl::isPrime()
+{
+  return IsPrime(*_value);
+}
+
 string IntegerImpl::toString()
 {
   ostringstream out;
@@ -244,7 +249,8 @@ vector<uint8_t> IntegerImpl::toBinary()
 vector<uint8_t> IntegerImpl::toFixedBinary(const int32_t length)
 {
   auto bin = toBinary();
-  for (int i = length - bin.size() ; i > 0 ; i--) {
+  for (int i = length - bin.size(); i > 0; i--)
+  {
     bin.insert(bin.begin(), 0);
   }
   return bin;

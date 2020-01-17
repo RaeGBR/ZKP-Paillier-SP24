@@ -233,6 +233,18 @@ TEST(IntegerWrapper, GCD)
   EXPECT_EQ(e->gcd(f)->toString(), "18913");
 }
 
+TEST(IntegerWrapper, Is_prime)
+{
+  EXPECT_TRUE(make_shared<IntegerImpl>("2", 10)->isPrime());
+  EXPECT_TRUE(make_shared<IntegerImpl>("3", 10)->isPrime());
+  EXPECT_TRUE(make_shared<IntegerImpl>("7", 10)->isPrime());
+  EXPECT_TRUE(make_shared<IntegerImpl>("101", 10)->isPrime());
+  EXPECT_FALSE(make_shared<IntegerImpl>("4", 10)->isPrime());
+  EXPECT_FALSE(make_shared<IntegerImpl>("6", 10)->isPrime());
+  EXPECT_FALSE(make_shared<IntegerImpl>("9", 10)->isPrime());
+  EXPECT_FALSE(make_shared<IntegerImpl>("102", 10)->isPrime());
+}
+
 TEST(IntegerWrapper, ToFixedBinary)
 {
   string hex = "1234";
@@ -250,7 +262,8 @@ TEST(IntegerWrapper, ToFixedBinary)
 
   auto bin = a->toBinary();
   int32_t l = 7;
-  for (int i = l - bin.size() ; i > 0 ; i--) {
+  for (int i = l - bin.size(); i > 0; i--)
+  {
     bin.insert(bin.begin(), 0);
   }
   EXPECT_EQ(bin, b);

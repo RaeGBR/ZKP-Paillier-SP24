@@ -22,21 +22,23 @@ private:
   void clean();
 
 public:
-
   /**
     NOTES :
     1. Polynomial smallest index can be negative
     2. Need to marks the smallest index value (default is 0)
     3. index 0 is the most significant bits
   */
-  vector<shared_ptr<Matrix>> values;    // Polynomial Values
-  int lsd;                              // Least Significant Degree
+  vector<shared_ptr<Matrix>> values; // Polynomial Values
+  int lsd;                           // Least Significant Degree
 
   Polynomial();                                           // All Zero Polynomial
   Polynomial(const vector<shared_ptr<Matrix>> ci, int d); // Create the Polynomial
 
   // clone the Polynomial
   shared_ptr<Polynomial> clone();
+
+  // transpose all coefficients
+  shared_ptr<Polynomial> t();
 
   // get term ci * x^i, return nullptr if not exists
   shared_ptr<Matrix> get(int i);

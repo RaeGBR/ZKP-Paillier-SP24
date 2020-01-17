@@ -2,6 +2,7 @@
 
 #include "lib/math/Polynomial.hpp"
 #include "lib/math/Matrix.hpp"
+#include "lib/math/IntegerImpl.hpp"
 
 using namespace std;
 using namespace cryptoplus;
@@ -17,7 +18,8 @@ TEST(Polynomial, Default)
 }
 
 // Construct from Matrix
-TEST(Polynomial, Matrix_Construction_and_Get) {
+TEST(Polynomial, Matrix_Construction_and_Get)
+{
   const size_t m = 2;
   const size_t n = 3;
   auto a = make_shared<Matrix>(m, n);
@@ -29,7 +31,7 @@ TEST(Polynomial, Matrix_Construction_and_Get) {
     }
   }
   EXPECT_EQ(a->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
-  
+
   auto b = make_shared<Matrix>(m, n);
   for (size_t i = 0; i < m; i++)
   {
@@ -50,18 +52,18 @@ TEST(Polynomial, Matrix_Construction_and_Get) {
   coefficients.push_back(a);    // 1
   coefficients.push_back(zero); // 0
   coefficients.push_back(a);    // -1
-  
+
   auto poly = make_shared<Polynomial>(coefficients, -1);
   EXPECT_EQ(poly->getSmallestDegree(), -1);
   EXPECT_EQ(poly->values.size(), 5);
   EXPECT_EQ(poly->lsd + poly->values.size() - 1, 3);
   EXPECT_EQ(poly->getLargestDegree(), 3);
-  
+
   auto obj = poly->toJson();
   EXPECT_EQ(obj[0]["degree"], -1);
   EXPECT_EQ(obj[0]["matrix"].dump(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
   EXPECT_EQ(poly->get(-1)->toString(), obj[0]["matrix"].dump());
-  
+
   EXPECT_EQ(obj[1]["degree"], 0);
   EXPECT_EQ(obj[1]["matrix"].dump(), "[[\"0\"]]");
   EXPECT_EQ(poly->get(0)->toString(), obj[1]["matrix"].dump());
@@ -79,7 +81,8 @@ TEST(Polynomial, Matrix_Construction_and_Get) {
   EXPECT_EQ(poly->get(3)->toString(), obj[4]["matrix"].dump());
 }
 
-TEST(Polynomial, PUT_and_Erase) {
+TEST(Polynomial, PUT_and_Erase)
+{
   const size_t m = 2;
   const size_t n = 3;
   auto a = make_shared<Matrix>(m, n);
@@ -91,7 +94,7 @@ TEST(Polynomial, PUT_and_Erase) {
     }
   }
   EXPECT_EQ(a->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
-  
+
   auto b = make_shared<Matrix>(m, n);
   for (size_t i = 0; i < m; i++)
   {
@@ -162,8 +165,8 @@ TEST(Polynomial, PUT_and_Erase) {
   EXPECT_EQ(poly->get(0)->toString(), zero->toString());
 }
 
-
-TEST(Polynomial, Clone) {
+TEST(Polynomial, Clone)
+{
   const size_t m = 2;
   const size_t n = 3;
   auto a = make_shared<Matrix>(m, n);
@@ -175,7 +178,7 @@ TEST(Polynomial, Clone) {
     }
   }
   EXPECT_EQ(a->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
-  
+
   auto b = make_shared<Matrix>(m, n);
   for (size_t i = 0; i < m; i++)
   {
@@ -217,7 +220,8 @@ TEST(Polynomial, Clone) {
 }
 
 // Add
-TEST(Polynomial, Add) {
+TEST(Polynomial, Add)
+{
   const size_t m = 2;
   const size_t n = 3;
   auto a = make_shared<Matrix>(m, n);
@@ -229,7 +233,7 @@ TEST(Polynomial, Add) {
     }
   }
   EXPECT_EQ(a->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
-  
+
   auto b = make_shared<Matrix>(m, n);
   for (size_t i = 0; i < m; i++)
   {
@@ -305,7 +309,7 @@ TEST(Polynomial, Scalar_Multiplication)
     }
   }
   EXPECT_EQ(a->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
-  
+
   auto b = make_shared<Matrix>(m, n);
   for (size_t i = 0; i < m; i++)
   {
@@ -364,7 +368,6 @@ TEST(Polynomial, Scalar_Multiplication)
   EXPECT_EQ(ps->get(0)->toString(), zero->toString());
   EXPECT_EQ(ps->get(-1)->toString(), zero->toString());
   EXPECT_EQ(ps->get(-2)->toString(), "[[\"0\",\"10\",\"8\"],[\"3\",\"1\",\"11\"]]");
-  
 }
 
 // Cross Prod.
@@ -435,7 +438,7 @@ TEST(Polynomial, Dot_Product)
   auto zero = make_shared<Matrix>(1, 1);
   EXPECT_EQ(zero->toString(), "[[\"0\"]]");
 
-   // p(a) = a * x^2  + a * x^-3
+  // p(a) = a * x^2  + a * x^-3
   auto pa = make_shared<Polynomial>();
   pa->put(a, -2);
   pa->put(a, 2);
@@ -449,11 +452,11 @@ TEST(Polynomial, Dot_Product)
 
   // try with modulus
   ps = pa->dot(b, Integer::createWithNumber(7));
-  EXPECT_EQ(ps->get(2)->toString(),  "[[\"1\",\"3\"],[\"5\",\"6\"]]");
+  EXPECT_EQ(ps->get(2)->toString(), "[[\"1\",\"3\"],[\"5\",\"6\"]]");
   EXPECT_EQ(ps->get(1)->toString(), zero->toString());
   EXPECT_EQ(ps->get(0)->toString(), zero->toString());
   EXPECT_EQ(ps->get(-1)->toString(), zero->toString());
-  EXPECT_EQ(ps->get(-2)->toString(),  "[[\"1\",\"3\"],[\"5\",\"6\"]]");
+  EXPECT_EQ(ps->get(-2)->toString(), "[[\"1\",\"3\"],[\"5\",\"6\"]]");
 }
 
 // Mul. Poly
@@ -515,4 +518,69 @@ TEST(Polynomial, Polynomial_Multiplication)
   EXPECT_EQ(ps->get(-2)->toString(), "[[\"2\",\"1\"],[\"6\",\"0\"]]");
 }
 
+shared_ptr<Matrix> createMatrix(vector<int> nums)
+{
+  vector<shared_ptr<Integer>> ns;
+  for (int i = 0; i < nums.size(); i++)
+  {
+    ns.push_back(make_shared<IntegerImpl>(nums[i]));
+  }
+  return make_shared<Matrix>(ns);
 }
+
+TEST(Polynomial, More_test_1)
+{
+  auto p1 = make_shared<Polynomial>();
+  p1->put(createMatrix({1}), -1);
+  p1->put(createMatrix({2}), 1);
+  p1->put(createMatrix({3}), 2);
+
+  auto p2 = make_shared<Polynomial>();
+  p2->put(createMatrix({4}), -2);
+  p2->put(createMatrix({5}), -1);
+  p2->put(createMatrix({6}), 1);
+
+  auto ret = p1->add(p2);
+  EXPECT_EQ(ret->get(-2)->toString(), "[[\"4\"]]");
+  EXPECT_EQ(ret->get(-1)->toString(), "[[\"6\"]]");
+  EXPECT_EQ(ret->get(0)->toString(), "[[\"0\"]]");
+  EXPECT_EQ(ret->get(1)->toString(), "[[\"8\"]]");
+  EXPECT_EQ(ret->get(2)->toString(), "[[\"3\"]]");
+}
+
+TEST(Polynomial, More_test_2)
+{
+  auto p1 = make_shared<Polynomial>();
+  p1->put(createMatrix({1, 2}), -1);
+  p1->put(createMatrix({3, 4}), 1);
+
+  auto m = createMatrix({5, 6});
+  auto ret = p1->dot(m);
+  EXPECT_EQ(ret->get(-1)->toString(), "[[\"17\"]]");
+  EXPECT_EQ(ret->get(1)->toString(), "[[\"39\"]]");
+}
+
+TEST(Polynomial, More_test_3)
+{
+  auto p1 = make_shared<Polynomial>();
+  p1->put(createMatrix({1, 2}), -1);
+  p1->put(createMatrix({3, 4}), 1);
+
+  auto p2 = make_shared<Polynomial>();
+  p2->put(createMatrix({5, 6}), -1);
+  p2->put(createMatrix({7, 8}), 2);
+  p2 = p2->t();
+
+  auto ret = p1->mul(p2);
+  EXPECT_EQ(ret->getSmallestDegree(), -2);
+  EXPECT_EQ(ret->getLargestDegree(), 3);
+
+  EXPECT_EQ(ret->get(-2)->toString(), "[[\"17\"]]");
+  EXPECT_EQ(ret->get(-1)->toString(), "[[\"0\"]]");
+  EXPECT_EQ(ret->get(1)->toString(), "[[\"23\"]]");
+  EXPECT_EQ(ret->get(0)->toString(), "[[\"39\"]]");
+  EXPECT_EQ(ret->get(2)->toString(), "[[\"0\"]]");
+  EXPECT_EQ(ret->get(3)->toString(), "[[\"53\"]]");
+}
+
+} // namespace

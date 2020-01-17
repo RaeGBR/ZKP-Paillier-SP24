@@ -3,7 +3,7 @@
 
 Polynomial::Polynomial()
 {
-  this->lsd = 0; 
+  this->lsd = 0;
   values.push_back(make_shared<Matrix>(1, 1));
 }
 
@@ -17,6 +17,14 @@ Polynomial::Polynomial(const vector<shared_ptr<Matrix>> ci, int d)
 shared_ptr<Polynomial> Polynomial::clone()
 {
   return make_shared<Polynomial>(values, lsd);
+}
+
+shared_ptr<Polynomial> Polynomial::t(){
+  vector<shared_ptr<Matrix>> v;
+  for(size_t i = 0; i < values.size(); i++){
+    v.push_back(values[i]->t());
+  }
+  return make_shared<Polynomial>(v, lsd);
 }
 
 int Polynomial::getSmallestDegree() {
@@ -110,7 +118,7 @@ void Polynomial::put(const shared_ptr<Matrix> c, int i)
       i = -2 -> v = 6 + 3 + 2 = 11 -> push c to 11 & 0 between i to d
     */
     int index = (size - 1) + this->lsd - i;
-    // Push Zero between the smallest 
+    // Push Zero between the smallest
     for(int i = size ; i < index ; i++) {
       values.push_back(Matrix(1, 1).t());
     }
@@ -212,7 +220,7 @@ shared_ptr<Polynomial> Polynomial::add(const shared_ptr<Polynomial> &b, const sh
       if (ai) ai = ai->add(make_shared<Matrix>(ai->m, ai->n), modulus);
       if (bi) bi = bi->add(make_shared<Matrix>(bi->m, bi->n), modulus);
     }
-    
+
     // bi should have the degree if ai is null
     if (!ai) ret->put(bi, i);
     // ai should have the degree if bi is null

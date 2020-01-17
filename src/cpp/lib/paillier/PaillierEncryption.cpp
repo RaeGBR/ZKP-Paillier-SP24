@@ -4,16 +4,21 @@ using namespace std;
 using namespace cryptoplus;
 
 // Generate the Paillier Cryptosystem
-shared_ptr<PaillierEncryption> PaillierEncryption::generate(int byteLength, const vector<uint8_t> &seed) {
-  if (seed.size() == 0) {
+shared_ptr<PaillierEncryption> PaillierEncryption::generate(int byteLength, const vector<uint8_t> &seed)
+{
+  if (seed.size() == 0)
+  {
     return make_shared<PaillierEncryption>(byteLength);
-  } else {
+  }
+  else
+  {
     return make_shared<PaillierEncryption>(byteLength, seed);
   }
 }
 
 // Generate a new Keypair
-PaillierEncryption::PaillierEncryption(int byteLength) {
+PaillierEncryption::PaillierEncryption(int byteLength)
+{
   this->byteLength = byteLength;
   auto length = byteLength >> 1;
   // P & Q are big primes which byte length roughly ~= N's byte length / 2
@@ -22,7 +27,8 @@ PaillierEncryption::PaillierEncryption(int byteLength) {
   this->n = p->mul(q);
 
   // Loop until GCD (pq, (p-1)(q-1)) == 1 and byte length of (pq) = N
-  while (this->n->toBinary().size() != byteLength || p->compare(q) == 0) {
+  while (this->n->toBinary().size() != byteLength || p->compare(q) == 0)
+  {
     p = Random::genInteger(length, true);
     q = Random::genInteger(length, true);
 
@@ -31,14 +37,13 @@ PaillierEncryption::PaillierEncryption(int byteLength) {
 
   this->lambda = p->sub(Integer::ONE())->mul(q->sub(Integer::ONE()));
 
-  this->n2 = this->n->mul(this->n);
-
-  this->g = this->n->add(Integer::ONE())->mod(this->n2);  // Burden code ? N+1 < N^2 as always...
-  this->mu = this->lambda->inv(this->n);
+  init();
+  init2(p, q);
 }
 
 // Generate a new Keypair with seed
-PaillierEncryption::PaillierEncryption(int byteLength, vector<uint8_t> seed) {
+PaillierEncryption::PaillierEncryption(int byteLength, vector<uint8_t> seed)
+{
   this->byteLength = byteLength;
   auto length = byteLength >> 1;
 
@@ -49,7 +54,8 @@ PaillierEncryption::PaillierEncryption(int byteLength, vector<uint8_t> seed) {
   auto q = Random::genInteger(length, true, iseed->add(Integer::ONE())->toBinary());
   this->n = p->mul(q);
 
-  while (this->n->toBinary().size() != byteLength || p->compare(q) == 0) {
+  while (this->n->toBinary().size() != byteLength || p->compare(q) == 0)
+  {
     p = Random::genInteger(length, true, iseed->add(Integer::ONE())->toBinary());
     q = Random::genInteger(length, true, iseed->add(Integer::ONE())->toBinary());
 
@@ -58,10 +64,8 @@ PaillierEncryption::PaillierEncryption(int byteLength, vector<uint8_t> seed) {
 
   this->lambda = p->sub(Integer::ONE())->mul(q->sub(Integer::ONE()));
 
-  this->n2 = this->n->mul(this->n);
-
-  this->g = this->n->add(Integer::ONE())->mod(this->n2);  // Burden code ? N+1 < N^2 as always...
-  this->mu = this->lambda->inv(this->n);
+  init();
+  init2(p, q);
 }
 
 // Import KeyPair From N (public key), can perform encrypt
@@ -75,9 +79,69 @@ PaillierEncryption::PaillierEncryption(const std::shared_ptr<Integer> &N, const 
   this->byteLength = this->n->toBinary().size();
   this->lambda = lamda;
 
+  init();
+}
+
+// Import KeyPair From p, q and N (private & public key), can perform encrypt, decrypt
+PaillierEncryption::PaillierEncryption(const shared_ptr<Integer> &N,
+                                       const shared_ptr<Integer> &p,
+                                       const shared_ptr<Integer> &q)
+    : PaillierEncryption::PaillierEncryption(N, p->sub(Integer::ONE())->mul(q->sub(Integer::ONE())))
+{
+  init2(p, q);
+}
+
+// init value n2, g, mu
+void PaillierEncryption::init()
+{
   this->n2 = this->n->mul(this->n);
-  this->g = this->n->add(Integer::ONE())->mod(this->n2);
+  this->g = this->n->add(Integer::ONE())->mod(this->n2); // Burden code ? N+1 < N^2 as always...
   this->mu = this->lambda->inv(this->n);
+
+  this->Q = this->n2;
+  this->G = Integer::ONE();
+}
+
+// init value Q, G
+void PaillierEncryption::init2(const shared_ptr<Integer> &p, const shared_ptr<Integer> &q)
+{
+  shared_ptr<Integer> f;
+  for (int i = 2; true; i++)
+  {
+    f = make_shared<IntegerImpl>(i);
+    Q = f->mul(n2)->add(Integer::ONE());
+    if (Q->isPrime())
+      break;
+  }
+
+  auto Qbin = Q->toBinary();
+  while (true)
+  {
+    auto y = Random::genInteger(Qbin);
+    G = y->modPow(f, Q);
+
+    if (!G->modPow(n2, Q)->eq(Integer::ONE()))
+      continue;
+
+    if (G->modPow(p, Q)->eq(Integer::ONE()))
+      continue;
+    if (G->modPow(q, Q)->eq(Integer::ONE()))
+      continue;
+    if (G->modPow(p->mul(q), Q)->eq(Integer::ONE()))
+      continue;
+
+    if (G->modPow(p->mul(p), Q)->eq(Integer::ONE()))
+      continue;
+    if (G->modPow(q->mul(q), Q)->eq(Integer::ONE()))
+      continue;
+
+    if (G->modPow(p->mul(p)->mul(q), Q)->eq(Integer::ONE()))
+      continue;
+    if (G->modPow(q->mul(q)->mul(p), Q)->eq(Integer::ONE()))
+      continue;
+
+    break;
+  }
 }
 
 std::shared_ptr<Integer> PaillierEncryption::getPrivateKey()
@@ -89,7 +153,8 @@ shared_ptr<Integer> PaillierEncryption::getPublicKey()
   return n;
 }
 
-std::shared_ptr<Integer> PaillierEncryption::encrypt(const std::shared_ptr<Integer> &m) {
+std::shared_ptr<Integer> PaillierEncryption::encrypt(const std::shared_ptr<Integer> &m)
+{
   auto r = Random::genInteger(this->byteLength, false)->mod(this->n);
   auto rn = r->modPow(this->n, this->n2);
 
@@ -97,20 +162,26 @@ std::shared_ptr<Integer> PaillierEncryption::encrypt(const std::shared_ptr<Integ
   return this->n->mul(m)->add(Integer::ONE())->mul(rn)->mod(this->n2);
 }
 
-std::shared_ptr<Integer> PaillierEncryption::decrypt(const std::shared_ptr<Integer> &c) {
+std::shared_ptr<Integer> PaillierEncryption::decrypt(const std::shared_ptr<Integer> &c)
+{
   return c->modPow(this->lambda, this->n2)->sub(Integer::ONE())->div(this->n)->mul(this->mu)->mod(this->n);
 }
 
 // If ciphers = false -> c2 is data not cipher
-std::shared_ptr<Integer> PaillierEncryption::add(const std::shared_ptr<Integer> &c1, const std::shared_ptr<Integer> &c2, bool ciphers) {
-  if (ciphers) {
+std::shared_ptr<Integer> PaillierEncryption::add(const std::shared_ptr<Integer> &c1, const std::shared_ptr<Integer> &c2, bool ciphers)
+{
+  if (ciphers)
+  {
     return c1->mul(c2)->mod(this->n2);
-  } else {
+  }
+  else
+  {
     return c1->mul(g->modPow(c2, this->n2))->mod(this->n2);
   }
 }
 
 // E(c1)^k = c1 * k
-std::shared_ptr<Integer> PaillierEncryption::mul(const std::shared_ptr<Integer> &c1, const std::shared_ptr<Integer> &k) {
+std::shared_ptr<Integer> PaillierEncryption::mul(const std::shared_ptr<Integer> &c1, const std::shared_ptr<Integer> &k)
+{
   return c1->modPow(k, this->n2);
 }

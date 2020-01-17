@@ -38,7 +38,7 @@ public:
   void appendCol(const vector<shared_ptr<Integer>> &col);
 
   shared_ptr<Matrix> clone();
-  shared_ptr<Matrix> group(size_t n);
+  shared_ptr<Matrix> group(size_t n, size_t m = 0);
   bool eq(const shared_ptr<Matrix> &b);
 
   json toJson();

@@ -198,13 +198,19 @@ shared_ptr<Matrix> Matrix::clone()
   return make_shared<Matrix>(values);
 }
 
-shared_ptr<Matrix> Matrix::group(size_t newN)
+shared_ptr<Matrix> Matrix::group(size_t newN, size_t newM)
 {
   if (m != 1)
     throw invalid_argument("only allow group from vector to matrix");
 
-  size_t newM = (n % newN) == 0 ? n / newN : (n / newN) + 1;
+  if (newM == 0)
+  {
+    newM = (n % newN) == 0 ? n / newN : (n / newN) + 1;
+  }
   auto ret = make_shared<Matrix>(newM, newN);
+
+  if (n > newN * newM)
+    throw invalid_argument("cannot group a big vector to a small matrix");
 
   for (size_t i = 0; i < n; i++)
   {

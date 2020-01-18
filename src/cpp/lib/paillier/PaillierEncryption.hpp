@@ -21,15 +21,15 @@ private:
   shared_ptr<Integer> n; // n = p*q
   shared_ptr<Integer> g; // g = (n+1) mod n^2
 
-  void init();                                                            // init value n2, g, mu
-  void init2(const shared_ptr<Integer> &p, const shared_ptr<Integer> &q); // init value Q, G
-
-public:
   // Cyclic group parameters
   shared_ptr<Integer> Q;  // Q
   shared_ptr<Integer> n2; // p = n^2
   shared_ptr<Integer> G;  // generator
 
+  void init();                                                            // init value n2, g, mu
+  void init2(const shared_ptr<Integer> &p, const shared_ptr<Integer> &q); // init value Q, G
+
+public:
   // Generate a Cryptosystem
   static shared_ptr<PaillierEncryption> generate(int byteLength, const vector<uint8_t> &seed = vector<uint8_t>());
 
@@ -52,6 +52,11 @@ public:
   std::shared_ptr<Integer> getPrivateKey();
   // Export Public Key
   std::shared_ptr<Integer> getPublicKey();
+
+  std::shared_ptr<Integer> getGroupQ();
+  std::shared_ptr<Integer> getGroupP();
+  std::shared_ptr<Integer> getGroupG();
+
 
   // Interface
   std::shared_ptr<Integer> encrypt(const std::shared_ptr<Integer> &m);

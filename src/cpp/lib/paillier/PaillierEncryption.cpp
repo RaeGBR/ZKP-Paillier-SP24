@@ -153,6 +153,16 @@ shared_ptr<Integer> PaillierEncryption::getPublicKey()
   return n;
 }
 
+std::shared_ptr<Integer> PaillierEncryption::getGroupQ(){
+  return Q;
+}
+std::shared_ptr<Integer> PaillierEncryption::getGroupP(){
+  return n2;
+}
+std::shared_ptr<Integer> PaillierEncryption::getGroupG(){
+  return G;
+}
+
 std::shared_ptr<Integer> PaillierEncryption::encrypt(const std::shared_ptr<Integer> &m)
 {
   auto r = Random::genInteger(this->byteLength, false)->mod(this->n);

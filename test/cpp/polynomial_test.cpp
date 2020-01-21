@@ -497,7 +497,7 @@ TEST(Polynomial, Polynomial_Multiplication)
 
   // p(s) = (ab) * x^4 + (ab) * x^2 + (ab) * x^0 + (ab) * x^-2
   auto ps = pa->mul(pb);
-  printf("%s\n", ps->toString().c_str());
+  // printf("%s\n", ps->toString().c_str());
 
   EXPECT_EQ(ps->get(4)->toString(), "[[\"58\",\"64\"],[\"139\",\"154\"]]");
   EXPECT_EQ(ps->get(3)->toString(), zero->toString());

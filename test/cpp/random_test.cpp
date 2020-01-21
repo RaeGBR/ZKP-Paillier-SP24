@@ -97,4 +97,17 @@ TEST(Random, getRandoms_all_numbers_in_group)
   }
 }
 
+TEST(Random, getRandoms_positive_only)
+{
+  uint32_t n = 1000;
+  auto p = Integer::create("9", 10);
+  auto gs = Random::getRandoms(n, p, true);
+
+  EXPECT_EQ(gs.size(), n);
+  for (int i = 0; i < n; i++)
+  {
+    EXPECT_EQ(gs[i]->gt(Integer::ZERO()), true);
+  }
+}
+
 } // namespace

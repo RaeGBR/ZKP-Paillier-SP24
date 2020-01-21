@@ -53,7 +53,7 @@ shared_ptr<Matrix> PolynomialCommitment::calcT(
   T = T->group(n);
 
   // Random vector u
-  auto u = Random::getRandoms(n - 1, p);
+  auto u = Random::getRandoms(n - 1, p, true);
   u.push_back(Integer::ZERO());
   T->appendRow(u);
 
@@ -79,7 +79,7 @@ vector<shared_ptr<Integer>> PolynomialCommitment::commit(
   // Generate randomness if it isn't provided
   if (ri.size() == 0)
   {
-    auto rs = Random::getRandoms(m, p);
+    auto rs = Random::getRandoms(m, p, true);
     ri.insert(ri.begin(), rs.begin(), rs.end());
   }
 

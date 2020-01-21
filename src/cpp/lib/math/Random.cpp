@@ -1,29 +1,24 @@
 #include "Random.hpp"
 
-shared_ptr<Integer> Random::genInteger(const shared_ptr<Integer> &max, const vector<uint8_t> &seed)
+shared_ptr<Integer> Random::genInteger(const shared_ptr<Integer> &max, const bool positiveOnly)
 {
-  return genInteger(max->toBinary(), seed);
+  return genInteger(max->toBinary(), positiveOnly);
 }
 
-shared_ptr<Integer> Random::genInteger(vector<uint8_t> _max, const vector<uint8_t> &seed)
+shared_ptr<Integer> Random::genInteger(vector<uint8_t> _max, const bool positiveOnly)
 {
   string hex = Integer::createWithBinary(_max)->sub(Integer::ONE())->toHex();
   CryptoPP::Integer max(hex.c_str());
 
-  if (seed.size() == 0)
+  shared_ptr<IntegerImpl> ret;
+  do
   {
     // No Seed
     RandomGenerator prng;
-    return make_shared<IntegerImpl>(CryptoPP::Integer(prng, CryptoPP::Integer::Zero(), max));
-  }
-  else
-  {
-    // With Seed
-    CryptoPP::byte *s = (CryptoPP::byte *)seed.data();
-    RandomGenerator rng(s, (size_t)seed.size());
+    ret = make_shared<IntegerImpl>(CryptoPP::Integer(prng, CryptoPP::Integer::Zero(), max));
+  } while (positiveOnly && ret->eq(Integer::ZERO()));
 
-    return make_shared<IntegerImpl>(CryptoPP::Integer(rng, CryptoPP::Integer::Zero(), max));
-  }
+  return ret;
 }
 
 shared_ptr<Integer> Random::genInteger(int byteLength, bool prime, const vector<uint8_t> &seed)
@@ -76,12 +71,12 @@ string Random::genHex(int byteLength, const vector<uint8_t> &seed)
   return Utils::binaryToHex(ret);
 }
 
-vector<shared_ptr<Integer>> Random::getRandoms(size_t n, const shared_ptr<Integer> &modulus)
+vector<shared_ptr<Integer>> Random::getRandoms(size_t n, const shared_ptr<Integer> &modulus, const bool positiveOnly)
 {
   vector<shared_ptr<Integer>> ret;
   for (size_t i = 0; i < n; i++)
   {
-    auto rand = Random::genInteger(modulus, {});
+    auto rand = Random::genInteger(modulus, positiveOnly);
     ret.push_back(rand);
   }
   return ret;

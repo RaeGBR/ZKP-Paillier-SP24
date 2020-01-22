@@ -518,27 +518,17 @@ TEST(Polynomial, Polynomial_Multiplication)
   EXPECT_EQ(ps->get(-2)->toString(), "[[\"2\",\"1\"],[\"6\",\"0\"]]");
 }
 
-shared_ptr<Matrix> createMatrix(vector<int> nums)
-{
-  vector<shared_ptr<Integer>> ns;
-  for (int i = 0; i < nums.size(); i++)
-  {
-    ns.push_back(make_shared<IntegerImpl>(nums[i]));
-  }
-  return make_shared<Matrix>(ns);
-}
-
 TEST(Polynomial, More_test_1)
 {
   auto p1 = make_shared<Polynomial>();
-  p1->put(createMatrix({1}), -1);
-  p1->put(createMatrix({2}), 1);
-  p1->put(createMatrix({3}), 2);
+  p1->put(make_shared<Matrix>(vector<int>({1})), -1);
+  p1->put(make_shared<Matrix>(vector<int>({2})), 1);
+  p1->put(make_shared<Matrix>(vector<int>({3})), 2);
 
   auto p2 = make_shared<Polynomial>();
-  p2->put(createMatrix({4}), -2);
-  p2->put(createMatrix({5}), -1);
-  p2->put(createMatrix({6}), 1);
+  p2->put(make_shared<Matrix>(vector<int>({4})), -2);
+  p2->put(make_shared<Matrix>(vector<int>({5})), -1);
+  p2->put(make_shared<Matrix>(vector<int>({6})), 1);
 
   auto ret = p1->add(p2);
   EXPECT_EQ(ret->get(-2)->toString(), "[[\"4\"]]");
@@ -551,10 +541,10 @@ TEST(Polynomial, More_test_1)
 TEST(Polynomial, More_test_2)
 {
   auto p1 = make_shared<Polynomial>();
-  p1->put(createMatrix({1, 2}), -1);
-  p1->put(createMatrix({3, 4}), 1);
+  p1->put(make_shared<Matrix>(vector<int>({1, 2})), -1);
+  p1->put(make_shared<Matrix>(vector<int>({3, 4})), 1);
 
-  auto m = createMatrix({5, 6});
+  auto m = make_shared<Matrix>(vector<int>({5, 6}));
   auto ret = p1->dot(m);
   EXPECT_EQ(ret->get(-1)->toString(), "[[\"17\"]]");
   EXPECT_EQ(ret->get(1)->toString(), "[[\"39\"]]");
@@ -563,12 +553,12 @@ TEST(Polynomial, More_test_2)
 TEST(Polynomial, More_test_3)
 {
   auto p1 = make_shared<Polynomial>();
-  p1->put(createMatrix({1, 2}), -1);
-  p1->put(createMatrix({3, 4}), 1);
+  p1->put(make_shared<Matrix>(vector<int>({1, 2})), -1);
+  p1->put(make_shared<Matrix>(vector<int>({3, 4})), 1);
 
   auto p2 = make_shared<Polynomial>();
-  p2->put(createMatrix({5, 6}), -1);
-  p2->put(createMatrix({7, 8}), 2);
+  p2->put(make_shared<Matrix>(vector<int>({5, 6})), -1);
+  p2->put(make_shared<Matrix>(vector<int>({7, 8})), 2);
   p2 = p2->t();
 
   auto ret = p1->mul(p2);

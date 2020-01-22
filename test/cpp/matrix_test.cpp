@@ -26,6 +26,23 @@ TEST(Matrix, Default)
   EXPECT_EQ(a->toString(), "[[\"0\",\"0\",\"0\"],[\"0\",\"0\",\"0\"]]");
 }
 
+TEST(Matrix, Constructor_int_array)
+{
+  int m = 1;
+  int n = 6;
+  auto a = make_shared<Matrix>(vector<int>({0, 1, 2, 3, 4, 5}));
+  EXPECT_EQ(a->m, m);
+  EXPECT_EQ(a->n, n);
+
+  for (size_t i = 0; i < m; i++)
+  {
+    for (size_t j = 0; j < n; j++)
+    {
+      EXPECT_EQ((*a)[i][j]->toString(), to_string(i * n + j));
+    }
+  }
+}
+
 TEST(Matrix, Identity)
 {
   const size_t size = 3;

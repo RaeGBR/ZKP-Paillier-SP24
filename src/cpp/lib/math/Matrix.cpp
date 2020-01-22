@@ -49,6 +49,22 @@ Matrix::Matrix(size_t m, size_t n)
   }
 }
 
+Matrix::Matrix(const vector<int> &values)
+{
+  m = 1;
+  if (m <= 0)
+    throw invalid_argument("m and n cannot be zero");
+  n = values.size();
+  if (n <= 0)
+    throw invalid_argument("m and n cannot be zero");
+
+  this->values.push_back(vector<shared_ptr<Integer>>());
+  for (size_t i = 0; i < n; i++)
+  {
+    this->values[0].push_back(make_shared<IntegerImpl>(values[i]));
+  }
+}
+
 Matrix::Matrix(const vector<shared_ptr<Integer>> &values) : Matrix(vector<vector<shared_ptr<Integer>>>{values})
 {
 }

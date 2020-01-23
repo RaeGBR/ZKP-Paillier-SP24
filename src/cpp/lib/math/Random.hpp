@@ -9,10 +9,11 @@
 #include "osrng.h"
 #include "algparam.h"
 
-#include "Integer.hpp"
+#include "HashUtils.hpp"
 
 #include "./RandomGenerator.hpp"
 #include "./IntegerImpl.hpp"
+#include "../utils/HexUtils.hpp"
 
 using namespace std;
 using namespace cryptoplus;
@@ -24,10 +25,10 @@ class Random
 {
 public:
   // Random Integer with Max Integer (exclusive: 0 to max -1)
-  static shared_ptr<Integer> genInteger(const shared_ptr<Integer> &max, const bool positiveOnly = false);
+  static shared_ptr<Integer> genInteger(const shared_ptr<Integer> &max, const vector<uint8_t> &seed = vector<uint8_t>(), const bool positiveOnly = false);
 
   // Random Integer with Max Integer (exclusive: 0 to max -1)
-  static shared_ptr<Integer> genInteger(vector<uint8_t> max, const bool positiveOnly = false);
+  static shared_ptr<Integer> genInteger(const vector<uint8_t> &max, const vector<uint8_t> &seed = vector<uint8_t>(), const bool positiveOnly = false);
 
   // Random Integer
   static shared_ptr<Integer> genInteger(int byteLength, bool prime = false, const vector<uint8_t> &seed = vector<uint8_t>());

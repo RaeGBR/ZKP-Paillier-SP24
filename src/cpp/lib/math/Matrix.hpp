@@ -16,6 +16,7 @@ namespace cryptoplus
 class Matrix
 {
 public:
+  static shared_ptr<Matrix> ZERO();
   static shared_ptr<Matrix> identity(size_t size); // Identity matrix
   static shared_ptr<Matrix> powerVector(const shared_ptr<Integer> &x,
                                         size_t n,
@@ -25,6 +26,7 @@ public:
   size_t m;
   size_t n;
 
+  Matrix();                                                  // [[0]]
   Matrix(size_t m, size_t n);                                // All zero matrix
   Matrix(const vector<int> &values);                         // Initialized with defaults
   Matrix(const vector<shared_ptr<Integer>> &values);         // Initialized with defaults

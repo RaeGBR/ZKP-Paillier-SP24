@@ -58,10 +58,3 @@ shared_ptr<Integer> CircuitZKPVerifier::calculateY()
   auto ret = Random::genInteger(GP_P, seed, true);
   return ret;
 }
-void CircuitZKPVerifier::clearCommits()
-{
-  commitA.clear();
-  commitB.clear();
-  commitC.clear();
-  commitD = nullptr;
-}

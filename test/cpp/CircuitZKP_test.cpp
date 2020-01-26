@@ -93,9 +93,11 @@ TEST(CircuitZKP, Test_1)
   // P get challenge value by his own (non-interactive mode)
   prover->zkp->setCommits(commits);
   auto y3 = prover->zkp->calculateY();
-  prover->zkp->clearCommits(); // clear temp variables in non-interactive mode
 
   EXPECT_EQ(y1->toHex(), y3->toHex());
+
+  // P->V polyCommit
+  auto pc = prover->polyCommit(y3);
 }
 
 } // namespace

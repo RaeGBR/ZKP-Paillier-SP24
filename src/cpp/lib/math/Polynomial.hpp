@@ -4,11 +4,11 @@
 
 #include <stdexcept>
 #include <vector>
+#include <map>
+#include <iterator>
 
-#include "Integer.hpp"
 #include "./IntegerImpl.hpp"
-
-#include "Matrix.hpp"
+#include "./Matrix.hpp"
 
 using namespace std;
 
@@ -18,21 +18,18 @@ namespace cryptoplus
 class Polynomial
 {
 private:
-  // Clean the Polynomial Zeros
-  void clean();
-
-public:
   /**
     NOTES :
     1. Polynomial smallest index can be negative
     2. Need to marks the smallest index value (default is 0)
-    3. index 0 is the most significant bits
   */
-  vector<shared_ptr<Matrix>> values; // Polynomial Values
-  int lsd;                           // Least Significant Degree
+  map<int, shared_ptr<Matrix>> values; // Polynomial Values
+  int lsd = 0;                         // Least Significant Degree
+  int msd = 0;                         // Most Significant Degree
 
-  Polynomial();                                           // All Zero Polynomial
-  Polynomial(const vector<shared_ptr<Matrix>> ci, int d); // Create the Polynomial
+public:
+  Polynomial();                                            // All Zero Polynomial
+  Polynomial(const vector<shared_ptr<Matrix>> &ci, int d); // Create the Polynomial
 
   // clone the Polynomial
   shared_ptr<Polynomial> clone();
@@ -40,20 +37,22 @@ public:
   // transpose all coefficients
   shared_ptr<Polynomial> t();
 
-  // get term ci * x^i, return nullptr if not exists
-  shared_ptr<Matrix> get(int i);
-
-  // update the term ci * x^i
-  void put(const shared_ptr<Matrix> c, int i);
-
-  // remove the term ci * x^i
-  bool erase(int i);
-
   // get the smallest degree of x in the polynomial
   int getSmallestDegree();
 
   // get the largest degree of x in the polynomial
   int getLargestDegree();
+
+  vector<int> getDegrees();
+
+  // get term ci * x^i, return nullptr if not exists
+  shared_ptr<Matrix> get(int i);
+
+  // update the term ci * x^i
+  void put(int i, const shared_ptr<Matrix> &c);
+
+  // remove the term ci * x^i
+  void erase(int i);
 
   // pure function, add 2 polynomial
   // eg.    a(x) = a1 * x + a2 * x^3
@@ -83,8 +82,8 @@ public:
   // a(x) * b(x) = (a1*b1) * x + (a1*b2 + a2*b1) * x^2 + (a2*b2) * x^3
   shared_ptr<Polynomial> mul(const shared_ptr<Polynomial> &b, const shared_ptr<Integer> modulus = Integer::ZERO());
 
-  json toJson();
-  string toString();
+  // json toJson();
+  // string toString();
 };
 
 } // namespace cryptoplus

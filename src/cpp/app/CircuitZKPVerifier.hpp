@@ -47,7 +47,6 @@ public:
       const vector<shared_ptr<Integer>> &Kq);
 
   void setCommits(const vector<shared_ptr<Integer>> &commits);
-  void clearCommits();
   shared_ptr<Integer> calculateY();
 };
 

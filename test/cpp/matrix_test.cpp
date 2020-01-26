@@ -187,6 +187,19 @@ TEST(Matrix, ModAdd)
   EXPECT_EQ(c->toString(), "[[\"0\",\"2\",\"4\"],[\"4\",\"0\",\"2\"]]");
 }
 
+TEST(Matrix, ModAdd_with_negative)
+{
+  const auto modulus = Integer::createWithString("7");
+  auto a = make_shared<Matrix>();
+  auto b = make_shared<Matrix>();
+  (*a)[0][0] = Integer::createWithString(to_string(-3));
+  (*b)[0][0] = Integer::createWithString(to_string(4));
+  auto c = a->add(b, modulus);
+  EXPECT_EQ(a->toString(), "[[\"-3\"]]");
+  EXPECT_EQ(b->toString(), "[[\"4\"]]");
+  EXPECT_EQ(c->toString(), "[[\"1\"]]");
+}
+
 TEST(Matrix, Mul)
 {
   const size_t m = 2;
@@ -226,6 +239,19 @@ TEST(Matrix, ModMul)
   EXPECT_EQ(a->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
   EXPECT_EQ(b->toString(), "2");
   EXPECT_EQ(c->toString(), "[[\"0\",\"2\",\"4\"],[\"0\",\"2\",\"4\"]]");
+}
+
+TEST(Matrix, ModMul_with_negative)
+{
+  const auto modulus = Integer::createWithString("7");
+  auto a = make_shared<Matrix>();
+  auto b = make_shared<Matrix>();
+  (*a)[0][0] = Integer::createWithString(to_string(-3));
+  (*b)[0][0] = Integer::createWithString(to_string(4));
+  auto c = a->mul(b, modulus);
+  EXPECT_EQ(a->toString(), "[[\"-3\"]]");
+  EXPECT_EQ(b->toString(), "[[\"4\"]]");
+  EXPECT_EQ(c->toString(), "[[\"2\"]]");
 }
 
 TEST(Matrix, CrossProduct)

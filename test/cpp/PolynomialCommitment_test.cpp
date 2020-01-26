@@ -105,11 +105,7 @@ TEST(PolynomialCommitment, PolyCommit_eval_verify2)
   }
 
   // prepare m + 1 randomness for commitment
-  vector<shared_ptr<Integer>> ri;
-  for (int i = 0; i < m + 1; i++)
-  {
-    ri.push_back(Random::genInteger(p));
-  }
+  vector<shared_ptr<Integer>> ri = Random::getRandoms(m + 1, p);
 
   // calculate PolyCommit
   auto T = commitScheme.calcT(m1, m2, n, poly);

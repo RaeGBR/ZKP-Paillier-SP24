@@ -1,5 +1,10 @@
 #include "./Matrix.hpp"
 
+shared_ptr<Matrix> Matrix::ZERO()
+{
+  return make_shared<Matrix>();
+}
+
 shared_ptr<Matrix> Matrix::identity(size_t size)
 {
   auto I = make_shared<Matrix>(size, size);
@@ -31,6 +36,8 @@ shared_ptr<Matrix> Matrix::powerVector(const shared_ptr<Integer> &x,
   }
   return ret;
 }
+
+Matrix::Matrix() : Matrix(1, 1) {}
 
 Matrix::Matrix(size_t m, size_t n)
 {

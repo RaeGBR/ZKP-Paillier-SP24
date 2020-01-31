@@ -16,20 +16,6 @@ namespace polyu
 class CircuitZKPProver
 {
 private:
-  // [y^(M+1), y^(M+2), ... , y^(M+Q)]
-  vector<shared_ptr<Integer>> cachedY_Mq;
-  vector<shared_ptr<Integer>> getY_Mq(const shared_ptr<Integer> &y);
-  shared_ptr<Integer> getY_Mq(const shared_ptr<Integer> &y, size_t q); // q: 1 to Q
-
-  // [y^m, y^2m, ... , y^mn]
-  shared_ptr<Matrix> cachedY_ = nullptr;
-  shared_ptr<Matrix> getY_(const shared_ptr<Integer> &y);
-
-  shared_ptr<Matrix> Wai(size_t i, const shared_ptr<Integer> &y);
-  shared_ptr<Matrix> Wbi(size_t i, const shared_ptr<Integer> &y);
-  shared_ptr<Matrix> Wci(size_t i, const shared_ptr<Integer> &y);
-  shared_ptr<Integer> K(const shared_ptr<Integer> &y);
-
 public:
   shared_ptr<CircuitZKPVerifier> zkp;
 
@@ -43,8 +29,8 @@ public:
   vector<shared_ptr<Integer>> randC;
   shared_ptr<Integer> randD;
 
-  vector<shared_ptr<Integer>> Tx;
-  vector<shared_ptr<Integer>> TxRi;
+  shared_ptr<Matrix> txT;
+  vector<shared_ptr<Integer>> txRi;
 
   CircuitZKPProver(
       const shared_ptr<CircuitZKPVerifier> &zkp,
@@ -54,6 +40,7 @@ public:
 
   vector<shared_ptr<Integer>> commit();
   vector<shared_ptr<Integer>> polyCommit(const shared_ptr<Integer> &y);
+  vector<shared_ptr<Integer>> prove(const shared_ptr<Integer> &y, const shared_ptr<Integer> &x);
 };
 
 } // namespace polyu

@@ -57,15 +57,26 @@ vector<int> Polynomial::getDegrees()
   return ret;
 }
 
-shared_ptr<Matrix> Polynomial::get(int i)
+shared_ptr<Matrix> Polynomial::get(int i, const shared_ptr<Matrix> &defaultValue)
 {
   auto it = values.find(i);
   if (it == values.end())
   {
-    return Matrix::ZERO();
+    return defaultValue != nullptr ? defaultValue : zero();
   }
 
   return it->second;
+}
+
+shared_ptr<Matrix> Polynomial::zero()
+{
+  if (values.empty())
+    return Matrix::ZERO();
+
+  auto d = getSmallestDegree();
+  auto el = values[d];
+  auto ret = make_shared<Matrix>(el->m, el->n);
+  return ret;
 }
 
 void Polynomial::put(int i, const shared_ptr<Matrix> &c)
@@ -137,14 +148,14 @@ shared_ptr<Polynomial> Polynomial::mul(const shared_ptr<Matrix> &b, const shared
   return ret;
 }
 
-shared_ptr<Polynomial> Polynomial::dot(const shared_ptr<Matrix> &b, const shared_ptr<Integer> modulus)
+shared_ptr<Polynomial> Polynomial::inner(const shared_ptr<Matrix> &b, const shared_ptr<Integer> modulus)
 {
   auto ret = make_shared<Polynomial>();
 
   for (auto it : values)
   {
     auto d = it.first;
-    ret->put(d, it.second->dot(b, modulus));
+    ret->put(d, it.second->inner(b, modulus));
   }
   return ret;
 }
@@ -167,118 +178,71 @@ shared_ptr<Polynomial> Polynomial::mul(const shared_ptr<Polynomial> &b, const sh
   return ret;
 }
 
-// // Scalar multiplication for all matrix coefficients
-// // eg. a(x) = a1 * x + a2 * x^3
-// // b * a(x) = (b*a1) * x + (b*a2) * x^3
-// shared_ptr<Polynomial> Polynomial::mul(const shared_ptr<Integer> &b, const shared_ptr<Integer> modulus)
-// {
-//   auto ret = this->clone();
+shared_ptr<Matrix> Polynomial::eval(const shared_ptr<Integer> &x, const shared_ptr<Integer> modulus)
+{
+  if (values.empty())
+    return Matrix::ZERO();
 
-//   auto zero = make_shared<Matrix>(1, 1);
-//   bool isMod = !Integer::ZERO()->eq(modulus);
+  bool isMod = !modulus->eq(Integer::ZERO());
+  auto first = get(getSmallestDegree());
+  auto ret = make_shared<Matrix>(first->m, first->n);
 
-//   for (int i = ret->getSmallestDegree(); i <= ret->getLargestDegree(); i++)
-//   {
-//     auto mi = ret->get(i);
-//     if (mi->eq(zero))
-//       continue;
-//     else
-//       ret->put(mi->mul(b, modulus), i);
-//   }
-//   return ret;
-// }
+  for (auto el : values)
+  {
+    if (!isMod)
+    {
+      auto i = make_shared<IntegerImpl>(el.first);
+      auto xi = i->eq(Integer::ZERO()) ? Integer::ONE() : x->pow(i);
+      auto v = el.second->mul(xi);
+      ret = ret->add(v);
+    }
+    else
+    {
+      bool isNeg = el.first < 0;
+      auto i = make_shared<IntegerImpl>(isNeg ? -el.first : el.first);
+      auto xi = i->eq(Integer::ZERO()) ? Integer::ONE() : x->modPow(i, modulus);
+      if (isNeg)
+      {
+        xi = xi->inv(modulus);
+      }
+      auto v = el.second->mul(xi, modulus);
+      ret = ret->add(v, modulus);
+    }
+  }
 
-// // Cross product for all matrix coefficients with a vector
-// // eg. a(x) = a1 * x + a2 * x^3
-// // b * a(x) = (b*a1) * x + (b*a2) * x^3
-// // b is a vector
-// shared_ptr<Polynomial> Polynomial::mul(const shared_ptr<Matrix> &b, const shared_ptr<Integer> modulus)
-// {
-//   auto ret = this->clone();
+  return ret;
+}
 
-//   auto zero = make_shared<Matrix>(1, 1);
+json Polynomial::toJson()
+{
+  json output = json::array();
+  for (auto el : values)
+  {
+    json obj = json::object();
+    obj["degree"] = el.first;
+    obj["matrix"] = el.second->toJson();
+    output.push_back(obj);
+  }
+  return output;
+}
 
-//   for (int i = ret->getSmallestDegree(); i <= ret->getLargestDegree(); i++)
-//   {
-//     auto mi = ret->get(i);
-//     if (mi->eq(zero))
-//       continue;
-//     else
-//       ret->put(mi->mul(b, modulus), i);
-//   }
-//   return ret;
-// }
+string Polynomial::toString()
+{
+  string ret = "f(X) =";
+  if (values.empty())
+  {
+    ret += " 0";
+    return ret;
+  }
 
-// // Dot product for all matrix coefficients
-// // eg. a(x) = a1 * x + a2 * x^3
-// // b . a(x) = (b.a1) * x + (b.a2) * x^3
-// shared_ptr<Polynomial> Polynomial::dot(const shared_ptr<Matrix> &b, const shared_ptr<Integer> modulus)
-// {
-//   auto ret = this->clone();
-
-//   auto zero = make_shared<Matrix>(1, 1);
-
-//   for (int i = ret->getSmallestDegree(); i <= ret->getLargestDegree(); i++)
-//   {
-//     auto mi = ret->get(i);
-//     if (mi->eq(zero))
-//       continue;
-//     else
-//       ret->put(mi->dot(b, modulus), i);
-//   }
-//   return ret;
-// }
-
-// // Multiply two polynomial
-// // eg.    a(x) = a1 * x + a2 * x^2
-// //        b(x) = b1     + b2 * x
-// // a(x) * b(x) = (a1*b1) * x + (a1*b2) * x^2 + (a2*b1) * x^2 + (a2*b2) * x^3
-// // a(x) * b(x) = (a1*b1) * x + (a1*b2 + a2*b1) * x^2 + (a2*b2) * x^3
-// shared_ptr<Polynomial> Polynomial::mul(const shared_ptr<Polynomial> &b, const shared_ptr<Integer> modulus)
-// {
-//   auto ret = make_shared<Polynomial>();
-
-//   auto zero = make_shared<Matrix>(1, 1);
-
-//   for (int i = this->getSmallestDegree(); i <= this->getLargestDegree(); i++)
-//   {
-//     for (int j = b->getSmallestDegree(); j <= b->getLargestDegree(); j++)
-//     {
-//       if (this->get(i)->eq(zero) || b->get(j)->eq(zero))
-//         continue;
-
-//       int degree = i + j;
-//       auto origin = ret->get(degree);
-
-//       auto adding = this->get(i)->mul(b->get(j), modulus);
-
-//       // ret[degree] += a[i] * b[i]
-//       if (origin)
-//         adding = origin->add(adding, modulus);
-//       ret->put(adding, degree);
-//     }
-//   }
-
-//   return ret;
-// }
-
-// json Polynomial::toJson()
-// {
-//   json output = json::array();
-//   int index = 0;
-//   for (int i = this->getSmallestDegree(); i <= this->getLargestDegree(); i++)
-//   {
-//     json element = json::object();
-//     auto matrix = this->get(i)->toJson();
-//     element["degree"] = i;
-//     element["matrix"] = matrix;
-//     output.push_back(element);
-//   }
-
-//   return output;
-// }
-
-// string Polynomial::toString()
-// {
-//   return this->toJson().dump();
-// }
+  auto j = this->toJson();
+  for (size_t i = 0; i < j.size(); i++)
+  {
+    if (i > 0)
+    {
+      ret += " + ";
+    }
+    ret += j[i]["matrix"].dump() + " X^" + j[i]["degree"].dump();
+  }
+  return ret;
+}

@@ -53,7 +53,11 @@ shared_ptr<Matrix> PolynomialCommitment::calcT(
   T = T->group(n);
 
   // Random vector u
-  auto u = Random::getRandoms(n - 1, p, true);
+  vector<shared_ptr<Integer>> u;
+  if (n > 1)
+  {
+    u = Random::getRandoms(n - 1, p, true);
+  }
   u.push_back(Integer::ZERO());
   T->appendRow(u);
 

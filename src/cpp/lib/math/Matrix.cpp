@@ -183,6 +183,33 @@ shared_ptr<Matrix> Matrix::mul(const shared_ptr<Matrix> &b, const shared_ptr<Int
   return ret;
 }
 
+shared_ptr<Matrix> Matrix::inner(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus)
+{
+  if (m != b->m || n != b->n)
+    throw invalid_argument("matrix dimension not match for inner product");
+
+  bool isMod = !Integer::ZERO()->eq(modulus);
+
+  auto ret = make_shared<Matrix>(m, n);
+  for (size_t i = 0; i < m; i++)
+  {
+    for (size_t j = 0; j < n; j++)
+    {
+      if (isMod)
+      {
+        auto v = this->values[i][j]->modMul(b->values[i][j], modulus);
+        ret->values[i][j] = v;
+      }
+      else
+      {
+        auto v = this->values[i][j]->mul(b->values[i][j]);
+        ret->values[i][j] = v;
+      }
+    }
+  }
+  return ret;
+}
+
 shared_ptr<Matrix> Matrix::dot(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus)
 {
   if (m != b->m || n != b->n)

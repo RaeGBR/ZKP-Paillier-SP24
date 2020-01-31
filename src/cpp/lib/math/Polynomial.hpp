@@ -46,7 +46,10 @@ public:
   vector<int> getDegrees();
 
   // get term ci * x^i, return nullptr if not exists
-  shared_ptr<Matrix> get(int i);
+  shared_ptr<Matrix> get(int i, const shared_ptr<Matrix> &defaultValue = nullptr);
+
+  // get a zero matrix which match the first element dimension
+  shared_ptr<Matrix> zero();
 
   // update the term ci * x^i
   void put(int i, const shared_ptr<Matrix> &c);
@@ -70,10 +73,10 @@ public:
   // b * a(x) = (b*a1) * x + (b*a2) * x^3
   shared_ptr<Polynomial> mul(const shared_ptr<Matrix> &b, const shared_ptr<Integer> modulus = Integer::ZERO());
 
-  // pure function, dot product for all matrix coefficients
+  // pure function, inner product for all matrix coefficients
   // eg. a(x) = a1 * x + a2 * x^3
   // b . a(x) = (b.a1) * x + (b.a2) * x^3
-  shared_ptr<Polynomial> dot(const shared_ptr<Matrix> &b, const shared_ptr<Integer> modulus = Integer::ZERO());
+  shared_ptr<Polynomial> inner(const shared_ptr<Matrix> &b, const shared_ptr<Integer> modulus = Integer::ZERO());
 
   // pure function, multiply 2 polynomial
   // eg.    a(x) = a1 * x + a2 * x^2
@@ -82,8 +85,10 @@ public:
   // a(x) * b(x) = (a1*b1) * x + (a1*b2 + a2*b1) * x^2 + (a2*b2) * x^3
   shared_ptr<Polynomial> mul(const shared_ptr<Polynomial> &b, const shared_ptr<Integer> modulus = Integer::ZERO());
 
-  // json toJson();
-  // string toString();
+  shared_ptr<Matrix> eval(const shared_ptr<Integer> &x, const shared_ptr<Integer> modulus = Integer::ZERO());
+
+  json toJson();
+  string toString();
 };
 
 } // namespace cryptoplus

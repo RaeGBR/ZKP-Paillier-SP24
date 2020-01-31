@@ -219,6 +219,14 @@ shared_ptr<Matrix> Matrix::dot(const shared_ptr<Matrix> &b, const shared_ptr<Int
   return this->mul(t, modulus);
 }
 
+vector<shared_ptr<Integer>> Matrix::row(size_t i)
+{
+  if (i < 0 || i >= m)
+    return make_shared<Matrix>(1, n)->values[0];
+
+  return values[i];
+}
+
 void Matrix::appendRow(const vector<shared_ptr<Integer>> &row)
 {
   if (row.size() != n)

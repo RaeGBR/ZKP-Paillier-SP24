@@ -72,6 +72,17 @@ public:
       const vector<shared_ptr<Matrix>> &Wqc,
       const vector<shared_ptr<Integer>> &Kq);
 
+  CircuitZKPVerifier(
+      const shared_ptr<Integer> &GP_Q,
+      const shared_ptr<Integer> &GP_P,
+      const shared_ptr<Integer> &GP_G,
+      const vector<shared_ptr<Matrix>> &Wqa,
+      const vector<shared_ptr<Matrix>> &Wqb,
+      const vector<shared_ptr<Matrix>> &Wqc,
+      const vector<shared_ptr<Integer>> &Kq,
+      size_t m,
+      size_t n);
+
   shared_ptr<Matrix> getY(const shared_ptr<Integer> &y);
   shared_ptr<Matrix> getY_(const shared_ptr<Integer> &y);
   void setY(const shared_ptr<Integer> &y); // recalculated cachedY, cachedY_, cachedY_Mq

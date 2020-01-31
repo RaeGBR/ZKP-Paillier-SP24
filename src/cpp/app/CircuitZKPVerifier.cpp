@@ -10,6 +10,18 @@ CircuitZKPVerifier::CircuitZKPVerifier(
     const vector<shared_ptr<Matrix>> &Wqb,
     const vector<shared_ptr<Matrix>> &Wqc,
     const vector<shared_ptr<Integer>> &Kq)
+    : CircuitZKPVerifier(GP_Q, GP_P, GP_G, Wqa, Wqb, Wqc, Kq, 0, 0) {}
+
+CircuitZKPVerifier::CircuitZKPVerifier(
+    const shared_ptr<Integer> &GP_Q,
+    const shared_ptr<Integer> &GP_P,
+    const shared_ptr<Integer> &GP_G,
+    const vector<shared_ptr<Matrix>> &Wqa,
+    const vector<shared_ptr<Matrix>> &Wqb,
+    const vector<shared_ptr<Matrix>> &Wqc,
+    const vector<shared_ptr<Integer>> &Kq,
+    size_t m,
+    size_t n)
 {
   this->GP_Q = GP_Q;
   this->GP_P = GP_P;
@@ -22,8 +34,10 @@ CircuitZKPVerifier::CircuitZKPVerifier(
   this->Q = Wqa.size();
   if (this->Q <= 0 || this->Q != Wqb.size() || this->Q != Wqc.size())
     throw invalid_argument("the number of linear constrians are different in Wqa, Wqb and Wqc");
-  this->m = Wqa[0]->m;
-  this->n = Wqa[0]->n;
+  m = m > 0 ? m : Wqa[0]->m;
+  n = n > 0 ? n : Wqa[0]->n;
+  this->m = m;
+  this->n = n;
   this->N = m * n;
   this->M = N + m;
 
@@ -32,7 +46,7 @@ CircuitZKPVerifier::CircuitZKPVerifier(
   this->txM2 = txCfg[1];
   this->txN = txCfg[2];
 
-  this->commitScheme = make_shared<PolynomialCommitment>(this->GP_Q, this->GP_P, this->GP_G, this->txN);
+  this->commitScheme = make_shared<PolynomialCommitment>(this->GP_Q, this->GP_P, this->GP_G, max(this->txN, this->n));
 }
 
 vector<size_t> CircuitZKPVerifier::calcMN(size_t _N)
@@ -121,7 +135,7 @@ shared_ptr<Matrix> CircuitZKPVerifier::Wai(size_t i, const shared_ptr<Integer> &
   auto ret = make_shared<Matrix>(1, n);
   for (size_t q = 1; q <= Q; q++)
   {
-    auto w = make_shared<Matrix>(Wqa[q - 1]->values[i - 1]);
+    auto w = make_shared<Matrix>(Wqa[q - 1]->row(i - 1));
     w = w->mul(getY_Mq(y, q), GP_P);
     ret = ret->add(w, GP_P);
   }
@@ -136,7 +150,7 @@ shared_ptr<Matrix> CircuitZKPVerifier::Wbi(size_t i, const shared_ptr<Integer> &
   auto ret = make_shared<Matrix>(1, n);
   for (size_t q = 1; q <= Q; q++)
   {
-    auto w = make_shared<Matrix>(Wqb[q - 1]->values[i - 1]);
+    auto w = make_shared<Matrix>(Wqb[q - 1]->row(i - 1));
     w = w->mul(getY_Mq(y, q), GP_P);
     ret = ret->add(w, GP_P);
   }
@@ -151,7 +165,7 @@ shared_ptr<Matrix> CircuitZKPVerifier::Wci(size_t i, const shared_ptr<Integer> &
   auto ret = make_shared<Matrix>(1, n);
   for (size_t q = 1; q <= Q; q++)
   {
-    auto w = make_shared<Matrix>(Wqc[q - 1]->values[i - 1]);
+    auto w = make_shared<Matrix>(Wqc[q - 1]->row(i - 1));
     w = w->mul(getY_Mq(y, q), GP_P);
     ret = ret->add(w, GP_P);
   }
@@ -180,7 +194,7 @@ shared_ptr<Polynomial> CircuitZKPVerifier::createSx(const shared_ptr<Integer> &y
   // s(X) = SUM(Wai(y) * y^-i * X^-i) + SUM(Wbi(y) * X^i) + X^-m * SUM(Wci(y) * X^-i)
   auto sx = make_shared<Polynomial>();
 
-  auto Y = getY(y)->values[0]; // [1, y, y^2, ... , y^m]
+  auto Y = getY(y)->row(0); // [1, y, y^2, ... , y^m]
 
   for (size_t i = 1; i <= m; i++)
   {
@@ -242,6 +256,7 @@ shared_ptr<Integer> CircuitZKPVerifier::calculateX()
   {
     HexUtils::append(seed, pc[i]->toBinary());
   }
+
   auto ret = Random::genInteger(GP_P, seed, true);
   return ret;
 }

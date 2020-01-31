@@ -21,8 +21,10 @@ TEST(CircuitZKP, Test_1)
   auto g = make_shared<IntegerImpl>(8);
 
   // define circuit constrains
-  int m = 2;
-  int n = 3;
+  auto mnCfg = CircuitZKPVerifier::calcMN(123); // explicitly define a too big circuit
+  int m = mnCfg[0];
+  int n = mnCfg[1];
+
   vector<shared_ptr<Matrix>> Wqa;
   vector<shared_ptr<Matrix>> Wqb;
   vector<shared_ptr<Matrix>> Wqc;
@@ -59,17 +61,17 @@ TEST(CircuitZKP, Test_1)
   Kq.push_back(Integer::ZERO());
 
   // create verifier
-  auto verifier = make_shared<CircuitZKPVerifier>(Q, p, g, Wqa, Wqb, Wqc, Kq);
-  EXPECT_EQ(verifier->Q, 6);
-  EXPECT_EQ(verifier->m, 2);
-  EXPECT_EQ(verifier->n, 3);
-  EXPECT_EQ(verifier->N, 6);
-  EXPECT_EQ(verifier->M, 8);
+  auto verifier = make_shared<CircuitZKPVerifier>(Q, p, g, Wqa, Wqb, Wqc, Kq, m, n); // difine the dimension explicitly
+  EXPECT_EQ(verifier->Q, Wqa.size());
+  EXPECT_EQ(verifier->m, m);
+  EXPECT_EQ(verifier->n, n);
+  EXPECT_EQ(verifier->N, m * n);
+  EXPECT_EQ(verifier->M, m * n + m);
 
   // prover define / calculate circuit arguments
-  shared_ptr<Matrix> A = make_shared<Matrix>(vector<int>({1, 2, 3, 4, 40, 11}))->group(n);
-  shared_ptr<Matrix> B = make_shared<Matrix>(vector<int>({4, 5, 6, 10, 11, 72}))->group(n);
-  shared_ptr<Matrix> C = make_shared<Matrix>(vector<int>({4, 10, 18, 40, 36, 85}))->group(n);
+  shared_ptr<Matrix> A = make_shared<Matrix>(vector<int>({1, 2, 3, 4, 40, 11}))->group(n, m); // make sure the dimension match
+  shared_ptr<Matrix> B = make_shared<Matrix>(vector<int>({4, 5, 6, 10, 11, 72}))->group(n, m);
+  shared_ptr<Matrix> C = make_shared<Matrix>(vector<int>({4, 10, 18, 40, 36, 85}))->group(n, m);
 
   // create prover
   auto prover = make_shared<CircuitZKPProver>(verifier, A, B, C);
@@ -142,6 +144,7 @@ TEST(CircuitZKP, Test_2)
   // define circuit constrains
   int m = 2;
   int n = 2;
+
   vector<shared_ptr<Matrix>> Wqa;
   vector<shared_ptr<Matrix>> Wqb;
   vector<shared_ptr<Matrix>> Wqc;

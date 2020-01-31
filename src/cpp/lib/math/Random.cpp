@@ -31,7 +31,7 @@ shared_ptr<Integer> Random::genInteger(
       // With Seed
       hash = HashUtils::sha256(hash);
       CryptoPP::byte *s = (CryptoPP::byte *)hash.data();
-      RandomGenerator rng(s, (size_t)seed.size());
+      RandomGenerator rng(s, (size_t)hash.size());
       ret = make_shared<IntegerImpl>(CryptoPP::Integer(rng, CryptoPP::Integer::Zero(), max));
     }
   } while (positiveOnly && ret->eq(Integer::ZERO()));

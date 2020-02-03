@@ -153,19 +153,40 @@ shared_ptr<Integer> PaillierEncryption::getPublicKey()
   return n;
 }
 
-std::shared_ptr<Integer> PaillierEncryption::getGroupQ(){
+std::shared_ptr<Integer> PaillierEncryption::getGroupQ()
+{
   return Q;
 }
-std::shared_ptr<Integer> PaillierEncryption::getGroupP(){
+std::shared_ptr<Integer> PaillierEncryption::getGroupP()
+{
   return n2;
 }
-std::shared_ptr<Integer> PaillierEncryption::getGroupG(){
+std::shared_ptr<Integer> PaillierEncryption::getGroupG()
+{
   return G;
 }
 
-std::shared_ptr<Integer> PaillierEncryption::encrypt(const std::shared_ptr<Integer> &m)
+std::shared_ptr<Integer> PaillierEncryption::pickRandom()
 {
-  auto r = Random::genInteger(this->byteLength, false)->mod(this->n);
+  // 0 < r < N, gcd(r, n) = 1
+  while (true)
+  {
+    auto r = Random::genInteger(n, {}, true);
+    auto gcd = r->gcd(n);
+    if (gcd->eq(Integer::ONE()))
+    {
+      return r;
+    }
+  }
+}
+
+std::shared_ptr<Integer> PaillierEncryption::encrypt(const std::shared_ptr<Integer> &m, const std::shared_ptr<Integer> &_r)
+{
+  auto r = _r;
+  if (r->eq(Integer::ZERO()))
+  {
+    r = pickRandom();
+  }
   auto rn = r->modPow(this->n, this->n2);
 
   // c = (nm + 1) * r^n mod n^2

@@ -31,11 +31,14 @@ TEST(Paillier, KeyGeneration)
 
 TEST(Paillier, CyclicGroupGeneration)
 {
+  // p = 3, q = 5, N = 15
   auto crypto = make_shared<PaillierEncryption>(
       make_shared<IntegerImpl>(15),
       make_shared<IntegerImpl>(3),
       make_shared<IntegerImpl>(5));
 
+  // GP_P = N^2 = 225
+  // GP_Q = (f * GP_P) + 1 is prime
   auto Q = crypto->getGroupQ();
   auto p = crypto->getGroupP();
   auto g = crypto->getGroupG();
@@ -59,6 +62,21 @@ TEST(Paillier, CyclicGroupGeneration)
   }
 }
 
+TEST(Paillier, PickRandom)
+{
+  int byteLength = 2;
+  auto crypto = PaillierEncryption::generate(byteLength);
+  auto N = crypto->getPublicKey();
+
+  for (int i = 0; i < 1000; i++)
+  {
+    auto r = crypto->pickRandom();
+    EXPECT_TRUE(r->gt(Integer::ZERO()));
+    EXPECT_TRUE(r->lt(N));
+    EXPECT_TRUE(r->gcd(N)->eq(Integer::ONE()));
+  }
+}
+
 TEST(Paillier, EncryptionDecryption)
 {
   int byteLength = 32;
@@ -68,7 +86,13 @@ TEST(Paillier, EncryptionDecryption)
 
   for (int i = 0; i < 50; i++)
   {
-    auto c = crypto->encrypt(m);
+    auto r = crypto->pickRandom();
+    auto c = crypto->encrypt(m, r); // r is optional
+    EXPECT_EQ(crypto->decrypt(c)->toString(), m->toString());
+  }
+  for (int i = 0; i < 50; i++)
+  {
+    auto c = crypto->encrypt(m); // r is optional
     EXPECT_EQ(crypto->decrypt(c)->toString(), m->toString());
   }
 }
@@ -134,7 +158,7 @@ TEST(Paillier, HomomorphicMultiplication)
 
 TEST(Paillier, Generate_group_element)
 {
-/*
+  /*
 ===== Key 1 =====
 byteLength: 256
 
@@ -199,11 +223,11 @@ sk=lamda (16-bit):
   auto sk = crypto->getPrivateKey();
 
   printf("byteLength: %d\n\n", byteLength);
-  printf("p=N^2 (%lu-bit):\n%s\n\n", p->toBinary().size()*8, p->toHex().c_str());
-  printf("Q (%lu-bit):\n%s\n\n", Q->toBinary().size()*8, Q->toHex().c_str());
+  printf("p=N^2 (%lu-bit):\n%s\n\n", p->toBinary().size() * 8, p->toHex().c_str());
+  printf("Q (%lu-bit):\n%s\n\n", Q->toBinary().size() * 8, Q->toHex().c_str());
   printf("G:\n%s\n\n", g->toHex().c_str());
-  printf("pk=N (%lu-bit):\n%s\n\n", pk->toBinary().size()*8, pk->toHex().c_str());
-  printf("sk=lamda (%lu-bit):\n%s\n\n", sk->toBinary().size()*8, sk->toHex().c_str());
+  printf("pk=N (%lu-bit):\n%s\n\n", pk->toBinary().size() * 8, pk->toHex().c_str());
+  printf("sk=lamda (%lu-bit):\n%s\n\n", sk->toBinary().size() * 8, sk->toHex().c_str());
 }
 
 TEST(Paillier, Encrypt_decrypt_with_predefined_group)
@@ -225,6 +249,5 @@ TEST(Paillier, Encrypt_decrypt_with_predefined_group)
   EXPECT_EQ(m->toHex(), r->toHex());
   EXPECT_EQ(ret, msg);
 }
-
 
 } // namespace

@@ -57,9 +57,9 @@ public:
   std::shared_ptr<Integer> getGroupP();
   std::shared_ptr<Integer> getGroupG();
 
-
   // Interface
-  std::shared_ptr<Integer> encrypt(const std::shared_ptr<Integer> &m);
+  std::shared_ptr<Integer> pickRandom(); // 0 < r < N, gcd(r, n) = 1
+  std::shared_ptr<Integer> encrypt(const std::shared_ptr<Integer> &m, const std::shared_ptr<Integer> &r = Integer::ZERO());
   std::shared_ptr<Integer> decrypt(const std::shared_ptr<Integer> &c);
 
   // If ciphers = false -> c2 is data not cipher

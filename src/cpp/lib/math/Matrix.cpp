@@ -1,5 +1,10 @@
 #include "./Matrix.hpp"
 
+shared_ptr<Matrix> Matrix::ZERO()
+{
+  return make_shared<Matrix>();
+}
+
 shared_ptr<Matrix> Matrix::identity(size_t size)
 {
   auto I = make_shared<Matrix>(size, size);
@@ -32,6 +37,8 @@ shared_ptr<Matrix> Matrix::powerVector(const shared_ptr<Integer> &x,
   return ret;
 }
 
+Matrix::Matrix() : Matrix(1, 1) {}
+
 Matrix::Matrix(size_t m, size_t n)
 {
   if (m <= 0 || n <= 0)
@@ -46,6 +53,22 @@ Matrix::Matrix(size_t m, size_t n)
     {
       values[i][j] = Integer::ZERO();
     }
+  }
+}
+
+Matrix::Matrix(const vector<int> &values)
+{
+  m = 1;
+  if (m <= 0)
+    throw invalid_argument("m and n cannot be zero");
+  n = values.size();
+  if (n <= 0)
+    throw invalid_argument("m and n cannot be zero");
+
+  this->values.push_back(vector<shared_ptr<Integer>>());
+  for (size_t i = 0; i < n; i++)
+  {
+    this->values[0].push_back(make_shared<IntegerImpl>(values[i]));
   }
 }
 
@@ -160,6 +183,33 @@ shared_ptr<Matrix> Matrix::mul(const shared_ptr<Matrix> &b, const shared_ptr<Int
   return ret;
 }
 
+shared_ptr<Matrix> Matrix::inner(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus)
+{
+  if (m != b->m || n != b->n)
+    throw invalid_argument("matrix dimension not match for inner product");
+
+  bool isMod = !Integer::ZERO()->eq(modulus);
+
+  auto ret = make_shared<Matrix>(m, n);
+  for (size_t i = 0; i < m; i++)
+  {
+    for (size_t j = 0; j < n; j++)
+    {
+      if (isMod)
+      {
+        auto v = this->values[i][j]->modMul(b->values[i][j], modulus);
+        ret->values[i][j] = v;
+      }
+      else
+      {
+        auto v = this->values[i][j]->mul(b->values[i][j]);
+        ret->values[i][j] = v;
+      }
+    }
+  }
+  return ret;
+}
+
 shared_ptr<Matrix> Matrix::dot(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus)
 {
   if (m != b->m || n != b->n)
@@ -167,6 +217,14 @@ shared_ptr<Matrix> Matrix::dot(const shared_ptr<Matrix> &b, const shared_ptr<Int
 
   auto t = b->t();
   return this->mul(t, modulus);
+}
+
+vector<shared_ptr<Integer>> Matrix::row(size_t i)
+{
+  if (i < 0 || i >= m)
+    return make_shared<Matrix>(1, n)->values[0];
+
+  return values[i];
 }
 
 void Matrix::appendRow(const vector<shared_ptr<Integer>> &row)

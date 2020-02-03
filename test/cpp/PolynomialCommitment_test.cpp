@@ -98,18 +98,10 @@ TEST(PolynomialCommitment, PolyCommit_eval_verify2)
   size_t m2 = m - m1; // +ve degree 1 to 35 (n * m2)
 
   // prepare the polynomial from x^-15, x^-14, ... , x^-1, x, x^2, ... , x^35
-  vector<shared_ptr<Integer>> poly;
-  for (int i = 0; i < cnt; i++)
-  {
-    poly.push_back(Random::genInteger(p));
-  }
+  vector<shared_ptr<Integer>> poly = Random::getRandoms(cnt, p);
 
   // prepare m + 1 randomness for commitment
-  vector<shared_ptr<Integer>> ri;
-  for (int i = 0; i < m + 1; i++)
-  {
-    ri.push_back(Random::genInteger(p));
-  }
+  vector<shared_ptr<Integer>> ri = Random::getRandoms(m + 1, p);
 
   // calculate PolyCommit
   auto T = commitScheme.calcT(m1, m2, n, poly);
@@ -147,25 +139,17 @@ TEST(PolynomialCommitment, PolyCommit_eval_verify3)
   size_t m2 = m - m1; // +ve degree 1 to 35 (n * m2)
 
   // prepare the polynomial from x^-15, x^-14, ... , x^-1, x, x^2, ... , x^35
-  vector<shared_ptr<Integer>> poly;
-  for (int i = 0; i < cnt; i++)
-  {
-    poly.push_back(Random::genInteger(p));
-  }
+  vector<shared_ptr<Integer>> poly = Random::getRandoms(cnt, p);
 
   // prepare m + 1 randomness for commitment
-  vector<shared_ptr<Integer>> ri;
-  for (int i = 0; i < m + 1; i++)
-  {
-    ri.push_back(Random::genInteger(p));
-  }
+  vector<shared_ptr<Integer>> ri = Random::getRandoms(m + 1, p);
 
   // calculate PolyCommit
   auto T = commitScheme.calcT(m1, m2, n, poly);
   auto pc = commitScheme.commit(m1, m2, n, T, ri);
 
   // set challenge value
-  auto x = Random::genInteger(p);
+  auto x = Random::genInteger(p, {}, true);
 
   // calculate PolyEval
   auto pe = commitScheme.eval(m1, m2, n, T, ri, x);

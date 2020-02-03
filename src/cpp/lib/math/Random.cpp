@@ -1,27 +1,45 @@
 #include "Random.hpp"
 
-shared_ptr<Integer> Random::genInteger(const shared_ptr<Integer> &max, const bool positiveOnly)
+shared_ptr<Integer> Random::genInteger(
+    const shared_ptr<Integer> &max,
+    const binary_t &seed,
+    const bool positiveOnly)
 {
-  return genInteger(max->toBinary(), positiveOnly);
+  return genInteger(max->toBinary(), seed, positiveOnly);
 }
 
-shared_ptr<Integer> Random::genInteger(vector<uint8_t> _max, const bool positiveOnly)
+shared_ptr<Integer> Random::genInteger(
+    const binary_t &_max,
+    const binary_t &seed,
+    const bool positiveOnly)
 {
   string hex = Integer::createWithBinary(_max)->sub(Integer::ONE())->toHex();
   CryptoPP::Integer max(hex.c_str());
 
   shared_ptr<IntegerImpl> ret;
+  binary_t hash = seed;
   do
   {
-    // No Seed
-    RandomGenerator prng;
-    ret = make_shared<IntegerImpl>(CryptoPP::Integer(prng, CryptoPP::Integer::Zero(), max));
+    if (seed.size() == 0)
+    {
+      // No Seed
+      RandomGenerator prng;
+      ret = make_shared<IntegerImpl>(CryptoPP::Integer(prng, CryptoPP::Integer::Zero(), max));
+    }
+    else
+    {
+      // With Seed
+      hash = HashUtils::sha256(hash);
+      CryptoPP::byte *s = (CryptoPP::byte *)hash.data();
+      RandomGenerator rng(s, (size_t)hash.size());
+      ret = make_shared<IntegerImpl>(CryptoPP::Integer(rng, CryptoPP::Integer::Zero(), max));
+    }
   } while (positiveOnly && ret->eq(Integer::ZERO()));
 
   return ret;
 }
 
-shared_ptr<Integer> Random::genInteger(int byteLength, bool prime, const vector<uint8_t> &seed)
+shared_ptr<Integer> Random::genInteger(int byteLength, bool prime, const binary_t &seed)
 {
   CryptoPP::Integer x;
   int length = byteLength * 8;
@@ -52,7 +70,7 @@ shared_ptr<Integer> Random::genInteger(int byteLength, bool prime, const vector<
   }
 }
 
-vector<uint8_t> Random::genBinary(int byteLength, const vector<uint8_t> &seed)
+binary_t Random::genBinary(int byteLength, const binary_t &seed)
 {
   auto retInt = Random::genInteger(byteLength, false, seed);
   auto retBin = retInt->toBinary();
@@ -60,12 +78,12 @@ vector<uint8_t> Random::genBinary(int byteLength, const vector<uint8_t> &seed)
   if (len == byteLength)
     return retBin;
 
-  vector<uint8_t> newBin(byteLength - len, 0x0);
+  binary_t newBin(byteLength - len, 0x0);
   newBin.insert(newBin.end(), retBin.begin(), retBin.end());
   return newBin;
 }
 
-string Random::genHex(int byteLength, const vector<uint8_t> &seed)
+string Random::genHex(int byteLength, const binary_t &seed)
 {
   auto ret = Random::genBinary(byteLength, seed);
   return Utils::binaryToHex(ret);
@@ -76,7 +94,7 @@ vector<shared_ptr<Integer>> Random::getRandoms(size_t n, const shared_ptr<Intege
   vector<shared_ptr<Integer>> ret;
   for (size_t i = 0; i < n; i++)
   {
-    auto rand = Random::genInteger(modulus, positiveOnly);
+    auto rand = Random::genInteger(modulus, {}, positiveOnly);
     ret.push_back(rand);
   }
   return ret;

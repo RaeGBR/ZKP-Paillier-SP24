@@ -84,6 +84,16 @@ TEST(IntegerWrapper, Subtract)
   ASSERT_TRUE(a->sub(b)->eq(c));
 }
 
+TEST(IntegerWrapper, Subtract_then_mod)
+{
+  shared_ptr<Integer> a = make_shared<IntegerImpl>("1", 10);
+  shared_ptr<Integer> b = make_shared<IntegerImpl>("5", 10);
+  shared_ptr<Integer> c = make_shared<IntegerImpl>("7", 10);
+  shared_ptr<Integer> d = make_shared<IntegerImpl>("3", 10);
+
+  ASSERT_TRUE(a->sub(b)->mod(c)->eq(d));
+}
+
 TEST(IntegerWrapper, Multiply)
 {
   shared_ptr<Integer> a = make_shared<IntegerImpl>("35", 10);

@@ -19,7 +19,6 @@ shared_ptr<PaillierEncryption> PaillierEncryption::generate(int byteLength, cons
 // Generate a new Keypair
 PaillierEncryption::PaillierEncryption(int byteLength)
 {
-  this->byteLength = byteLength;
   auto length = byteLength >> 1;
   // P & Q are big primes which byte length roughly ~= N's byte length / 2
   auto p = Random::genInteger(length, true);
@@ -44,7 +43,6 @@ PaillierEncryption::PaillierEncryption(int byteLength)
 // Generate a new Keypair with seed
 PaillierEncryption::PaillierEncryption(int byteLength, vector<uint8_t> seed)
 {
-  this->byteLength = byteLength;
   auto length = byteLength >> 1;
 
   auto iseed = Integer::createWithBinary(seed);
@@ -68,18 +66,37 @@ PaillierEncryption::PaillierEncryption(int byteLength, vector<uint8_t> seed)
   init2(p, q);
 }
 
-// Import KeyPair From N (public key), can perform encrypt
-PaillierEncryption::PaillierEncryption(const std::shared_ptr<Integer> &N)
-    : PaillierEncryption::PaillierEncryption(N, Integer::ONE()) {}
-
-// Import KeyPair From Lambda and N (private & public key), can perform encrypt, decrypt
-PaillierEncryption::PaillierEncryption(const std::shared_ptr<Integer> &N, const std::shared_ptr<Integer> &lamda)
+// internal no group elements
+PaillierEncryption::PaillierEncryption(const std::shared_ptr<Integer> &N,
+                                       const std::shared_ptr<Integer> &lamda)
 {
   this->n = N;
-  this->byteLength = this->n->toBinary().size();
   this->lambda = lamda;
 
   init();
+}
+
+// Import KeyPair From N (public key) and group elements, can perform encrypt
+PaillierEncryption::PaillierEncryption(const shared_ptr<Integer> &N,
+                                       const shared_ptr<Integer> &GP_Q,
+                                       const shared_ptr<Integer> &GP_P,
+                                       const shared_ptr<Integer> &GP_G)
+    : PaillierEncryption::PaillierEncryption(N, Integer::ONE(), GP_Q, GP_P, GP_G) {}
+
+// Import KeyPair From Lambda and N (private & public key), can perform encrypt, decrypt
+PaillierEncryption::PaillierEncryption(
+    const std::shared_ptr<Integer> &N,
+    const std::shared_ptr<Integer> &lamda,
+    const shared_ptr<Integer> &GP_Q,
+    const shared_ptr<Integer> &GP_P,
+    const shared_ptr<Integer> &GP_G)
+    : PaillierEncryption::PaillierEncryption(N, lamda)
+{
+  if (!GP_P->eq(n2) || GP_Q->lte(GP_P) || !GP_Q->isPrime() || !GP_G->modPow(GP_P, GP_Q)->eq(Integer::ONE()))
+    throw invalid_argument("Group element is not correct");
+
+  this->Q = GP_Q;
+  this->G = GP_G;
 }
 
 // Import KeyPair From p, q and N (private & public key), can perform encrypt, decrypt

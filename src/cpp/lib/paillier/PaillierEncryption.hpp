@@ -13,7 +13,6 @@ class PaillierEncryption
 {
 
 private:
-  int32_t byteLength;
   // Keypair
   shared_ptr<Integer> lambda; // lambda = (p-1)(q-1) mod n
   shared_ptr<Integer> mu;     // mu = lambda^-1 mod n
@@ -26,8 +25,9 @@ private:
   shared_ptr<Integer> n2; // p = n^2
   shared_ptr<Integer> G;  // generator
 
-  void init();                                                            // init value n2, g, mu
-  void init2(const shared_ptr<Integer> &p, const shared_ptr<Integer> &q); // init value Q, G
+  PaillierEncryption(const std::shared_ptr<Integer> &N, const std::shared_ptr<Integer> &lamda); // internal no group elements
+  void init();                                                                                  // init value n2, g, mu
+  void init2(const shared_ptr<Integer> &p, const shared_ptr<Integer> &q);                       // init value Q, G
 
 public:
   // Generate a Cryptosystem
@@ -39,13 +39,13 @@ public:
   // Generate a new Keypair with Seed
   PaillierEncryption(int byteLength, vector<uint8_t> seed);
 
-  // Import KeyPair From N (public key), can perform encrypt
-  PaillierEncryption(const std::shared_ptr<Integer> &N);
+  // Import KeyPair from N (public key) and group elements, can perform encrypt
+  PaillierEncryption(const shared_ptr<Integer> &N, const shared_ptr<Integer> &GP_Q, const shared_ptr<Integer> &GP_P, const shared_ptr<Integer> &GP_G);
 
-  // Import KeyPair From Lambda and N (private & public key), can perform encrypt, decrypt
-  PaillierEncryption(const std::shared_ptr<Integer> &N, const std::shared_ptr<Integer> &lamda);
+  // Import KeyPair from Lambda and N (private & public key) and group elements, can perform encrypt, decrypt
+  PaillierEncryption(const std::shared_ptr<Integer> &N, const std::shared_ptr<Integer> &lamda, const shared_ptr<Integer> &GP_Q, const shared_ptr<Integer> &GP_P, const shared_ptr<Integer> &GP_G);
 
-  // Import KeyPair From p, q and N (private & public key), can perform encrypt, decrypt
+  // Import KeyPair from p, q and N (private & public key), can perform encrypt, decrypt
   PaillierEncryption(const shared_ptr<Integer> &N, const shared_ptr<Integer> &p, const shared_ptr<Integer> &q);
 
   // Export Private Key

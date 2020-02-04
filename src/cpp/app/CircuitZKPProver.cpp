@@ -31,11 +31,11 @@ vector<shared_ptr<Integer>> CircuitZKPProver::commit()
   randD = Random::genInteger(zkp->GP_P);
 
   for (size_t i = 0; i < zkp->m; i++)
-    ret.push_back(zkp->commitScheme->commit(A->row(i), randA[i]));
+    ret.push_back(zkp->commitScheme->commit(A->values[i], randA[i]));
   for (size_t i = 0; i < zkp->m; i++)
-    ret.push_back(zkp->commitScheme->commit(B->row(i), randB[i]));
+    ret.push_back(zkp->commitScheme->commit(B->values[i], randB[i]));
   for (size_t i = 0; i < zkp->m; i++)
-    ret.push_back(zkp->commitScheme->commit(C->row(i), randC[i]));
+    ret.push_back(zkp->commitScheme->commit(C->values[i], randC[i]));
 
   ret.push_back(zkp->commitScheme->commit(D, randD));
 
@@ -47,22 +47,22 @@ vector<shared_ptr<Integer>> CircuitZKPProver::polyCommit(const shared_ptr<Intege
   const size_t m = zkp->m;
   const auto p = zkp->GP_P;
 
-  zkp->setY(y);                  // recalculate cachedY_ and cachedY_Mq
-  auto Y = zkp->getY(y)->row(0); // [1, y, y^2, ... , y^m]
-  auto Y_ = zkp->getY_(y);       // [y^m, y^2m, ... , y^mn]
+  zkp->setY(y);                     // recalculate cachedY_ and cachedY_Mq
+  auto Y = zkp->getY(y)->values[0]; // [1, y, y^2, ... , y^m]
+  auto Y_ = zkp->getY_(y);          // [y^m, y^2m, ... , y^mn]
 
   // r(X) = SUM(ai * y^i * X^i) + SUM(bi * X^-i) + X^m * SUM(ci * X^i) + d * X^2m+1
   auto rx = make_shared<Polynomial>();
   for (size_t i = 1; i <= m; i++)
   {
-    auto ai = make_shared<Matrix>(A->row(i - 1));
+    auto ai = make_shared<Matrix>(A->values[i - 1]);
     ai = ai->mul(Y[i], p);
     rx->put(i, ai);
 
-    auto bi = make_shared<Matrix>(B->row(i - 1));
+    auto bi = make_shared<Matrix>(B->values[i - 1]);
     rx->put(-i, bi);
 
-    auto ci = make_shared<Matrix>(C->row(i - 1));
+    auto ci = make_shared<Matrix>(C->values[i - 1]);
     rx->put(m + i, ci);
   }
   auto di = make_shared<Matrix>(D);
@@ -92,11 +92,11 @@ vector<shared_ptr<Integer>> CircuitZKPProver::polyCommit(const shared_ptr<Intege
   vector<shared_ptr<Integer>> ti;
   for (int i = d1; i >= 1; i--)
   {
-    ti.push_back(tx->get(-i)->row(0)[0]);
+    ti.push_back(tx->get(-i)->values[0][0]);
   }
   for (int i = 1; i <= d2; i++)
   {
-    ti.push_back(tx->get(i)->row(0)[0]);
+    ti.push_back(tx->get(i)->values[0][0]);
   }
   txT = zkp->commitScheme->calcT(zkp->txM1, zkp->txM2, zkp->txN, ti);
   txRi.clear();
@@ -128,9 +128,9 @@ vector<shared_ptr<Integer>> CircuitZKPProver::prove(const shared_ptr<Integer> &y
     auto xmi = prevXM = prevXM->modMul(x, p);
     auto xi_ = xi->inv(p);
 
-    auto a = make_shared<Matrix>(A->row(i - 1));
-    auto b = make_shared<Matrix>(B->row(i - 1));
-    auto c = make_shared<Matrix>(C->row(i - 1));
+    auto a = make_shared<Matrix>(A->values[i - 1]);
+    auto b = make_shared<Matrix>(B->values[i - 1]);
+    auto c = make_shared<Matrix>(C->values[i - 1]);
     a = a->mul(xi, p)->mul(yi, p);
     b = b->mul(xi_, p);
     c = c->mul(xmi, p);

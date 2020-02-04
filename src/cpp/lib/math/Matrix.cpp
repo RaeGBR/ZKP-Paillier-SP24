@@ -54,6 +54,11 @@ Matrix::Matrix(size_t m, size_t n)
       values[i][j] = Integer::ZERO();
     }
   }
+
+  for (size_t i = 0; i < n; i++)
+  {
+    zeroVector.push_back(Integer::ZERO());
+  }
 }
 
 Matrix::Matrix(const vector<int> &values)
@@ -69,6 +74,7 @@ Matrix::Matrix(const vector<int> &values)
   for (size_t i = 0; i < n; i++)
   {
     this->values[0].push_back(make_shared<IntegerImpl>(values[i]));
+    zeroVector.push_back(Integer::ZERO());
   }
 }
 
@@ -90,6 +96,11 @@ Matrix::Matrix(const vector<vector<shared_ptr<Integer>>> &values)
     if (values[i].size() != n)
       throw invalid_argument("matrix initial values does not fit the matrix size");
     this->values.push_back(vector<shared_ptr<Integer>>(values[i].begin(), values[i].end()));
+  }
+
+  for (size_t i = 0; i < n; i++)
+  {
+    zeroVector.push_back(Integer::ZERO());
   }
 }
 
@@ -219,10 +230,10 @@ shared_ptr<Matrix> Matrix::dot(const shared_ptr<Matrix> &b, const shared_ptr<Int
   return this->mul(t, modulus);
 }
 
-vector<shared_ptr<Integer>> Matrix::row(size_t i)
+vector<shared_ptr<Integer>> &Matrix::row(size_t i)
 {
   if (i < 0 || i >= m)
-    return make_shared<Matrix>(1, n)->values[0];
+    return zeroVector;
 
   return values[i];
 }
@@ -245,6 +256,7 @@ void Matrix::appendCol(const vector<shared_ptr<Integer>> &col)
     throw invalid_argument("matrix dimension not match for append row");
 
   n++;
+  zeroVector.push_back(Integer::ZERO());
   for (size_t i = 0; i < m; i++)
   {
     values[i].push_back(col[i]);

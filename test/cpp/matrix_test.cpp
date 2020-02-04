@@ -80,10 +80,22 @@ TEST(Matrix, Clone)
   EXPECT_EQ(b->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
   EXPECT_EQ(c->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
 
+  (*a)[0][0] = Integer::createWithString("7");
+  (*b)[0][0] = Integer::createWithString("8");
   (*c)[0][0] = Integer::createWithString("9");
-  EXPECT_EQ(a->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
-  EXPECT_EQ(b->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
+  EXPECT_EQ(a->toString(), "[[\"7\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
+  EXPECT_EQ(b->toString(), "[[\"8\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
   EXPECT_EQ(c->toString(), "[[\"9\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
+
+  c->appendCol({Integer::ONE(), Integer::ZERO()});
+  EXPECT_EQ(a->toString(), "[[\"7\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
+  EXPECT_EQ(b->toString(), "[[\"8\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
+  EXPECT_EQ(c->toString(), "[[\"9\",\"1\",\"2\",\"1\"],[\"3\",\"4\",\"5\",\"0\"]]");
+
+  (*c)[0][0] = Integer::ONE();
+  EXPECT_EQ(a->toString(), "[[\"7\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
+  EXPECT_EQ(b->toString(), "[[\"8\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
+  EXPECT_EQ(c->toString(), "[[\"1\",\"1\",\"2\",\"1\"],[\"3\",\"4\",\"5\",\"0\"]]");
 }
 
 TEST(Matrix, Group)

@@ -15,6 +15,9 @@ namespace cryptoplus
 
 class Matrix
 {
+private:
+  vector<shared_ptr<Integer>> zeroVector;
+
 public:
   static shared_ptr<Matrix> ZERO();
   static shared_ptr<Matrix> identity(size_t size); // Identity matrix
@@ -38,7 +41,7 @@ public:
   shared_ptr<Matrix> mul(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus = Integer::ZERO());
   shared_ptr<Matrix> inner(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus = Integer::ZERO());
   shared_ptr<Matrix> dot(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus = Integer::ZERO());
-  vector<shared_ptr<Integer>> row(size_t i);
+  vector<shared_ptr<Integer>> &row(size_t i);
   void appendRow(const vector<shared_ptr<Integer>> &row);
   void appendCol(const vector<shared_ptr<Integer>> &col);
 

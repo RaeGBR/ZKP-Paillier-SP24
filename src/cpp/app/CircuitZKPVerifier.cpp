@@ -194,7 +194,7 @@ shared_ptr<Polynomial> CircuitZKPVerifier::createSx(const shared_ptr<Integer> &y
   // s(X) = SUM(Wai(y) * y^-i * X^-i) + SUM(Wbi(y) * X^i) + X^-m * SUM(Wci(y) * X^-i)
   auto sx = make_shared<Polynomial>();
 
-  auto Y = getY(y)->row(0); // [1, y, y^2, ... , y^m]
+  auto Y = getY(y)->values[0]; // [1, y, y^2, ... , y^m]
 
   for (size_t i = 1; i <= m; i++)
   {

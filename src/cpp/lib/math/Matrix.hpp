@@ -42,6 +42,7 @@ public:
   shared_ptr<Matrix> inner(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus = Integer::ZERO());
   shared_ptr<Matrix> dot(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus = Integer::ZERO());
   vector<shared_ptr<Integer>> &row(size_t i);
+  void shift(const size_t n);
   void appendRow(const vector<shared_ptr<Integer>> &row);
   void appendCol(const vector<shared_ptr<Integer>> &col);
 

@@ -238,6 +238,23 @@ vector<shared_ptr<Integer>> &Matrix::row(size_t i)
   return values[i];
 }
 
+void Matrix::shift(const size_t n)
+{
+  this->n += n;
+
+  vector<shared_ptr<Integer>> v;
+  for (size_t i = 0; i < n; i++)
+  {
+    v.push_back(Integer::ZERO());
+  }
+
+  zeroVector.insert(zeroVector.begin(), v.begin(), v.end());
+  for (size_t i = 0; i < m; i++)
+  {
+    values[i].insert(values[i].begin(), v.begin(), v.end());
+  }
+}
+
 void Matrix::appendRow(const vector<shared_ptr<Integer>> &row)
 {
   if (row.size() != n)

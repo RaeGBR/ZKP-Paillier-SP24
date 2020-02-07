@@ -22,8 +22,8 @@ TEST(CircuitZKP, Test_1)
 
   // define circuit constrains
   auto mnCfg = CircuitZKPVerifier::calcMN(123); // explicitly define a too big circuit
-  int m = mnCfg[0];
-  int n = mnCfg[1];
+  auto m = mnCfg[0];
+  auto n = mnCfg[1];
 
   vector<shared_ptr<Matrix>> Wqa;
   vector<shared_ptr<Matrix>> Wqb;

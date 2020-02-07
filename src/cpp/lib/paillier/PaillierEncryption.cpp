@@ -92,8 +92,9 @@ PaillierEncryption::PaillierEncryption(
     const shared_ptr<Integer> &GP_G)
     : PaillierEncryption::PaillierEncryption(N, lamda)
 {
-  if (!GP_P->eq(n2) || GP_Q->lte(GP_P) || !GP_Q->isPrime() || !GP_G->modPow(GP_P, GP_Q)->eq(Integer::ONE()))
-    throw invalid_argument("Group element is not correct");
+  // TODO: check group elements relationship
+  // if (!GP_P->eq(n2) || GP_Q->lte(GP_P) || !GP_Q->isPrime() || !GP_G->modPow(GP_P, GP_Q)->eq(Integer::ONE()))
+  //   throw invalid_argument("Group element is not correct");
 
   this->Q = GP_Q;
   this->G = GP_G;

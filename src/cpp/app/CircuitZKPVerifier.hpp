@@ -12,6 +12,7 @@
 #include "../lib/math/Matrix.hpp"
 #include "../lib/math/Polynomial.hpp"
 #include "../lib/utils/HexUtils.hpp"
+#include "../lib/utils/Timer.hpp"
 
 namespace polyu
 {

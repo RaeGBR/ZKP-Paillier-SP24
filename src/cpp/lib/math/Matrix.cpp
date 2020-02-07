@@ -230,15 +230,17 @@ shared_ptr<Matrix> Matrix::dot(const shared_ptr<Matrix> &b, const shared_ptr<Int
   return this->mul(t, modulus);
 }
 
-vector<shared_ptr<Integer>> &Matrix::row(size_t i)
+bool Matrix::rowExists(size_t i)
 {
-  if (i < 0 || i >= m)
-    return zeroVector;
-
-  return values[i];
+  return i < m && values[i].size() > 0;
 }
 
-void Matrix::shift(const size_t n)
+vector<shared_ptr<Integer>> &Matrix::row(size_t i)
+{
+  return rowExists(i) ? values[i] : zeroVector;
+}
+
+void Matrix::shift(size_t n)
 {
   this->n += n;
 
@@ -252,6 +254,43 @@ void Matrix::shift(const size_t n)
   for (size_t i = 0; i < m; i++)
   {
     values[i].insert(values[i].begin(), v.begin(), v.end());
+  }
+}
+
+void Matrix::extend(size_t n)
+{
+  this->n += n;
+
+  vector<shared_ptr<Integer>> v;
+  for (size_t i = 0; i < n; i++)
+  {
+    v.push_back(Integer::ZERO());
+  }
+
+  zeroVector.insert(zeroVector.end(), v.begin(), v.end());
+  for (size_t i = 0; i < m; i++)
+  {
+    values[i].insert(values[i].end(), v.begin(), v.end());
+  }
+}
+
+void Matrix::trim()
+{
+  for (size_t i = 0; i < m; i++)
+  {
+    bool allZero = true;
+    for (size_t j = 0; j < n; j++)
+    {
+      if (!values[i][j]->eq(Integer::ZERO()))
+      {
+        allZero = false;
+        break;
+      }
+    }
+    if (allZero)
+    {
+      values[i].clear();
+    }
   }
 }
 
@@ -335,7 +374,7 @@ json Matrix::toJson()
   for (size_t i = 0; i < m; i++)
   {
     output[i] = json::array();
-    for (size_t j = 0; j < n; j++)
+    for (size_t j = 0; j < values[i].size(); j++)
     {
       output[i][j] = values[i][j]->toString();
     }

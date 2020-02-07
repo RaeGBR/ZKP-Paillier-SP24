@@ -411,6 +411,45 @@ TEST(Matrix, Shift)
   EXPECT_EQ(a->row(m + 1).size(), n + offset);
 }
 
+TEST(Matrix, Extend)
+{
+  const size_t m = 2;
+  const size_t n = 3;
+  auto a = make_shared<Matrix>(m, n);
+  for (size_t i = 0; i < m; i++)
+  {
+    for (size_t j = 0; j < n; j++)
+    {
+      (*a)[i][j] = Integer::createWithString(to_string(i * n + j + 1));
+    }
+  }
+
+  EXPECT_EQ(a->m, m);
+  EXPECT_EQ(a->n, n);
+  EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\"],[\"4\",\"5\",\"6\"]]");
+
+  size_t offset = 3;
+  a->extend(offset);
+  EXPECT_EQ(a->m, m);
+  EXPECT_EQ(a->n, n + offset);
+  EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\",\"0\",\"0\",\"0\"],[\"4\",\"5\",\"6\",\"0\",\"0\",\"0\"]]");
+  EXPECT_EQ(a->row(m + 1).size(), n + offset);
+}
+
+TEST(Matrix, Trim)
+{
+  auto a = make_shared<Matrix>(vector<int>({1, 2, 3, 0, 0, 0, 4, 5, 6}))->group(3);
+
+  EXPECT_EQ(a->m, 3);
+  EXPECT_EQ(a->n, 3);
+  EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\"],[\"0\",\"0\",\"0\"],[\"4\",\"5\",\"6\"]]");
+
+  a->trim();
+  EXPECT_EQ(a->m, 3);
+  EXPECT_EQ(a->n, 3);
+  EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\"],[],[\"4\",\"5\",\"6\"]]");
+}
+
 TEST(Matrix, AppendRow)
 {
   const size_t m = 2;

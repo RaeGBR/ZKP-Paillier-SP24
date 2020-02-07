@@ -41,8 +41,11 @@ public:
   shared_ptr<Matrix> mul(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus = Integer::ZERO());
   shared_ptr<Matrix> inner(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus = Integer::ZERO());
   shared_ptr<Matrix> dot(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus = Integer::ZERO());
+  bool rowExists(size_t i);
   vector<shared_ptr<Integer>> &row(size_t i);
-  void shift(const size_t n);
+  void shift(size_t n);
+  void extend(size_t n);
+  void trim(); // trim all zero rows
   void appendRow(const vector<shared_ptr<Integer>> &row);
   void appendCol(const vector<shared_ptr<Integer>> &col);
 

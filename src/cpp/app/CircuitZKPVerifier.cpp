@@ -135,9 +135,13 @@ shared_ptr<Matrix> CircuitZKPVerifier::Wai(size_t i, const shared_ptr<Integer> &
   auto ret = make_shared<Matrix>(1, n);
   for (size_t q = 1; q <= Q; q++)
   {
-    auto w = make_shared<Matrix>(Wqa[q - 1]->row(i - 1));
-    w = w->mul(getY_Mq(y, q), GP_P);
-    ret = ret->add(w, GP_P);
+    // zero row may trimmed, only process on non-zero rows
+    if (Wqa[q - 1]->rowExists(i - 1))
+    {
+      auto w = make_shared<Matrix>(Wqa[q - 1]->row(i - 1));
+      w = w->mul(getY_Mq(y, q), GP_P);
+      ret = ret->add(w, GP_P);
+    }
   }
   return ret;
 }
@@ -150,9 +154,13 @@ shared_ptr<Matrix> CircuitZKPVerifier::Wbi(size_t i, const shared_ptr<Integer> &
   auto ret = make_shared<Matrix>(1, n);
   for (size_t q = 1; q <= Q; q++)
   {
-    auto w = make_shared<Matrix>(Wqb[q - 1]->row(i - 1));
-    w = w->mul(getY_Mq(y, q), GP_P);
-    ret = ret->add(w, GP_P);
+    // zero row may trimmed, only process on non-zero rows
+    if (Wqb[q - 1]->rowExists(i - 1))
+    {
+      auto w = make_shared<Matrix>(Wqb[q - 1]->row(i - 1));
+      w = w->mul(getY_Mq(y, q), GP_P);
+      ret = ret->add(w, GP_P);
+    }
   }
   return ret;
 }
@@ -165,9 +173,13 @@ shared_ptr<Matrix> CircuitZKPVerifier::Wci(size_t i, const shared_ptr<Integer> &
   auto ret = make_shared<Matrix>(1, n);
   for (size_t q = 1; q <= Q; q++)
   {
-    auto w = make_shared<Matrix>(Wqc[q - 1]->row(i - 1));
-    w = w->mul(getY_Mq(y, q), GP_P);
-    ret = ret->add(w, GP_P);
+    // zero row may trimmed, only process on non-zero rows
+    if (Wqc[q - 1]->rowExists(i - 1))
+    {
+      auto w = make_shared<Matrix>(Wqc[q - 1]->row(i - 1));
+      w = w->mul(getY_Mq(y, q), GP_P);
+      ret = ret->add(w, GP_P);
+    }
   }
 
   auto Y_ = getY_(y);

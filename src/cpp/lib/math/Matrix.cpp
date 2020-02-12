@@ -242,6 +242,8 @@ vector<shared_ptr<Integer>> &Matrix::row(size_t i)
 
 void Matrix::shift(size_t n)
 {
+  if(n == 0) return;
+
   this->n += n;
 
   vector<shared_ptr<Integer>> v;

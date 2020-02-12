@@ -109,6 +109,17 @@ void CEnc::wireUp(const shared_ptr<Integer> &C)
   Kq[q - 1] = C;
 }
 
+void CEnc::updateCipher(const shared_ptr<Integer> &C)
+{
+  Kq[linearCount - 1] = C;
+}
+
+/*
+ * A[0][0] = m
+ * A[0][1] = r
+ * C[0][q-1] = c
+ * Kq[0][q-1] = c
+ */
 void CEnc::run(const shared_ptr<Integer> &m, const shared_ptr<Integer> &r)
 {
   auto n = 0;

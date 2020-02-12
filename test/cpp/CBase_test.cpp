@@ -124,6 +124,9 @@ TEST(CBase, CopyCircuit)
   auto circuit2 = make_shared<CBase>();
   CBase::copyCircuit(circuit1, circuit2);
 
+  EXPECT_EQ(circuit1->gateCount, circuit2->gateCount);
+  EXPECT_EQ(circuit1->linearCount, circuit2->linearCount);
+  EXPECT_EQ(circuit1->offset, circuit2->offset);
   EXPECT_EQ(circuit1->GP_Q->toString(), circuit2->GP_Q->toString());
   EXPECT_EQ(circuit1->GP_P->toString(), circuit2->GP_P->toString());
   EXPECT_EQ(circuit1->GP_G->toString(), circuit2->GP_G->toString());
@@ -141,6 +144,10 @@ TEST(CBase, CopyCircuit)
   EXPECT_EQ(circuit1->A->toString(), circuit2->A->toString());
   EXPECT_EQ(circuit1->B->toString(), circuit2->B->toString());
   EXPECT_EQ(circuit1->C->toString(), circuit2->C->toString());
+
+  EXPECT_EQ(circuit2->gateCount, 6);
+  EXPECT_EQ(circuit2->linearCount, 2);
+  EXPECT_EQ(circuit2->offset, 0);
 
   circuit2->Wqa[0]->values[0][0] = Integer::TWO();
   EXPECT_EQ(circuit1->Wqa[0]->toString(), "[[\"1\",\"0\",\"0\",\"0\",\"0\",\"0\"]]");
@@ -204,4 +211,80 @@ TEST(CBase, Shift)
   EXPECT_EQ(circuit->C->toString(), "[[\"0\",\"0\",\"0\",\"0\",\"5\",\"6\"]]");
 }
 
+TEST(CBase, Append)
+{
+  vector<shared_ptr<Matrix>> Wqa1;
+  vector<shared_ptr<Matrix>> Wqb1;
+  vector<shared_ptr<Matrix>> Wqc1;
+  vector<shared_ptr<Integer>> Kq1;
+
+  Wqa1.push_back(make_shared<Matrix>(vector<int>({1, 0, 0, 0, 0, 0})));
+  Wqa1.push_back(make_shared<Matrix>(vector<int>({0, 1, 0, 0, 0, 0})));
+  Wqb1.push_back(make_shared<Matrix>(vector<int>({0, 0, 1, 0, 0, 0})));
+  Wqb1.push_back(make_shared<Matrix>(vector<int>({0, 0, 0, 1, 0, 0})));
+  Wqc1.push_back(make_shared<Matrix>(vector<int>({0, 0, 0, 0, 1, 0})));
+  Wqc1.push_back(make_shared<Matrix>(vector<int>({0, 0, 0, 0, 0, 1})));
+  Kq1.push_back(make_shared<IntegerImpl>(7));
+  Kq1.push_back(make_shared<IntegerImpl>(9));
+
+  auto A1 = make_shared<Matrix>(vector<int>({1, 2, 0, 0, 0, 0}));
+  auto B1 = make_shared<Matrix>(vector<int>({0, 0, 3, 4, 0, 0}));
+  auto C1 = make_shared<Matrix>(vector<int>({0, 0, 0, 0, 5, 6}));
+
+  auto circuit1 = make_shared<CEnc>(GP_Q, GP_P, GP_G, Wqa1, Wqb1, Wqc1, Kq1, A1, B1, C1);
+
+  EXPECT_EQ(circuit1->gateCount, 6);
+  EXPECT_EQ(circuit1->linearCount, 2);
+
+  EXPECT_EQ(circuit1->Wqa[0]->toString(), "[[\"1\",\"0\",\"0\",\"0\",\"0\",\"0\"]]");
+  EXPECT_EQ(circuit1->Wqa[1]->toString(), "[[\"0\",\"1\",\"0\",\"0\",\"0\",\"0\"]]");
+  EXPECT_EQ(circuit1->Wqb[0]->toString(), "[[\"0\",\"0\",\"1\",\"0\",\"0\",\"0\"]]");
+  EXPECT_EQ(circuit1->Wqb[1]->toString(), "[[\"0\",\"0\",\"0\",\"1\",\"0\",\"0\"]]");
+  EXPECT_EQ(circuit1->Wqc[0]->toString(), "[[\"0\",\"0\",\"0\",\"0\",\"1\",\"0\"]]");
+  EXPECT_EQ(circuit1->Wqc[1]->toString(), "[[\"0\",\"0\",\"0\",\"0\",\"0\",\"1\"]]");
+  EXPECT_EQ(circuit1->Kq[0]->toString(), "7");
+  EXPECT_EQ(circuit1->Kq[1]->toString(), "9");
+
+  EXPECT_EQ(circuit1->A->toString(), "[[\"1\",\"2\",\"0\",\"0\",\"0\",\"0\"]]");
+  EXPECT_EQ(circuit1->B->toString(), "[[\"0\",\"0\",\"3\",\"4\",\"0\",\"0\"]]");
+  EXPECT_EQ(circuit1->C->toString(), "[[\"0\",\"0\",\"0\",\"0\",\"5\",\"6\"]]");
+
+  vector<shared_ptr<Matrix>> Wqa2;
+  vector<shared_ptr<Matrix>> Wqb2;
+  vector<shared_ptr<Matrix>> Wqc2;
+  vector<shared_ptr<Integer>> Kq2;
+
+  Wqa2.push_back(make_shared<Matrix>(vector<int>({2, 0, 0})));
+  Wqb2.push_back(make_shared<Matrix>(vector<int>({0, 2, 0})));
+  Wqc2.push_back(make_shared<Matrix>(vector<int>({0, 0, 2})));
+  Kq2.push_back(make_shared<IntegerImpl>(8));
+
+  auto A2 = make_shared<Matrix>(vector<int>({1, 2, 3}));
+  auto B2 = make_shared<Matrix>(vector<int>({4, 5, 6}));
+  auto C2 = make_shared<Matrix>(vector<int>({7, 8, 9}));
+
+  auto circuit2 = make_shared<CEnc>(GP_Q, GP_P, GP_G, Wqa2, Wqb2, Wqc2, Kq2, A2, B2, C2);
+
+  circuit1->append(circuit2);
+
+  EXPECT_EQ(circuit1->gateCount, 9);
+  EXPECT_EQ(circuit1->linearCount, 3);
+
+  EXPECT_EQ(circuit1->Wqa[0]->toString(), "[[\"1\",\"0\",\"0\",\"0\",\"0\",\"0\"]]");
+  EXPECT_EQ(circuit1->Wqa[1]->toString(), "[[\"0\",\"1\",\"0\",\"0\",\"0\",\"0\"]]");
+  EXPECT_EQ(circuit1->Wqa[2]->toString(), "[[\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"2\",\"0\",\"0\"]]");
+  EXPECT_EQ(circuit1->Wqb[0]->toString(), "[[\"0\",\"0\",\"1\",\"0\",\"0\",\"0\"]]");
+  EXPECT_EQ(circuit1->Wqb[1]->toString(), "[[\"0\",\"0\",\"0\",\"1\",\"0\",\"0\"]]");
+  EXPECT_EQ(circuit1->Wqb[2]->toString(), "[[\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"2\",\"0\"]]");
+  EXPECT_EQ(circuit1->Wqc[0]->toString(), "[[\"0\",\"0\",\"0\",\"0\",\"1\",\"0\"]]");
+  EXPECT_EQ(circuit1->Wqc[1]->toString(), "[[\"0\",\"0\",\"0\",\"0\",\"0\",\"1\"]]");
+  EXPECT_EQ(circuit1->Wqc[2]->toString(), "[[\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"2\"]]");
+  EXPECT_EQ(circuit1->Kq[0]->toString(), "7");
+  EXPECT_EQ(circuit1->Kq[1]->toString(), "9");
+  EXPECT_EQ(circuit1->Kq[2]->toString(), "8");
+
+  EXPECT_EQ(circuit1->A->toString(), "[[\"1\",\"2\",\"0\",\"0\",\"0\",\"0\",\"1\",\"2\",\"3\"]]");
+  EXPECT_EQ(circuit1->B->toString(), "[[\"0\",\"0\",\"3\",\"4\",\"0\",\"0\",\"4\",\"5\",\"6\"]]");
+  EXPECT_EQ(circuit1->C->toString(), "[[\"0\",\"0\",\"0\",\"0\",\"5\",\"6\",\"7\",\"8\",\"9\"]]");
+}
 } // namespace

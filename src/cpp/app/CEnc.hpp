@@ -23,6 +23,7 @@ public:
   using CBase::CBase;
   CEnc(const shared_ptr<PaillierEncryption> &crypto);
 
+  void updateCipher(const shared_ptr<Integer> &C);
   void wireUp(const shared_ptr<Integer> &C = Integer::ZERO());
   void run(const shared_ptr<Integer> &m, const shared_ptr<Integer> &r);
 };

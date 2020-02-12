@@ -114,5 +114,55 @@ TEST(CBatchEnc, Batch_encrypt_data)
   auto lj3 = proverCir->calculateLj();
 
   EXPECT_EQ(lj1, lj3);
+
+  verifierCir->wireUp(lj1);
+  proverCir->wireUp(lj1);
+  proverCir->run(lj1);
+
+  EXPECT_EQ(verifierCir->gateCount, proverCir->gateCount);
+  EXPECT_EQ(verifierCir->linearCount, proverCir->linearCount);
+
+  auto N = proverCir->gateCount;
+  auto Q = proverCir->linearCount;
+  auto mnCfg = CircuitZKPVerifier::calcMN(N);
+  auto m = mnCfg[0];
+  auto n = mnCfg[1];
+  cout << "Q," << Q << endl;
+  cout << "N," << N << endl;
+  cout << "m," << m << endl;
+  cout << "n," << n << endl;
+
+  verifierCir->group(n, m);
+  verifierCir->trim();
+  proverCir->group(n, m);
+  proverCir->trim();
+
+  auto verifier = make_shared<CircuitZKPVerifier>(
+      GP_Q, GP_P, GP_G,
+      verifierCir->Wqa, verifierCir->Wqb, verifierCir->Wqc, verifierCir->Kq,
+      m, n);
+  auto proverZkp = make_shared<CircuitZKPVerifier>(
+      GP_Q, GP_P, GP_G,
+      proverCir->Wqa, proverCir->Wqb, proverCir->Wqc, proverCir->Kq,
+      m, n);
+  auto prover = make_shared<CircuitZKPProver>(proverZkp, proverCir->A, proverCir->B, proverCir->C);
+
+  vector<shared_ptr<Integer>> commits = prover->commit();
+
+  verifier->setCommits(commits);
+  auto y = verifier->calculateY();
+
+  auto pc = prover->polyCommit(y);
+
+  verifier->setPolyCommits(pc);
+  auto x = verifier->calculateX();
+
+  auto proofs = prover->prove(y, x);
+
+  auto isValid = verifier->verify(proofs, y, x);
+
+  EXPECT_TRUE(isValid);
+
+  cout << "valid: " << (isValid ? "true" : "false") << "\n";
 }
 } // namespace

@@ -97,9 +97,14 @@ void CBatchEnc::setCipher(const vector<shared_ptr<Integer>> &Cm,
   this->CRj.insert(this->CRj.begin(), CRj.begin(), CRj.end());
 }
 
+size_t CBatchEnc::getLjLength()
+{
+  return (size_t)ceil((msgCount * 1.0 * slotsPerMsg * rangeProofCount) / 8.0);
+}
+
 binary_t CBatchEnc::calculateLj()
 {
-  size_t len = (size_t)ceil((msgCount * 1.0 * slotsPerMsg * rangeProofCount) / 8.0);
+  size_t len = getLjLength();
   binary_t seed;
   for (auto v : Cm)
     HexUtils::append(seed, v->toBinary());
@@ -111,10 +116,94 @@ binary_t CBatchEnc::calculateLj()
   return Random::genBinary(len, seed);
 }
 
-void CBatchEnc::wireUp(const shared_ptr<Integer> &C)
+void CBatchEnc::wireUp(const binary_t &Lj)
 {
+  auto encCir = make_shared<CEnc>(crypto);
+  encCir->wireUp();
+  auto encCirN = encCir->gateCount;
+  auto encCirQ = encCir->linearCount;
+
+  // Const{ci, mi, ri} x k
+  // A[0][0] = m
+  // A[0][1] = r
+  // C[0][q-1] = c
+  size_t encMiOffset = 0;
+  for (size_t i = 0; i < msgCount; i++)
+  {
+    auto cir = encCir;
+    auto c = this->Cm[i];
+    cir->updateCipher(c);
+    this->append(cir);
+  }
+
+  // Const{c'j, R'j, r'j} x j
+  size_t encRjOffset = gateCount;
+  for (size_t i = 0; i < rangeProofCount; i++)
+  {
+    auto cir = encCir;
+    auto c = this->CRj[i];
+    cir->updateCipher(c);
+    this->append(cir);
+  }
+
+  // Const{c*s, m*s, r*s} x s
+  size_t encM_Offset = gateCount;
+  for (size_t i = 0; i < batchCount; i++)
+  {
+    auto cir = encCir;
+    auto c = this->Cm_[i];
+    cir->updateCipher(c);
+    this->append(cir);
+  }
 }
 
-void CBatchEnc::run(const shared_ptr<Integer> &m, const shared_ptr<Integer> &r)
+void CBatchEnc::run(const binary_t &Lj)
 {
+  auto encCir = make_shared<CEnc>(crypto);
+  encCir->wireUp();
+  auto encCirN = encCir->gateCount;
+  auto encCirQ = encCir->linearCount;
+
+  size_t offset = 0;
+
+  // Const{ci, mi, ri} x k
+  // A[0][0] = m
+  // A[0][1] = r
+  // C[0][q-1] = c
+  for (size_t i = 0; i < msgCount; i++)
+  {
+    auto cir = encCir;
+    auto c = this->Cm[i];
+    auto m = this->m[i];
+    auto r = this->Rm[i];
+    cir->updateCipher(c);
+    cir->run(m, r);
+    offset = this->assignValues(cir, offset);
+  }
+
+  // Const{c'j, R'j, r'j} x j
+  size_t encRjOffset = gateCount;
+  for (size_t i = 0; i < rangeProofCount; i++)
+  {
+    auto cir = encCir;
+    auto c = this->CRj[i];
+    auto m = this->Rj[i];
+    auto r = this->RRj[i];
+    cir->updateCipher(c);
+    cir->run(m, r);
+    offset = this->assignValues(cir, offset);
+  }
+
+  // Const{c*s, m*s, r*s} x s
+  size_t encM_Offset = gateCount;
+  for (size_t i = 0; i < batchCount; i++)
+  {
+    auto cir = encCir;
+    auto c = this->Cm_[i];
+    auto m = this->m_[i];
+    auto r = this->Rm_[i];
+    cir->updateCipher(c);
+    cir->run(m, r);
+    offset = this->assignValues(cir, offset);
+  }
 }

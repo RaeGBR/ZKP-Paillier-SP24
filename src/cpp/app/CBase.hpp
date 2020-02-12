@@ -16,7 +16,7 @@ namespace polyu
 class CBase
 {
 public:
-  static void copyCircuit(const shared_ptr<CBase> &values, shared_ptr<CBase> &target);
+  static void copyCircuit(const shared_ptr<CBase> &values, const shared_ptr<CBase> &target);
 
   shared_ptr<Integer> GP_Q;
   shared_ptr<Integer> GP_P;
@@ -52,6 +52,8 @@ public:
   void shift(size_t n);
   void group(size_t n, size_t m = 0);
   void trim();
+  void append(const shared_ptr<CBase> &b);
+  size_t assignValues(const shared_ptr<CBase> &b, size_t offset = 0);
   size_t addGate(size_t n = 1);
   size_t addLinear();
 

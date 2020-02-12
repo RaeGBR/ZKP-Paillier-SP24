@@ -50,10 +50,11 @@ public:
   void setCipher(const vector<shared_ptr<Integer>> &Cm,
                  const vector<shared_ptr<Integer>> &Cm_,
                  const vector<shared_ptr<Integer>> &CRj);
+  size_t getLjLength();
   binary_t calculateLj();
 
-  void wireUp(const shared_ptr<Integer> &C = Integer::ZERO());
-  void run(const shared_ptr<Integer> &m, const shared_ptr<Integer> &r);
+  void wireUp(const binary_t &Lj);
+  void run(const binary_t &Lj);
 };
 
 } // namespace polyu

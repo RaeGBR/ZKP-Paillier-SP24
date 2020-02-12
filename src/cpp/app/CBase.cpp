@@ -2,7 +2,7 @@
 
 using namespace polyu;
 
-void CBase::copyCircuit(const shared_ptr<CBase> &values, shared_ptr<CBase> &target)
+void CBase::copyCircuit(const shared_ptr<CBase> &values, const shared_ptr<CBase> &target)
 {
   target->GP_Q = values->GP_Q;
   target->GP_P = values->GP_P;
@@ -24,6 +24,10 @@ void CBase::copyCircuit(const shared_ptr<CBase> &values, shared_ptr<CBase> &targ
   target->A = values->A->clone();
   target->B = values->B->clone();
   target->C = values->C->clone();
+
+  target->linearCount = values->linearCount;
+  target->gateCount = values->gateCount;
+  target->offset = values->offset;
 }
 
 CBase::CBase() {}
@@ -94,6 +98,72 @@ void CBase::trim()
     Wqb[i]->trim();
     Wqc[i]->trim();
   }
+}
+
+void CBase::append(const shared_ptr<CBase> &b)
+{
+  if (b->gateCount == 0 || b->linearCount == 0)
+    throw invalid_argument("appended circuit is empty");
+
+  auto oldN = gateCount;
+  auto oldQ = linearCount;
+  if (gateCount == 0)
+  {
+    A = b->A->clone();
+    B = b->B->clone();
+    C = b->C->clone();
+  }
+  else
+  {
+    this->A->extend(b->gateCount);
+    this->B->extend(b->gateCount);
+    this->C->extend(b->gateCount);
+    for (size_t i = 0; i < b->gateCount; i++)
+    {
+      this->A->values[0][oldN + i] = b->A->values[0][i];
+      this->B->values[0][oldN + i] = b->B->values[0][i];
+      this->C->values[0][oldN + i] = b->C->values[0][i];
+    }
+  }
+  gateCount += b->gateCount;
+
+  for (size_t i = 0; i < b->linearCount; i++)
+  {
+    auto wqa = b->Wqa[i]->clone();
+    auto wqb = b->Wqb[i]->clone();
+    auto wqc = b->Wqc[i]->clone();
+    wqa->shift(oldN);
+    wqb->shift(oldN);
+    wqc->shift(oldN);
+    this->Wqa.push_back(wqa);
+    this->Wqb.push_back(wqb);
+    this->Wqc.push_back(wqc);
+    this->Kq.push_back(b->Kq[i]);
+  }
+  linearCount += b->linearCount;
+}
+
+size_t CBase::assignValues(const shared_ptr<CBase> &b, size_t offset)
+{
+  if (A == nullptr)
+    A = make_shared<Matrix>(1, gateCount);
+  if (B == nullptr)
+    B = make_shared<Matrix>(1, gateCount);
+  if (C == nullptr)
+    C = make_shared<Matrix>(1, gateCount);
+
+  size_t ret = offset + b->gateCount;
+  if (ret > gateCount)
+    throw invalid_argument("cannot assign values to circuit, exceed the max gate bound");
+
+  for (size_t i = 0; i < b->gateCount; i++)
+  {
+    A->values[0][offset + i] = b->A->values[0][i];
+    B->values[0][offset + i] = b->B->values[0][i];
+    C->values[0][offset + i] = b->C->values[0][i];
+  }
+
+  return ret;
 }
 
 size_t CBase::addGate(size_t n)

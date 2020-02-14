@@ -104,20 +104,24 @@ TEST(CBatchEnc, Batch_encrypt_data)
   auto CRj = proverCir->CRj;
 
   verifierCir->setCipher(Cm, Cm_, CRj);
-  auto lj1 = verifierCir->calculateLj();
-  auto lj2 = verifierCir->calculateLj();
+  auto ljir1 = verifierCir->calculateLjir();
+  auto ljir2 = verifierCir->calculateLjir();
 
-  EXPECT_EQ(lj1.size(), 6);
-  EXPECT_EQ(lj1, lj2);
+  EXPECT_EQ(ljir1.size(), 6);
+  EXPECT_EQ(ljir1, ljir2);
 
   // P: non-interactive mode, prover calculate challenge value by itself
-  auto lj3 = proverCir->calculateLj();
+  auto ljir3 = proverCir->calculateLjir();
 
-  EXPECT_EQ(lj1, lj3);
+  EXPECT_EQ(ljir1, ljir3);
 
-  verifierCir->wireUp(lj1);
-  proverCir->wireUp(lj1);
-  proverCir->run(lj1);
+  auto Lj = proverCir->calculateLj(ljir1);
+
+  EXPECT_EQ(Lj.size(), rangeProofCount);
+
+  verifierCir->wireUp(ljir1, Lj);
+  proverCir->wireUp(ljir1, Lj);
+  proverCir->run(ljir1, Lj);
 
   EXPECT_EQ(verifierCir->gateCount, proverCir->gateCount);
   EXPECT_EQ(verifierCir->linearCount, proverCir->linearCount);
@@ -127,10 +131,6 @@ TEST(CBatchEnc, Batch_encrypt_data)
   auto mnCfg = CircuitZKPVerifier::calcMN(N);
   auto m = mnCfg[0];
   auto n = mnCfg[1];
-  cout << "Q," << Q << endl;
-  cout << "N," << N << endl;
-  cout << "m," << m << endl;
-  cout << "n," << n << endl;
 
   verifierCir->group(n, m);
   verifierCir->trim();
@@ -162,7 +162,5 @@ TEST(CBatchEnc, Batch_encrypt_data)
   auto isValid = verifier->verify(proofs, y, x);
 
   EXPECT_TRUE(isValid);
-
-  cout << "valid: " << (isValid ? "true" : "false") << "\n";
 }
 } // namespace

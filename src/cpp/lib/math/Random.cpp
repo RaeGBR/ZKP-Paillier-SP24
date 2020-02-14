@@ -1,5 +1,5 @@
 #include "Random.hpp"
-
+/*
 shared_ptr<Integer> Random::genInteger(
     const shared_ptr<Integer> &max,
     const binary_t &seed,
@@ -38,6 +38,43 @@ shared_ptr<Integer> Random::genInteger(
 
   return ret;
 }
+/*/
+
+shared_ptr<Integer> Random::genInteger(
+    const shared_ptr<Integer> &max,
+    const binary_t &seed,
+    const bool positiveOnly)
+{
+  shared_ptr<Integer> ret;
+  size_t byteLength = max->toBinary().size();
+  binary_t hash = seed;
+  do
+  {
+    if (seed.size() == 0)
+    {
+      // No Seed
+      ret = genInteger(byteLength, false, seed)->mod(max);
+    }
+    else
+    {
+      // With Seed
+      hash = HashUtils::sha256(hash);
+      ret = genInteger(byteLength, false, hash)->mod(max);
+    }
+  } while (positiveOnly && ret->eq(Integer::ZERO()));
+
+  return ret;
+}
+
+shared_ptr<Integer> Random::genInteger(
+    const binary_t &_max,
+    const binary_t &seed,
+    const bool positiveOnly)
+{
+  auto max = Integer::createWithBinary(_max);
+  return genInteger(max, seed, positiveOnly);
+}
+//*/
 
 shared_ptr<Integer> Random::genInteger(int byteLength, bool prime, const binary_t &seed)
 {

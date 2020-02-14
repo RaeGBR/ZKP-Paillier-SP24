@@ -51,10 +51,11 @@ public:
                  const vector<shared_ptr<Integer>> &Cm_,
                  const vector<shared_ptr<Integer>> &CRj);
   size_t getLjLength();
-  binary_t calculateLj();
+  binary_t calculateLjir();
+  vector<shared_ptr<Integer>> calculateLj(const binary_t &Ljir);
 
-  void wireUp(const binary_t &Lj);
-  void run(const binary_t &Lj);
+  void wireUp(const binary_t &Ljir, const vector<shared_ptr<Integer>> &Lj);
+  void run(const binary_t &Ljir, const vector<shared_ptr<Integer>> &Lj);
 };
 
 } // namespace polyu

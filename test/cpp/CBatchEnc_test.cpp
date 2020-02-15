@@ -115,17 +115,22 @@ TEST(CBatchEnc, Batch_encrypt_data)
 
   EXPECT_EQ(ljir1, ljir3);
 
+  // P->V: prover compute Lj for range proof
   auto Lj = proverCir->calculateLj(ljir1);
 
   EXPECT_EQ(Lj.size(), rangeProofCount);
 
+  // P+V: create circuit constrains
   verifierCir->wireUp(ljir1, Lj);
   proverCir->wireUp(ljir1, Lj);
+
+  // P: assign circuit values
   proverCir->run(ljir1, Lj);
 
   EXPECT_EQ(verifierCir->gateCount, proverCir->gateCount);
   EXPECT_EQ(verifierCir->linearCount, proverCir->linearCount);
 
+  // P+V: setup ZKP protocol for the circuit
   auto N = proverCir->gateCount;
   auto Q = proverCir->linearCount;
   auto mnCfg = CircuitZKPVerifier::calcMN(N);
@@ -147,20 +152,27 @@ TEST(CBatchEnc, Batch_encrypt_data)
       m, n);
   auto prover = make_shared<CircuitZKPProver>(proverZkp, proverCir->A, proverCir->B, proverCir->C);
 
+  // P->V: prover commit the circuit arguments
   vector<shared_ptr<Integer>> commits = prover->commit();
 
+  // V->P: verifier calculate challenge value Y
   verifier->setCommits(commits);
   auto y = verifier->calculateY();
 
+  // P->V: prover perform polyComit
   auto pc = prover->polyCommit(y);
 
+  // V->P: verifier calculate challenge value X
   verifier->setPolyCommits(pc);
   auto x = verifier->calculateX();
 
+  // P->V: prover calculate the ZKP
   auto proofs = prover->prove(y, x);
 
+  // V: verify the proof
   auto isValid = verifier->verify(proofs, y, x);
 
   EXPECT_TRUE(isValid);
 }
+
 } // namespace

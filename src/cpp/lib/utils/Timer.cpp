@@ -15,7 +15,7 @@ double Timer::end(const string &name, bool quite)
   tDiff /= 1000;
   if (!quite)
   {
-    cout << "\"" << name << " time\"," << tDiff << endl;
+    cout << name << " time: " << tDiff << endl;
   }
   return tDiff;
 }

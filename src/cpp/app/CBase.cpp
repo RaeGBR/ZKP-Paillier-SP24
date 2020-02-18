@@ -120,9 +120,9 @@ void CBase::append(const shared_ptr<CBase> &b)
     this->C->extend(b->gateCount);
     for (size_t i = 0; i < b->gateCount; i++)
     {
-      this->A->values[0][oldN + i] = b->A->values[0][i];
-      this->B->values[0][oldN + i] = b->B->values[0][i];
-      this->C->values[0][oldN + i] = b->C->values[0][i];
+      this->A->cell(0, oldN + i, b->A->cell(0, i));
+      this->B->cell(0, oldN + i, b->B->cell(0, i));
+      this->C->cell(0, oldN + i, b->C->cell(0, i));
     }
   }
   gateCount += b->gateCount;
@@ -156,11 +156,23 @@ size_t CBase::assignValues(const shared_ptr<CBase> &b, size_t offset)
   if (ret > gateCount)
     throw invalid_argument("cannot assign values to circuit, exceed the max gate bound");
 
-  for (size_t i = 0; i < b->gateCount; i++)
+  for (auto it : b->A->values[0])
   {
-    A->values[0][offset + i] = b->A->values[0][i];
-    B->values[0][offset + i] = b->B->values[0][i];
-    C->values[0][offset + i] = b->C->values[0][i];
+    size_t i = it.first;
+    auto v = it.second;
+    A->cell(0, offset + i, v);
+  }
+  for (auto it : b->B->values[0])
+  {
+    size_t i = it.first;
+    auto v = it.second;
+    B->cell(0, offset + i, v);
+  }
+  for (auto it : b->C->values[0])
+  {
+    size_t i = it.first;
+    auto v = it.second;
+    C->cell(0, offset + i, v);
   }
 
   return ret;

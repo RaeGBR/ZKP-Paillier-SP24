@@ -3,6 +3,7 @@
 #include "../namespace.hpp"
 
 #include <stdexcept>
+#include <map>
 #include <vector>
 
 #include "Integer.hpp"
@@ -25,7 +26,7 @@ public:
                                         size_t n,
                                         const shared_ptr<Integer> &modulus = Integer::ZERO()); // [1, x, x^2, ..., x^(n-1)];
 
-  vector<vector<shared_ptr<Integer>>> values;
+  vector<map<size_t, shared_ptr<Integer>>> values;
   size_t m;
   size_t n;
 
@@ -42,10 +43,14 @@ public:
   shared_ptr<Matrix> inner(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus = Integer::ZERO());
   shared_ptr<Matrix> dot(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus = Integer::ZERO());
   bool rowExists(size_t i);
-  vector<shared_ptr<Integer>> &row(size_t i);
+  bool cellExists(size_t i, size_t j);
+  shared_ptr<Matrix> rowAsMatrix(size_t i);
+  vector<shared_ptr<Integer>> row(size_t i);
+  shared_ptr<Integer> cell(size_t i, size_t j);
+  void cell(size_t i, size_t j, const shared_ptr<Integer> &x);
   void shift(size_t n);
   void extend(size_t n);
-  void trim(); // trim all zero rows
+  void trim(); // trim all zero cells
   void appendRow(const vector<shared_ptr<Integer>> &row);
   void appendCol(const vector<shared_ptr<Integer>> &col);
 
@@ -55,11 +60,6 @@ public:
 
   json toJson();
   string toString();
-
-  vector<shared_ptr<Integer>> &operator[](size_t idx)
-  {
-    return values[idx];
-  }
 };
 
 } // namespace cryptoplus

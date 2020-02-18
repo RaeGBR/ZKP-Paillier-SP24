@@ -210,13 +210,13 @@ void CBatchEnc::wireUp(const binary_t &Ljir, const vector<shared_ptr<Integer>> &
 
       // linear: ai - bi = 1;
       q = addLinear();
-      Wqa[q - 1]->values[0][n - 1] = ONE;
-      Wqb[q - 1]->values[0][n - 1] = NEG_ONE;
+      Wqa[q - 1]->cell(0, n - 1, ONE);
+      Wqb[q - 1]->cell(0, n - 1, NEG_ONE);
       Kq[q - 1] = ONE;
 
       // linear: ci = 0;
       q = addLinear();
-      Wqc[q - 1]->values[0][n - 1] = ONE;
+      Wqc[q - 1]->cell(0, n - 1, ONE);
     }
   }
 
@@ -229,7 +229,7 @@ void CBatchEnc::wireUp(const binary_t &Ljir, const vector<shared_ptr<Integer>> &
     q = addLinear();
 
     // -mi
-    Wqa[q - 1]->values[0][encMOffset + encCirN * i] = NEG_ONE;
+    Wqa[q - 1]->cell(0, encMOffset + encCirN * i, NEG_ONE);
 
     auto bIdx = i * slotsPerMsg;
     auto offset = briOffset + bIdx;
@@ -237,7 +237,7 @@ void CBatchEnc::wireUp(const binary_t &Ljir, const vector<shared_ptr<Integer>> &
     {
       // 2^(32 * r) * bri
       auto r = slotsPerMsg - k - 1;
-      Wqa[q - 1]->values[0][offset + r] = two32s[r];
+      Wqa[q - 1]->cell(0, offset + r, two32s[r]);
     }
   }
 
@@ -247,7 +247,7 @@ void CBatchEnc::wireUp(const binary_t &Ljir, const vector<shared_ptr<Integer>> &
     q = addLinear();
 
     // R'j
-    Wqa[q - 1]->values[0][encRjOffset + encCirN * j] = ONE;
+    Wqa[q - 1]->cell(0, encRjOffset + encCirN * j, ONE);
 
     for (size_t i = 0; i < msgCount; i++)
     {
@@ -263,7 +263,7 @@ void CBatchEnc::wireUp(const binary_t &Ljir, const vector<shared_ptr<Integer>> &
         {
           auto bIdx = i * slotsPerMsg;
           auto offset = briOffset + bIdx;
-          Wqa[q - 1]->values[0][offset + r] = ONE; // li * bri
+          Wqa[q - 1]->cell(0, offset + r, ONE); // li * bri
         }
       }
     }
@@ -279,7 +279,7 @@ void CBatchEnc::wireUp(const binary_t &Ljir, const vector<shared_ptr<Integer>> &
     q = addLinear();
 
     // -m*s
-    Wqa[q - 1]->values[0][encM_Offset + encCirN * s] = NEG_ONE;
+    Wqa[q - 1]->cell(0, encM_Offset + encCirN * s, NEG_ONE);
 
     for (size_t j = 0; j < msgPerBatch; j++)
     {
@@ -293,7 +293,7 @@ void CBatchEnc::wireUp(const binary_t &Ljir, const vector<shared_ptr<Integer>> &
       for (size_t r = 0; r < slotsPerMsg; r++)
       {
         auto pow = TWOs[twoOffset + r];
-        Wqa[q - 1]->values[0][offset + r] = pow; // 2^959 * bri
+        Wqa[q - 1]->cell(0, offset + r, pow); // 2^959 * bri
       }
     }
   }
@@ -366,8 +366,8 @@ void CBatchEnc::run(const binary_t &Ljir, const vector<shared_ptr<Integer>> &Lj)
       // gate: bri * (bri - 1) = 0
       auto r = slotsPerMsg - k - 1;
       auto bi = mi[(k + 1) * slotSize - 1];
-      A->values[0][offset + r] = bi == 0 ? ZERO : ONE;
-      B->values[0][offset + r] = bi == 0 ? NEG_ONE : ZERO;
+      A->cell(0, offset + r, bi == 0 ? ZERO : ONE);
+      B->cell(0, offset + r, bi == 0 ? NEG_ONE : ZERO);
     }
   }
 }

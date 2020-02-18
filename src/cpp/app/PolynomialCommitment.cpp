@@ -64,7 +64,8 @@ shared_ptr<Matrix> PolynomialCommitment::calcT(
   // mask vector t0'
   for (size_t i = 0; i < n - 1; i++)
   {
-    (*T)[m1][i + 1] = (*T)[m1][i + 1]->sub(u[i])->mod(p);
+    auto v = T->cell(m1, i + 1)->sub(u[i])->mod(p);
+    T->cell(m1, i + 1, v);
   }
   return T;
 }
@@ -91,7 +92,8 @@ vector<shared_ptr<Integer>> PolynomialCommitment::commit(
   vector<shared_ptr<Integer>> ret;
   for (size_t i = 0; i < m; i++)
   {
-    ret.push_back(commit((*T)[i], ri[i]));
+    auto row = T->row(i);
+    ret.push_back(commit(row, ri[i]));
   }
 
   return ret;
@@ -137,8 +139,8 @@ vector<shared_ptr<Integer>> PolynomialCommitment::eval(
   r_ = Z->mul(r_, p);
 
   // return result vector
-  vector<shared_ptr<Integer>> ret((*t_)[0].begin(), (*t_)[0].end());
-  ret.push_back((*r_)[0][0]);
+  vector<shared_ptr<Integer>> ret = t_->row(0);
+  ret.push_back(r_->cell(0, 0));
   return ret;
 }
 
@@ -196,5 +198,5 @@ shared_ptr<Integer> PolynomialCommitment::calcV(
   auto t = make_shared<Matrix>(t_);
   auto X = Matrix::powerVector(x, n)->t();
   auto v = t->mul(X, p);
-  return (*v)[0][0];
+  return v->cell(0, 0);
 }

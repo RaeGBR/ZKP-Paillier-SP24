@@ -138,7 +138,7 @@ shared_ptr<Matrix> CircuitZKPVerifier::Wai(size_t i, const shared_ptr<Integer> &
     // zero row may trimmed, only process on non-zero rows
     if (Wqa[q - 1]->rowExists(i - 1))
     {
-      auto w = make_shared<Matrix>(Wqa[q - 1]->row(i - 1));
+      auto w = Wqa[q - 1]->rowAsMatrix(i - 1);
       w = w->mul(getY_Mq(y, q), GP_P);
       ret = ret->add(w, GP_P);
     }
@@ -157,7 +157,7 @@ shared_ptr<Matrix> CircuitZKPVerifier::Wbi(size_t i, const shared_ptr<Integer> &
     // zero row may trimmed, only process on non-zero rows
     if (Wqb[q - 1]->rowExists(i - 1))
     {
-      auto w = make_shared<Matrix>(Wqb[q - 1]->row(i - 1));
+      auto w = Wqb[q - 1]->rowAsMatrix(i - 1);
       w = w->mul(getY_Mq(y, q), GP_P);
       ret = ret->add(w, GP_P);
     }
@@ -176,7 +176,7 @@ shared_ptr<Matrix> CircuitZKPVerifier::Wci(size_t i, const shared_ptr<Integer> &
     // zero row may trimmed, only process on non-zero rows
     if (Wqc[q - 1]->rowExists(i - 1))
     {
-      auto w = make_shared<Matrix>(Wqc[q - 1]->row(i - 1));
+      auto w = Wqc[q - 1]->rowAsMatrix(i - 1);
       w = w->mul(getY_Mq(y, q), GP_P);
       ret = ret->add(w, GP_P);
     }
@@ -298,7 +298,7 @@ bool CircuitZKPVerifier::verify(const vector<shared_ptr<Integer>> &proofs, const
   auto rr_ = r->dot(r_, GP_P);                                     // r dot r'
   if (rr_->m != 1 || rr_->n != 1)
     return false;
-  auto v2 = rr_->values[0][0]->sub(K(y)->modMul(Integer::TWO(), GP_P))->mod(GP_P); // r dot r' - 2K
+  auto v2 = rr_->cell(0, 0)->sub(K(y)->modMul(Integer::TWO(), GP_P))->mod(GP_P); // r dot r' - 2K
 
   if (!v1->eq(v2))
     return false;

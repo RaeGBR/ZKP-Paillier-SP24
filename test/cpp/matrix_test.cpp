@@ -19,7 +19,7 @@ TEST(Matrix, Default)
   {
     for (size_t j = 0; j < n; j++)
     {
-      EXPECT_EQ((*a)[i][j]->toString(), "0");
+      EXPECT_EQ(a->cell(i, j)->toString(), "0");
     }
   }
 
@@ -38,7 +38,7 @@ TEST(Matrix, Constructor_int_array)
   {
     for (size_t j = 0; j < n; j++)
     {
-      EXPECT_EQ((*a)[i][j]->toString(), to_string(i * n + j));
+      EXPECT_EQ(a->cell(i, j)->toString(), to_string(i * n + j));
     }
   }
 }
@@ -54,7 +54,7 @@ TEST(Matrix, Identity)
     for (size_t j = 0; j < size; j++)
     {
       string expected = i == j ? "1" : "0";
-      EXPECT_EQ((*a)[i][j]->toString(), expected);
+      EXPECT_EQ(a->cell(i, j)->toString(), expected);
     }
   }
 
@@ -70,7 +70,7 @@ TEST(Matrix, Clone)
   {
     for (size_t j = 0; j < n; j++)
     {
-      (*a)[i][j] = Integer::createWithString(to_string(i * n + j));
+      a->cell(i, j, Integer::createWithString(to_string(i * n + j)));
     }
   }
 
@@ -80,9 +80,9 @@ TEST(Matrix, Clone)
   EXPECT_EQ(b->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
   EXPECT_EQ(c->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
 
-  (*a)[0][0] = Integer::createWithString("7");
-  (*b)[0][0] = Integer::createWithString("8");
-  (*c)[0][0] = Integer::createWithString("9");
+  a->cell(0, 0, Integer::createWithString("7"));
+  b->cell(0, 0, Integer::createWithString("8"));
+  c->cell(0, 0, Integer::createWithString("9"));
   EXPECT_EQ(a->toString(), "[[\"7\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
   EXPECT_EQ(b->toString(), "[[\"8\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
   EXPECT_EQ(c->toString(), "[[\"9\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
@@ -92,7 +92,7 @@ TEST(Matrix, Clone)
   EXPECT_EQ(b->toString(), "[[\"8\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
   EXPECT_EQ(c->toString(), "[[\"9\",\"1\",\"2\",\"1\"],[\"3\",\"4\",\"5\",\"0\"]]");
 
-  (*c)[0][0] = Integer::ONE();
+  c->cell(0, 0, Integer::ONE());
   EXPECT_EQ(a->toString(), "[[\"7\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
   EXPECT_EQ(b->toString(), "[[\"8\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
   EXPECT_EQ(c->toString(), "[[\"1\",\"1\",\"2\",\"1\"],[\"3\",\"4\",\"5\",\"0\"]]");
@@ -107,7 +107,7 @@ TEST(Matrix, Group)
   {
     for (size_t j = 0; j < n; j++)
     {
-      (*a)[i][j] = Integer::createWithString(to_string(i * n + j));
+      a->cell(i, j, Integer::createWithString(to_string(i * n + j)));
     }
   }
 
@@ -127,7 +127,7 @@ TEST(Matrix, Group_to_big_matrix)
   {
     for (size_t j = 0; j < n; j++)
     {
-      (*a)[i][j] = Integer::createWithString(to_string(i * n + j));
+      a->cell(i, j, Integer::createWithString(to_string(i * n + j)));
     }
   }
 
@@ -147,7 +147,7 @@ TEST(Matrix, Tansposition)
   {
     for (size_t j = 0; j < n; j++)
     {
-      (*a)[i][j] = Integer::createWithString(to_string(i * n + j));
+      a->cell(i, j, Integer::createWithString(to_string(i * n + j)));
     }
   }
 
@@ -166,8 +166,8 @@ TEST(Matrix, Add)
   {
     for (size_t j = 0; j < n; j++)
     {
-      (*a)[i][j] = Integer::createWithString(to_string(i * n + j));
-      (*b)[i][j] = Integer::createWithString(to_string(i + j));
+      a->cell(i, j, Integer::createWithString(to_string(i * n + j)));
+      b->cell(i, j, Integer::createWithString(to_string(i + j)));
     }
   }
 
@@ -188,8 +188,8 @@ TEST(Matrix, ModAdd)
   {
     for (size_t j = 0; j < n; j++)
     {
-      (*a)[i][j] = Integer::createWithString(to_string(i * n + j));
-      (*b)[i][j] = Integer::createWithString(to_string(i + j));
+      a->cell(i, j, Integer::createWithString(to_string(i * n + j)));
+      b->cell(i, j, Integer::createWithString(to_string(i + j)));
     }
   }
 
@@ -204,8 +204,8 @@ TEST(Matrix, ModAdd_with_negative)
   const auto modulus = Integer::createWithString("7");
   auto a = make_shared<Matrix>();
   auto b = make_shared<Matrix>();
-  (*a)[0][0] = Integer::createWithString(to_string(-3));
-  (*b)[0][0] = Integer::createWithString(to_string(4));
+  a->cell(0, 0, Integer::createWithString(to_string(-3)));
+  b->cell(0, 0, Integer::createWithString(to_string(4)));
   auto c = a->add(b, modulus);
   EXPECT_EQ(a->toString(), "[[\"-3\"]]");
   EXPECT_EQ(b->toString(), "[[\"4\"]]");
@@ -222,7 +222,7 @@ TEST(Matrix, Mul)
   {
     for (size_t j = 0; j < n; j++)
     {
-      (*a)[i][j] = Integer::createWithString(to_string(i * n + j));
+      a->cell(i, j, Integer::createWithString(to_string(i * n + j)));
     }
   }
 
@@ -243,7 +243,7 @@ TEST(Matrix, ModMul)
   {
     for (size_t j = 0; j < n; j++)
     {
-      (*a)[i][j] = Integer::createWithString(to_string(i * n + j));
+      a->cell(i, j, Integer::createWithString(to_string(i * n + j)));
     }
   }
 
@@ -258,8 +258,8 @@ TEST(Matrix, ModMul_with_negative)
   const auto modulus = Integer::createWithString("7");
   auto a = make_shared<Matrix>();
   auto b = make_shared<Matrix>();
-  (*a)[0][0] = Integer::createWithString(to_string(-3));
-  (*b)[0][0] = Integer::createWithString(to_string(4));
+  a->cell(0, 0, Integer::createWithString(to_string(-3)));
+  b->cell(0, 0, Integer::createWithString(to_string(4)));
   auto c = a->mul(b, modulus);
   EXPECT_EQ(a->toString(), "[[\"-3\"]]");
   EXPECT_EQ(b->toString(), "[[\"4\"]]");
@@ -277,10 +277,10 @@ TEST(Matrix, CrossProduct)
   {
     for (size_t j = 0; j < n; j++)
     {
-      (*a)[i][j] = Integer::createWithString(to_string(i * n + j + 1));
+      a->cell(i, j, Integer::createWithString(to_string(i * n + j + 1)));
       for (size_t k = 0; k < p; k++)
       {
-        (*b)[j][k] = Integer::create(to_string(m * n + j * p + k + 1), 10);
+        b->cell(j, k, Integer::create(to_string(m * n + j * p + k + 1), 10));
       }
     }
   }
@@ -303,10 +303,10 @@ TEST(Matrix, ModCrossProduct)
   {
     for (size_t j = 0; j < n; j++)
     {
-      (*a)[i][j] = Integer::createWithString(to_string(i * n + j + 1));
+      a->cell(i, j, Integer::createWithString(to_string(i * n + j + 1)));
       for (size_t k = 0; k < p; k++)
       {
-        (*b)[j][k] = Integer::create(to_string(m * n + j * p + k + 1), 10);
+        b->cell(j, k, Integer::create(to_string(m * n + j * p + k + 1), 10));
       }
     }
   }
@@ -327,8 +327,8 @@ TEST(Matrix, Dot)
   {
     for (size_t j = 0; j < n; j++)
     {
-      (*a)[i][j] = Integer::create(to_string(i * n + j), 10);
-      (*b)[i][j] = Integer::create(to_string(i * n + j + 1), 10);
+      a->cell(i, j, Integer::create(to_string(i * n + j), 10));
+      b->cell(i, j, Integer::create(to_string(i * n + j + 1), 10));
     }
   }
 
@@ -341,8 +341,8 @@ TEST(Matrix, Dot)
   auto e = make_shared<Matrix>(1, n);
   for (size_t i = 0; i < n; i++)
   {
-    (*d)[0][i] = Integer::create(to_string(i + 1), 10);
-    (*e)[0][i] = Integer::create(to_string(i + 1), 10);
+    d->cell(0, i, Integer::create(to_string(i + 1), 10));
+    e->cell(0, i, Integer::create(to_string(i + 1), 10));
   }
 
   auto f = d->dot(e);
@@ -362,8 +362,8 @@ TEST(Matrix, ModDot)
   {
     for (size_t j = 0; j < n; j++)
     {
-      (*a)[i][j] = Integer::create(to_string(i * n + j), 10);
-      (*b)[i][j] = Integer::create(to_string(i * n + j + 1), 10);
+      a->cell(i, j, Integer::create(to_string(i * n + j), 10));
+      b->cell(i, j, Integer::create(to_string(i * n + j + 1), 10));
     }
   }
 
@@ -376,8 +376,8 @@ TEST(Matrix, ModDot)
   auto e = make_shared<Matrix>(1, n);
   for (size_t i = 0; i < n; i++)
   {
-    (*d)[0][i] = Integer::create(to_string(i + 1), 10);
-    (*e)[0][i] = Integer::create(to_string(i + 1), 10);
+    d->cell(0, i, Integer::create(to_string(i + 1), 10));
+    e->cell(0, i, Integer::create(to_string(i + 1), 10));
   }
 
   auto f = d->dot(e, modulus);
@@ -395,7 +395,7 @@ TEST(Matrix, Shift)
   {
     for (size_t j = 0; j < n; j++)
     {
-      (*a)[i][j] = Integer::createWithString(to_string(i * n + j + 1));
+      a->cell(i, j, Integer::createWithString(to_string(i * n + j + 1)));
     }
   }
 
@@ -408,7 +408,7 @@ TEST(Matrix, Shift)
   EXPECT_EQ(a->m, m);
   EXPECT_EQ(a->n, n + offset);
   EXPECT_EQ(a->toString(), "[[\"0\",\"0\",\"0\",\"1\",\"2\",\"3\"],[\"0\",\"0\",\"0\",\"4\",\"5\",\"6\"]]");
-  EXPECT_EQ(a->row(m + 1).size(), n + offset);
+  EXPECT_EQ(a->rowAsMatrix(m + 1)->n, n + offset);
 }
 
 TEST(Matrix, Extend)
@@ -420,7 +420,7 @@ TEST(Matrix, Extend)
   {
     for (size_t j = 0; j < n; j++)
     {
-      (*a)[i][j] = Integer::createWithString(to_string(i * n + j + 1));
+      a->cell(i, j, Integer::createWithString(to_string(i * n + j + 1)));
     }
   }
 
@@ -433,13 +433,18 @@ TEST(Matrix, Extend)
   EXPECT_EQ(a->m, m);
   EXPECT_EQ(a->n, n + offset);
   EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\",\"0\",\"0\",\"0\"],[\"4\",\"5\",\"6\",\"0\",\"0\",\"0\"]]");
-  EXPECT_EQ(a->row(m + 1).size(), n + offset);
+  EXPECT_EQ(a->rowAsMatrix(m + 1)->n, n + offset);
 }
 
 TEST(Matrix, Trim)
 {
-  auto a = make_shared<Matrix>(vector<int>({1, 2, 3, 0, 0, 0, 4, 5, 6}))->group(3);
+  auto a = make_shared<Matrix>(vector<int>({1, 2, 3, 0, 0, 0, 4, 5, 6}));
 
+  EXPECT_EQ(a->m, 1);
+  EXPECT_EQ(a->n, 9);
+  EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\",\"0\",\"0\",\"0\",\"4\",\"5\",\"6\"]]");
+
+  a = a->group(3);
   EXPECT_EQ(a->m, 3);
   EXPECT_EQ(a->n, 3);
   EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\"],[\"0\",\"0\",\"0\"],[\"4\",\"5\",\"6\"]]");
@@ -447,7 +452,10 @@ TEST(Matrix, Trim)
   a->trim();
   EXPECT_EQ(a->m, 3);
   EXPECT_EQ(a->n, 3);
-  EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\"],[],[\"4\",\"5\",\"6\"]]");
+  EXPECT_EQ(a->values[0].size(), 3);
+  EXPECT_EQ(a->values[1].size(), 0);
+  EXPECT_EQ(a->values[2].size(), 3);
+  EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\"],[\"0\",\"0\",\"0\"],[\"4\",\"5\",\"6\"]]");
 }
 
 TEST(Matrix, AppendRow)
@@ -459,7 +467,7 @@ TEST(Matrix, AppendRow)
   {
     for (size_t j = 0; j < n; j++)
     {
-      (*a)[i][j] = Integer::createWithString(to_string(i * n + j + 1));
+      a->cell(i, j, Integer::createWithString(to_string(i * n + j + 1)));
     }
   }
 
@@ -487,7 +495,7 @@ TEST(Matrix, AppendCol)
   {
     for (size_t j = 0; j < n; j++)
     {
-      (*a)[i][j] = Integer::createWithString(to_string(i * n + j + 1));
+      a->cell(i, j, Integer::createWithString(to_string(i * n + j + 1)));
     }
   }
 
@@ -535,8 +543,8 @@ TEST(Matrix, Equal)
 
   EXPECT_EQ(a->eq(b), true);
 
-  (*b)[0][0] = Integer::ONE();
-  (*b)[1][1] = Integer::ONE();
+  b->cell(0, 0, Integer::ONE());
+  b->cell(1, 1, Integer::ONE());
 
   EXPECT_EQ(a->eq(b), false);
 

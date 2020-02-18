@@ -18,7 +18,7 @@ void CEnc::wireUp(const shared_ptr<Integer> &C)
 
   // linear: b0 = N
   auto q = addLinear();
-  Wqb[q - 1]->values[0][n - 1] = ONE;
+  Wqb[q - 1]->cell(0, n - 1, ONE);
   Kq[q - 1] = N;
 
   // eg. N = 101 = 0b 110 0101
@@ -33,8 +33,8 @@ void CEnc::wireUp(const shared_ptr<Integer> &C)
   n = addGate();
   // linear: a1 - b1 = 0
   q = addLinear();
-  Wqa[q - 1]->values[0][n - 1] = ONE;
-  Wqb[q - 1]->values[0][n - 1] = NEG_ONE;
+  Wqa[q - 1]->cell(0, n - 1, ONE);
+  Wqb[q - 1]->cell(0, n - 1, NEG_ONE);
 
   // gate: r^x * r^x = r^y
   // eg. r^2 r^2 = r^4
@@ -44,13 +44,13 @@ void CEnc::wireUp(const shared_ptr<Integer> &C)
 
     // linear: a2 - c1 = 0
     q = addLinear();
-    Wqa[q - 1]->values[0][n - 1] = ONE;
-    Wqc[q - 1]->values[0][n - 2] = NEG_ONE;
+    Wqa[q - 1]->cell(0, n - 1, ONE);
+    Wqc[q - 1]->cell(0, n - 2, NEG_ONE);
 
     // linear: b2 - c1 = 0
     q = addLinear();
-    Wqb[q - 1]->values[0][n - 1] = ONE;
-    Wqc[q - 1]->values[0][n - 2] = NEG_ONE;
+    Wqb[q - 1]->cell(0, n - 1, ONE);
+    Wqc[q - 1]->cell(0, n - 2, NEG_ONE);
   }
 
   // gate: r^x * r^y = r^z ...
@@ -75,18 +75,18 @@ void CEnc::wireUp(const shared_ptr<Integer> &C)
 
     // linear: ai - cj = 0
     q = addLinear();
-    Wqa[q - 1]->values[0][n - 1] = ONE;
+    Wqa[q - 1]->cell(0, n - 1, ONE);
     if (aggregateCnt == 2 && firstPow2 == 0)
-      Wqa[q - 1]->values[0][1] = NEG_ONE;
+      Wqa[q - 1]->cell(0, 1, NEG_ONE);
     else if (aggregateCnt == 2)
-      Wqc[q - 1]->values[0][firstPow2] = NEG_ONE;
+      Wqc[q - 1]->cell(0, firstPow2, NEG_ONE);
     else
-      Wqc[q - 1]->values[0][n - 2] = NEG_ONE; // input a <- last output
+      Wqc[q - 1]->cell(0, n - 2, NEG_ONE); // input a <- last output
 
     // linear: bi - cj = 0
     q = addLinear();
-    Wqb[q - 1]->values[0][n - 1] = ONE;
-    Wqc[q - 1]->values[0][curPow2] = NEG_ONE;
+    Wqb[q - 1]->cell(0, n - 1, ONE);
+    Wqc[q - 1]->cell(0, curPow2, NEG_ONE);
   }
 
   // gate: T * r^N = c
@@ -94,18 +94,18 @@ void CEnc::wireUp(const shared_ptr<Integer> &C)
 
   // linear: T - mN = 1
   q = addLinear();
-  Wqa[q - 1]->values[0][n - 1] = ONE;
-  Wqc[q - 1]->values[0][0] = NEG_ONE;
+  Wqa[q - 1]->cell(0, n - 1, ONE);
+  Wqc[q - 1]->cell(0, 0, NEG_ONE);
   Kq[q - 1] = ONE;
 
   // linear: bi - r^N = 0
   q = addLinear();
-  Wqb[q - 1]->values[0][n - 1] = ONE;
-  Wqc[q - 1]->values[0][n - 2] = NEG_ONE;
+  Wqb[q - 1]->cell(0, n - 1, ONE);
+  Wqc[q - 1]->cell(0, n - 2, NEG_ONE);
 
   // linear: ci = C
   q = addLinear();
-  Wqc[q - 1]->values[0][n - 1] = ONE;
+  Wqc[q - 1]->cell(0, n - 1, ONE);
   Kq[q - 1] = C;
 }
 
@@ -125,9 +125,9 @@ void CEnc::run(const shared_ptr<Integer> &m, const shared_ptr<Integer> &r)
   auto n = 0;
 
   // gate: m * N = mN
-  A->values[0][n] = m;
-  B->values[0][n] = N;
-  C->values[0][n] = A->values[0][n]->modMul(B->values[0][n], GP_P);
+  A->cell(0, n, m);
+  B->cell(0, n, N);
+  C->cell(0, n, A->cell(0, n)->modMul(B->cell(0, n), GP_P));
   n++;
 
   // eg. N = 101 = 0b 110 0101
@@ -139,18 +139,18 @@ void CEnc::run(const shared_ptr<Integer> &m, const shared_ptr<Integer> &r)
     throw invalid_argument("N is too small");
 
   // gate: r * r = r^2
-  A->values[0][n] = r;
-  B->values[0][n] = r;
-  C->values[0][n] = A->values[0][n]->modMul(B->values[0][n], GP_P);
+  A->cell(0, n, r);
+  B->cell(0, n, r);
+  C->cell(0, n, A->cell(0, n)->modMul(B->cell(0, n), GP_P));
   n++;
 
   // gate: r^x * r^x = r^y
   // eg. r^2 r^2 = r^4
   for (size_t i = 2; i <= maxPow; i++)
   {
-    A->values[0][n] = C->values[0][n - 1];
-    B->values[0][n] = C->values[0][n - 1];
-    C->values[0][n] = A->values[0][n]->modMul(B->values[0][n], GP_P);
+    A->cell(0, n, C->cell(0, n - 1));
+    B->cell(0, n, C->cell(0, n - 1));
+    C->cell(0, n, A->cell(0, n)->modMul(B->cell(0, n), GP_P));
     n++;
   }
 
@@ -173,20 +173,20 @@ void CEnc::run(const shared_ptr<Integer> &m, const shared_ptr<Integer> &r)
     // 0=r^1=a1, 1=r^2=c1, 2=r^4=c2, ...
     size_t curPow2 = i;
     if (aggregateCnt == 2 && firstPow2 == 0)
-      A->values[0][n] = A->values[0][1];
+      A->cell(0, n, A->cell(0, 1));
     else if (aggregateCnt == 2)
-      A->values[0][n] = C->values[0][firstPow2];
+      A->cell(0, n, C->cell(0, firstPow2));
     else
-      A->values[0][n] = C->values[0][n - 1]; // input a <- last output
+      A->cell(0, n, C->cell(0, n - 1)); // input a <- last output
 
-    B->values[0][n] = C->values[0][curPow2];
-    C->values[0][n] = A->values[0][n]->modMul(B->values[0][n], GP_P);
+    B->cell(0, n, C->cell(0, curPow2));
+    C->cell(0, n, A->cell(0, n)->modMul(B->cell(0, n), GP_P));
     n++;
   }
 
   // gate: T * r^N = c
-  A->values[0][n] = C->values[0][0]->add(Integer::ONE())->mod(GP_P);
-  B->values[0][n] = C->values[0][n - 1];
-  C->values[0][n] = A->values[0][n]->modMul(B->values[0][n], GP_P);
+  A->cell(0, n, C->cell(0, 0)->add(Integer::ONE())->mod(GP_P));
+  B->cell(0, n, C->cell(0, n - 1));
+  C->cell(0, n, A->cell(0, n)->modMul(B->cell(0, n), GP_P));
   n++;
 }

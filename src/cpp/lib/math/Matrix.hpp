@@ -16,9 +16,6 @@ namespace cryptoplus
 
 class Matrix
 {
-private:
-  vector<shared_ptr<Integer>> zeroVector;
-
 public:
   static shared_ptr<Matrix> ZERO();
   static shared_ptr<Matrix> identity(size_t size); // Identity matrix

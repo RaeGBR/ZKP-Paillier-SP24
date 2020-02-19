@@ -149,7 +149,7 @@ TEST(CBase, CopyCircuit)
   EXPECT_EQ(circuit2->linearCount, 2);
   EXPECT_EQ(circuit2->offset, 0);
 
-  circuit2->Wqa[0]->values[0][0] = Integer::TWO();
+  circuit2->Wqa[0]->cell(0, 0, Integer::TWO());
   EXPECT_EQ(circuit1->Wqa[0]->toString(), "[[\"1\",\"0\",\"0\",\"0\",\"0\",\"0\"]]");
   EXPECT_EQ(circuit2->Wqa[0]->toString(), "[[\"2\",\"0\",\"0\",\"0\",\"0\",\"0\"]]");
 
@@ -157,7 +157,7 @@ TEST(CBase, CopyCircuit)
   EXPECT_EQ(circuit1->Kq[0]->toString(), "7");
   EXPECT_EQ(circuit2->Kq[0]->toString(), "100");
 
-  circuit2->A->values[0][0] = Integer::TWO();
+  circuit2->A->cell(0, 0, Integer::TWO());
   EXPECT_EQ(circuit1->A->toString(), "[[\"1\",\"2\",\"0\",\"0\",\"0\",\"0\"]]");
   EXPECT_EQ(circuit2->A->toString(), "[[\"2\",\"2\",\"0\",\"0\",\"0\",\"0\"]]");
 }

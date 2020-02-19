@@ -107,11 +107,11 @@ shared_ptr<Matrix> CircuitZKPVerifier::getY_(const shared_ptr<Integer> &y)
     return cachedY_;
 
   auto Y_ = make_shared<Matrix>(1, n);
-  Y_->values[0][0] = y->modPow(make_shared<IntegerImpl>(m), GP_P); // y^m
+  Y_->cell(0, 0, y->modPow(make_shared<IntegerImpl>(m), GP_P)); // y^m
   for (size_t i = 1; i < n; i++)
   {
     // y^m * previous object (so [y^m, y^2m, ... , y^mn])
-    Y_->values[0][i] = Y_->values[0][i - 1]->modMul(Y_->values[0][0], GP_P);
+    Y_->cell(0, i, Y_->cell(0, i - 1)->modMul(Y_->cell(0, 0), GP_P));
   }
   cachedY_ = Y_;
   return Y_;

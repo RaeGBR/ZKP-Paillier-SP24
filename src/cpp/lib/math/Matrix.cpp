@@ -50,11 +50,6 @@ Matrix::Matrix(size_t m, size_t n)
   {
     values.push_back(map<size_t, shared_ptr<Integer>>());
   }
-
-  for (size_t i = 0; i < n; i++)
-  {
-    zeroVector.push_back(Integer::ZERO());
-  }
 }
 
 Matrix::Matrix(const vector<int> &values) : Matrix::Matrix(1, values.size())
@@ -89,11 +84,6 @@ Matrix::Matrix(const vector<vector<shared_ptr<Integer>>> &values)
       this->cell(i, j, values[i][j]);
     }
   }
-
-  for (size_t i = 0; i < n; i++)
-  {
-    zeroVector.push_back(Integer::ZERO());
-  }
 }
 
 shared_ptr<Matrix> Matrix::t()
@@ -119,15 +109,9 @@ shared_ptr<Matrix> Matrix::add(const shared_ptr<Matrix> &b, const shared_ptr<Int
 
   bool isMod = !Integer::ZERO()->eq(modulus);
 
-  auto ret = make_shared<Matrix>(m, n);
+  auto ret = clone();
   for (size_t i = 0; i < m; i++)
   {
-    for (auto it : values[i])
-    {
-      size_t j = it.first;
-      auto v = it.second;
-      ret->cell(i, j, v);
-    }
     for (auto it : b->values[i])
     {
       size_t j = it.first;
@@ -236,7 +220,7 @@ bool Matrix::rowExists(size_t i)
 
 bool Matrix::cellExists(size_t i, size_t j)
 {
-  return rowExists(i) && j < n && values[i].find(j) != values[i].end();
+  return i < m && j < n && values[i].find(j) != values[i].end();
 }
 
 shared_ptr<Matrix> Matrix::rowAsMatrix(size_t i)
@@ -258,9 +242,6 @@ shared_ptr<Matrix> Matrix::rowAsMatrix(size_t i)
 
 vector<shared_ptr<Integer>> Matrix::row(size_t i)
 {
-  if (!rowExists(i))
-    return zeroVector;
-
   vector<shared_ptr<Integer>> ret;
   for (size_t j = 0; j < n; j++)
   {
@@ -296,11 +277,6 @@ void Matrix::shift(size_t n)
 
   this->n += n;
 
-  for (size_t i = 0; i < n; i++)
-  {
-    zeroVector.push_back(Integer::ZERO());
-  }
-
   for (size_t i = 0; i < m; i++)
   {
     vector<size_t> keys;
@@ -322,11 +298,6 @@ void Matrix::shift(size_t n)
 void Matrix::extend(size_t n)
 {
   this->n += n;
-
-  for (size_t i = 0; i < n; i++)
-  {
-    zeroVector.push_back(Integer::ZERO());
-  }
 }
 
 void Matrix::trim()
@@ -353,6 +324,7 @@ void Matrix::appendRow(const vector<shared_ptr<Integer>> &row)
 
   m++;
   values.push_back(map<size_t, shared_ptr<Integer>>());
+
   for (size_t i = 0; i < n; i++)
   {
     this->cell(m - 1, i, row[i]);
@@ -365,7 +337,6 @@ void Matrix::appendCol(const vector<shared_ptr<Integer>> &col)
     throw invalid_argument("matrix dimension not match for append row");
 
   n++;
-  zeroVector.push_back(Integer::ZERO());
   for (size_t i = 0; i < m; i++)
   {
     this->cell(i, n - 1, col[i]);

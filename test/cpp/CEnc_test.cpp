@@ -89,7 +89,7 @@ TEST(CEnc, Run_circuit)
 
   EXPECT_EQ(circuit->Kq[0]->toString(), encryptor->getPublicKey()->toString());
   EXPECT_EQ(circuit->Kq[circuit->linearCount - 1]->toString(), c->toString());
-  EXPECT_EQ(circuit->C->values[0][circuit->gateCount - 1]->toString(), c->toString());
+  EXPECT_EQ(circuit->C->cell(0, circuit->gateCount - 1)->toString(), c->toString());
 
   auto N = circuit->gateCount;
   auto Q = circuit->linearCount;

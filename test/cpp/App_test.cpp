@@ -24,7 +24,7 @@ namespace
 
 TEST(App, Run)
 {
-  string filename = "../../test2.csv";
+  string filename = "../../test3.csv";
   ifstream ifile(filename);
   ofstream fs;
   if (ifile)
@@ -75,7 +75,7 @@ TEST(App, Run)
   // vector<size_t> bls({8, 16, 32, 64, 128, 256});
   // vector<size_t> ms({10, 20, 50, 100, 200});
   vector<size_t> bls({8});
-  vector<size_t> ms({1});
+  vector<size_t> ms({10, 20, 50});
   for (size_t i = 0; i < bls.size(); i++)
   {
     byteLength = bls[i];

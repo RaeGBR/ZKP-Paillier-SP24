@@ -25,18 +25,46 @@ shared_ptr<Integer> PolynomialCommitment::commit(
     const vector<shared_ptr<Integer>> &mi,
     const shared_ptr<Integer> &r)
 {
-  if (gi.size() < mi.size() + 1)
+  auto ms = make_shared<Matrix>(mi);
+  vector<shared_ptr<Integer>> rs({r});
+  vector<shared_ptr<Integer>> ret;
+  commit(ms, rs, ret);
+  return ret[0];
+}
+
+void PolynomialCommitment::commit(
+    const shared_ptr<Matrix> &ms,
+    const vector<shared_ptr<Integer>> &rs,
+    vector<shared_ptr<Integer>> &ret)
+{
+  if (gi.size() < ms->n + 1)
     throw invalid_argument("number of generators and messages do not match");
 
-  auto ret = gi[0]->modPow(r, Q);
-
-  for (size_t i = 0; i < mi.size(); i++)
+  for (size_t i = 0; i < ms->m; i++)
   {
-    auto gm = gi[i + 1]->modPow(mi[i], Q);
-    ret = ret->modMul(gm, Q);
-  }
+    auto c = gi[0]->modPow(rs[i], Q); // c = g^ri
 
-  return ret;
+    // c = g^ri * g0^m0 * g1^m1 * ...
+    if (ms->rowExists(i))
+    {
+      for (auto it : ms->values[i]) // skip mi = 0, where gi^0 = 1
+      {
+        size_t j = it.first;
+        auto v = it.second;
+
+        if (v->eq(Integer::ZERO()))
+          continue;
+
+        auto gm = gi[j + 1];
+        if (!v->eq(Integer::ONE()))
+        {
+          gm = gm->modPow(v, Q);
+        }
+        c = c->modMul(gm, Q);
+      }
+    }
+    ret.push_back(c);
+  }
 }
 
 shared_ptr<Matrix> PolynomialCommitment::calcT(
@@ -90,12 +118,7 @@ vector<shared_ptr<Integer>> PolynomialCommitment::commit(
 
   // calculate commitment
   vector<shared_ptr<Integer>> ret;
-  for (size_t i = 0; i < m; i++)
-  {
-    auto row = T->row(i);
-    ret.push_back(commit(row, ri[i]));
-  }
-
+  commit(T, ri, ret);
   return ret;
 }
 
@@ -139,7 +162,8 @@ vector<shared_ptr<Integer>> PolynomialCommitment::eval(
   r_ = Z->mul(r_, p);
 
   // return result vector
-  vector<shared_ptr<Integer>> ret = t_->row(0);
+  vector<shared_ptr<Integer>> ret;
+  t_->row(0, ret);
   ret.push_back(r_->cell(0, 0));
   return ret;
 }

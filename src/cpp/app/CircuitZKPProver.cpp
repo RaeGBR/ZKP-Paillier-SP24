@@ -30,13 +30,9 @@ vector<shared_ptr<Integer>> CircuitZKPProver::commit()
   D = Random::getRandoms(zkp->n, zkp->GP_P);
   randD = Random::genInteger(zkp->GP_P);
 
-  for (size_t i = 0; i < zkp->m; i++)
-    ret.push_back(zkp->commitScheme->commit(A->row(i), randA[i]));
-  for (size_t i = 0; i < zkp->m; i++)
-    ret.push_back(zkp->commitScheme->commit(B->row(i), randB[i]));
-  for (size_t i = 0; i < zkp->m; i++)
-    ret.push_back(zkp->commitScheme->commit(C->row(i), randC[i]));
-
+  zkp->commitScheme->commit(A, randA, ret);
+  zkp->commitScheme->commit(B, randB, ret);
+  zkp->commitScheme->commit(C, randC, ret);
   ret.push_back(zkp->commitScheme->commit(D, randD));
 
   return ret;
@@ -153,8 +149,7 @@ vector<shared_ptr<Integer>> CircuitZKPProver::prove(const shared_ptr<Integer> &y
   rd = rd->modMul(x2m1, p);
   rr = rr->add(rd)->mod(p);
 
-  auto r0 = r->row(0);
-  ret.insert(ret.end(), r0.begin(), r0.end());
+  r->row(0, ret); // append r... to result
   ret.push_back(rr);
 
   return ret;

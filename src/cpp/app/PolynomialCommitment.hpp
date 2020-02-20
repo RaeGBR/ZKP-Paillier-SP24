@@ -31,6 +31,11 @@ public:
       const vector<shared_ptr<Integer>> &mi,
       const shared_ptr<Integer> &r);
 
+  void commit(
+      const shared_ptr<Matrix> &ms,
+      const vector<shared_ptr<Integer>> &rs,
+      vector<shared_ptr<Integer>> &result);
+
   shared_ptr<Matrix> calcT(
       size_t m1, size_t m2, size_t n,
       const vector<shared_ptr<Integer>> &tx);

@@ -42,7 +42,7 @@ public:
   bool rowExists(size_t i);
   bool cellExists(size_t i, size_t j);
   shared_ptr<Matrix> rowAsMatrix(size_t i);
-  vector<shared_ptr<Integer>> row(size_t i);
+  void row(size_t i, vector<shared_ptr<Integer>> &result);
   shared_ptr<Integer> cell(size_t i, size_t j);
   void cell(size_t i, size_t j, const shared_ptr<Integer> &x);
   void shift(size_t n);

@@ -240,14 +240,12 @@ shared_ptr<Matrix> Matrix::rowAsMatrix(size_t i)
   return ret;
 }
 
-vector<shared_ptr<Integer>> Matrix::row(size_t i)
+void Matrix::row(size_t i, vector<shared_ptr<Integer>> &ret)
 {
-  vector<shared_ptr<Integer>> ret;
   for (size_t j = 0; j < n; j++)
   {
     ret.push_back(cell(i, j));
   }
-  return ret;
 }
 
 shared_ptr<Integer> Matrix::cell(size_t i, size_t j)

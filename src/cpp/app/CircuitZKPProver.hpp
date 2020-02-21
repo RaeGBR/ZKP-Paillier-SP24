@@ -39,9 +39,9 @@ public:
       const shared_ptr<Matrix> &B,
       const shared_ptr<Matrix> &C);
 
-  vector<shared_ptr<Integer>> commit();
-  vector<shared_ptr<Integer>> polyCommit(const shared_ptr<Integer> &y);
-  vector<shared_ptr<Integer>> prove(const shared_ptr<Integer> &y, const shared_ptr<Integer> &x);
+  void commit(vector<shared_ptr<Integer>> &result);
+  void polyCommit(const shared_ptr<Integer> &y, vector<shared_ptr<Integer>> &result);
+  void prove(const shared_ptr<Integer> &y, const shared_ptr<Integer> &x, vector<shared_ptr<Integer>> &result);
 };
 
 } // namespace polyu

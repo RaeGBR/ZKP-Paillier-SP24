@@ -122,7 +122,8 @@ vector<shared_ptr<Integer>> CBatchEnc::calculateLj(const binary_t &Ljir)
   vector<shared_ptr<Integer>> Lj;
 
   auto two32 = Integer::TWO()->modPow(make_shared<IntegerImpl>(slotSize * 8), GP_P);
-  auto two32s = Matrix::powerVector(two32, slotsPerMsg, GP_P)->values[0]; // [1, 2^32, 2^64, ... , 2^(32 * (r-1))]
+  vector<shared_ptr<Integer>> two32s; // [1, 2^32, 2^64, ... , 2^(32 * (r-1))]
+  Matrix::powerVector(two32, slotsPerMsg, GP_P)->row(0, two32s);
 
   // SUM( lj * bri ) + R'j = L'j
   for (size_t j = 0; j < rangeProofCount; j++)
@@ -221,7 +222,8 @@ void CBatchEnc::wireUp(const binary_t &Ljir, const vector<shared_ptr<Integer>> &
   }
 
   auto two32 = Integer::TWO()->modPow(make_shared<IntegerImpl>(slotSize * 8), GP_P);
-  auto two32s = Matrix::powerVector(two32, slotsPerMsg, GP_P)->values[0]; // [1, 2^32, 2^64, ... , 2^(32 * (r-1))]
+  vector<shared_ptr<Integer>> two32s; // [1, 2^32, 2^64, ... , 2^(32 * (r-1))]
+  Matrix::powerVector(two32, slotsPerMsg, GP_P)->row(0, two32s);
   // linear: SUM( 2^(32 * r)) * bri ) = mi
   //         SUM - mi = 0
   for (size_t i = 0; i < msgCount; i++)
@@ -273,7 +275,8 @@ void CBatchEnc::wireUp(const binary_t &Ljir, const vector<shared_ptr<Integer>> &
 
   // linear: 2^959 * bri + ... 2^0 * bri = m*s
   //         2^959 * bri + ... 2^0 * bri - m*s = 0
-  auto TWOs = Matrix::powerVector(Integer::TWO(), slotsPerMsg * msgPerBatch, GP_P)->values[0];
+  vector<shared_ptr<Integer>> TWOs;
+  Matrix::powerVector(Integer::TWO(), slotsPerMsg * msgPerBatch, GP_P)->row(0, TWOs);
   for (size_t s = 0; s < batchCount; s++)
   {
     q = addLinear();

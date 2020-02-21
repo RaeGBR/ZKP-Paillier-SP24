@@ -95,7 +95,8 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
 
   // P: prover commit the circuit arguments
   Timer::start("P.commit");
-  vector<shared_ptr<Integer>> commits = prover->commit();
+  vector<shared_ptr<Integer>> commits;
+  prover->commit(commits);
   commitTime += Timer::end("P.commit");
 
   // P: prover calculate challenge value Y (non-interactive mode)
@@ -106,7 +107,8 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
 
   // P: prover perform polyCommit
   Timer::start("P.polyCommit");
-  auto pc = prover->polyCommit(y1);
+  vector<shared_ptr<Integer>> pc;
+  prover->polyCommit(y1, pc);
   proveTime += Timer::end("P.polyCommit");
 
   // P: prover calculate challenge value X (non-interactive mode)
@@ -117,7 +119,8 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
 
   // P: prover calculate the ZKP
   Timer::start("P.prove");
-  auto proofs = prover->prove(y1, x1);
+  vector<shared_ptr<Integer>> proofs;
+  prover->prove(y1, x1, proofs);
   proveTime += Timer::end("P.prove");
 
   /*

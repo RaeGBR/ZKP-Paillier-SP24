@@ -66,11 +66,13 @@ TEST(PolynomialCommitment, PolyCommit_eval_verify)
       Integer::create("8", 10)};
 
   auto T = commitScheme.calcT(m1, m2, n, poly);
-  auto pc = commitScheme.commit(m1, m2, n, T, ri);
+  vector<shared_ptr<Integer>> pc;
+  commitScheme.commit(m1, m2, n, T, ri, pc);
 
   auto x = Integer::create("9", 10);
 
-  auto pe = commitScheme.eval(m1, m2, n, T, ri, x);
+  vector<shared_ptr<Integer>> pe;
+  commitScheme.eval(m1, m2, n, T, ri, x, pe);
 
   auto isValid = commitScheme.verify(m1, m2, n, pc, pe, x);
 
@@ -105,13 +107,15 @@ TEST(PolynomialCommitment, PolyCommit_eval_verify2)
 
   // calculate PolyCommit
   auto T = commitScheme.calcT(m1, m2, n, poly);
-  auto pc = commitScheme.commit(m1, m2, n, T, ri);
+  vector<shared_ptr<Integer>> pc;
+  commitScheme.commit(m1, m2, n, T, ri, pc);
 
   // set challenge value
   auto x = Random::genInteger(p);
 
   // calculate PolyEval
-  auto pe = commitScheme.eval(m1, m2, n, T, ri, x);
+  vector<shared_ptr<Integer>> pe;
+  commitScheme.eval(m1, m2, n, T, ri, x, pe);
 
   // verify
   auto isValid = commitScheme.verify(m1, m2, n, pc, pe, x);
@@ -146,13 +150,15 @@ TEST(PolynomialCommitment, PolyCommit_eval_verify3)
 
   // calculate PolyCommit
   auto T = commitScheme.calcT(m1, m2, n, poly);
-  auto pc = commitScheme.commit(m1, m2, n, T, ri);
+  vector<shared_ptr<Integer>> pc;
+  commitScheme.commit(m1, m2, n, T, ri, pc);
 
   // set challenge value
   auto x = Random::genInteger(p, {}, true);
 
   // calculate PolyEval
-  auto pe = commitScheme.eval(m1, m2, n, T, ri, x);
+  vector<shared_ptr<Integer>> pe;
+  commitScheme.eval(m1, m2, n, T, ri, x, pe);
 
   // verify
   auto isValid = commitScheme.verify(m1, m2, n, pc, pe, x);

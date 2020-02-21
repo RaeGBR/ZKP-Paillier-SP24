@@ -153,21 +153,24 @@ TEST(CBatchEnc, Batch_encrypt_data)
   auto prover = make_shared<CircuitZKPProver>(proverZkp, proverCir->A, proverCir->B, proverCir->C);
 
   // P->V: prover commit the circuit arguments
-  vector<shared_ptr<Integer>> commits = prover->commit();
+  vector<shared_ptr<Integer>> commits;
+  prover->commit(commits);
 
   // V->P: verifier calculate challenge value Y
   verifier->setCommits(commits);
   auto y = verifier->calculateY();
 
   // P->V: prover perform polyComit
-  auto pc = prover->polyCommit(y);
+  vector<shared_ptr<Integer>> pc;
+  prover->polyCommit(y, pc);
 
   // V->P: verifier calculate challenge value X
   verifier->setPolyCommits(pc);
   auto x = verifier->calculateX();
 
   // P->V: prover calculate the ZKP
-  auto proofs = prover->prove(y, x);
+  vector<shared_ptr<Integer>> proofs;
+  prover->prove(y, x, proofs);
 
   // V: verify the proof
   auto isValid = verifier->verify(proofs, y, x);

@@ -98,10 +98,11 @@ shared_ptr<Matrix> PolynomialCommitment::calcT(
   return T;
 }
 
-vector<shared_ptr<Integer>> PolynomialCommitment::commit(
+void PolynomialCommitment::commit(
     size_t m1, size_t m2, size_t n,
     const shared_ptr<Matrix> &T,
-    vector<shared_ptr<Integer>> &ri)
+    vector<shared_ptr<Integer>> &ri,
+    vector<shared_ptr<Integer>> &ret)
 {
   size_t m = m1 + m2 + 1;
   if (T->m != m || T->n != n)
@@ -117,16 +118,15 @@ vector<shared_ptr<Integer>> PolynomialCommitment::commit(
   }
 
   // calculate commitment
-  vector<shared_ptr<Integer>> ret;
   commit(T, ri, ret);
-  return ret;
 }
 
-vector<shared_ptr<Integer>> PolynomialCommitment::eval(
+void PolynomialCommitment::eval(
     size_t m1, size_t m2, size_t n,
     const shared_ptr<Matrix> &T,
     const vector<shared_ptr<Integer>> &ri,
-    const shared_ptr<Integer> &x)
+    const shared_ptr<Integer> &x,
+    vector<shared_ptr<Integer>> &ret)
 {
   size_t m = m1 + m2 + 1;
   if (T->m != m || T->n != n)
@@ -135,21 +135,25 @@ vector<shared_ptr<Integer>> PolynomialCommitment::eval(
     throw invalid_argument("ri.size() do not match (m1 + m2 + 1)");
 
   // Compute Z(X)
+  auto xn = x->modPow(make_shared<IntegerImpl>(n), p);
+  vector<shared_ptr<Integer>> xns; // [1, x^n, x^2n, ... , x^m1n or x^(m2-1)n]
+  Matrix::powerVector(xn, max(m1 + 1, m2))->row(0, xns);
   vector<shared_ptr<Integer>> zx;
   for (size_t i = m1; i > 0; i--)
   {
-    auto exp = make_shared<IntegerImpl>(i * n);
-    auto z = x->modPow(exp, p);
-    zx.push_back(z->inv(p));
-  }
-  zx.push_back(x);
-  for (size_t i = 1; i < m2; i++)
-  {
-    auto exp = make_shared<IntegerImpl>((i * n) + 1);
-    auto z = x->modPow(exp, p);
+    auto z = xns[i]->inv(p);
     zx.push_back(z);
   }
-  zx.push_back(x->modPow(Integer::TWO(), p));
+  if (m2 > 0)
+  {
+    zx.push_back(x);
+  }
+  for (size_t i = 1; i < m2; i++)
+  {
+    auto z = xns[i]->modMul(x, p);
+    zx.push_back(z);
+  }
+  zx.push_back(x->modMul(x, p));
   auto Z = make_shared<Matrix>(zx);
 
   // t_ = Z * T
@@ -162,10 +166,8 @@ vector<shared_ptr<Integer>> PolynomialCommitment::eval(
   r_ = Z->mul(r_, p);
 
   // return result vector
-  vector<shared_ptr<Integer>> ret;
   t_->row(0, ret);
   ret.push_back(r_->cell(0, 0));
-  return ret;
 }
 
 bool PolynomialCommitment::verify(

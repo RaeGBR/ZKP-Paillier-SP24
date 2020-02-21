@@ -116,7 +116,8 @@ TEST(CEnc, Run_circuit)
   auto prover = make_shared<CircuitZKPProver>(verifier, circuit->A, circuit->B, circuit->C);
 
   Timer::start("commit");
-  vector<shared_ptr<Integer>> commits = prover->commit();
+  vector<shared_ptr<Integer>> commits;
+  prover->commit(commits);
   totalCommit += Timer::end("commit");
 
   Timer::start("calculateY");
@@ -125,7 +126,8 @@ TEST(CEnc, Run_circuit)
   totalChallenge += Timer::end("calculateY");
 
   Timer::start("polyCommit");
-  auto pc = prover->polyCommit(y);
+  vector<shared_ptr<Integer>> pc;
+  prover->polyCommit(y, pc);
   totalProve += Timer::end("polyCommit");
 
   Timer::start("calculateX");
@@ -134,7 +136,8 @@ TEST(CEnc, Run_circuit)
   totalChallenge += Timer::end("calculateX");
 
   Timer::start("prove");
-  auto proofs = prover->prove(y, x);
+  vector<shared_ptr<Integer>> proofs;
+  prover->prove(y, x, proofs);
   totalProve += Timer::end("prove");
 
   Timer::start("verify");

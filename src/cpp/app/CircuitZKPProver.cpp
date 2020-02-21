@@ -17,10 +17,8 @@ CircuitZKPProver::CircuitZKPProver(
     throw invalid_argument("the matrix dimension of A, B and C are different to linear constrains");
 }
 
-vector<shared_ptr<Integer>> CircuitZKPProver::commit()
+void CircuitZKPProver::commit(vector<shared_ptr<Integer>> &ret)
 {
-  vector<shared_ptr<Integer>> ret;
-
   randA.clear();
   randB.clear();
   randC.clear();
@@ -34,18 +32,17 @@ vector<shared_ptr<Integer>> CircuitZKPProver::commit()
   zkp->commitScheme->commit(B, randB, ret);
   zkp->commitScheme->commit(C, randC, ret);
   ret.push_back(zkp->commitScheme->commit(D, randD));
-
-  return ret;
 }
 
-vector<shared_ptr<Integer>> CircuitZKPProver::polyCommit(const shared_ptr<Integer> &y)
+void CircuitZKPProver::polyCommit(const shared_ptr<Integer> &y, vector<shared_ptr<Integer>> &ret)
 {
   const size_t m = zkp->m;
   const auto p = zkp->GP_P;
 
-  zkp->setY(y);                     // recalculate cachedY_ and cachedY_Mq
-  auto Y = zkp->getY(y)->values[0]; // [1, y, y^2, ... , y^m]
-  auto Y_ = zkp->getY_(y);          // [y^m, y^2m, ... , y^mn]
+  zkp->setY(y);                  // recalculate cachedY_ and cachedY_Mq
+  vector<shared_ptr<Integer>> Y; // [1, y, y^2, ... , y^m]
+  zkp->getY(y)->row(0, Y);
+  auto Y_ = zkp->getY_(y); // [y^m, y^2m, ... , y^mn]
 
   // r(X) = SUM(ai * y^i * X^i) + SUM(bi * X^-i) + X^m * SUM(ci * X^i) + d * X^2m+1
   auto rx = make_shared<Polynomial>();
@@ -98,13 +95,14 @@ vector<shared_ptr<Integer>> CircuitZKPProver::polyCommit(const shared_ptr<Intege
   txRi.clear();
   txRi = Random::getRandoms(zkp->txM1 + zkp->txM2 + 1, p);
 
-  return zkp->commitScheme->commit(zkp->txM1, zkp->txM2, zkp->txN, txT, txRi);
+  // polyCommit( t(X) )
+  zkp->commitScheme->commit(zkp->txM1, zkp->txM2, zkp->txN, txT, txRi, ret);
 }
 
-vector<shared_ptr<Integer>> CircuitZKPProver::prove(const shared_ptr<Integer> &y, const shared_ptr<Integer> &x)
+void CircuitZKPProver::prove(const shared_ptr<Integer> &y, const shared_ptr<Integer> &x, vector<shared_ptr<Integer>> &ret)
 {
   // proofs contains: (pe..., r..., rr)
-  vector<shared_ptr<Integer>> ret = zkp->commitScheme->eval(zkp->txM1, zkp->txM2, zkp->txN, txT, txRi, x);
+  zkp->commitScheme->eval(zkp->txM1, zkp->txM2, zkp->txN, txT, txRi, x, ret);
 
   const auto m = zkp->m;
   const auto n = zkp->n;
@@ -151,6 +149,4 @@ vector<shared_ptr<Integer>> CircuitZKPProver::prove(const shared_ptr<Integer> &y
 
   r->row(0, ret); // append r... to result
   ret.push_back(rr);
-
-  return ret;
 }

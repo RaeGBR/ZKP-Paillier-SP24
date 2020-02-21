@@ -164,12 +164,14 @@ shared_ptr<Polynomial> Polynomial::mul(const shared_ptr<Polynomial> &b, const sh
 {
   auto ret = make_shared<Polynomial>();
 
-  for (int d1 : this->getDegrees())
+  for (auto it1 : values)
   {
-    auto ai = this->get(d1);
-    for (int d2 : b->getDegrees())
+    int d1 = it1.first;
+    auto ai = it1.second;
+    for (auto it2 : b->values)
     {
-      auto bi = b->get(d2);
+      int d2 = it2.first;
+      auto bi = it2.second;
       auto ab = ai->mul(bi, modulus);
       auto d = d1 + d2;
       ret->put(d, ret->get(d)->add(ab, modulus));

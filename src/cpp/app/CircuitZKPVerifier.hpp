@@ -30,7 +30,7 @@ private:
   vector<shared_ptr<Integer>> cachedY_Mq;
 
   vector<size_t> calcM1M2N(size_t m);
-  vector<shared_ptr<Integer>> getY_Mq(const shared_ptr<Integer> &y);
+  vector<shared_ptr<Integer>> &getY_Mq(const shared_ptr<Integer> &y);
   shared_ptr<Integer> getY_Mq(const shared_ptr<Integer> &y, size_t q); // q: 1 to Q
 
 public:

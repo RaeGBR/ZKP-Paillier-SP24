@@ -2,6 +2,7 @@
 
 #include "../lib/namespace.hpp"
 
+#include <algorithm>
 #include <stdexcept>
 #include <vector>
 
@@ -40,16 +41,18 @@ public:
       size_t m1, size_t m2, size_t n,
       const vector<shared_ptr<Integer>> &tx);
 
-  vector<shared_ptr<Integer>> commit(
+  void commit(
       size_t m1, size_t m2, size_t n,
       const shared_ptr<Matrix> &T,
-      vector<shared_ptr<Integer>> &ri);
+      vector<shared_ptr<Integer>> &ri,
+      vector<shared_ptr<Integer>> &result);
 
-  vector<shared_ptr<Integer>> eval(
+  void eval(
       size_t m1, size_t m2, size_t n,
       const shared_ptr<Matrix> &T,
       const vector<shared_ptr<Integer>> &ri,
-      const shared_ptr<Integer> &x);
+      const shared_ptr<Integer> &x,
+      vector<shared_ptr<Integer>> &result);
 
   bool verify(
       size_t m1, size_t m2, size_t n,

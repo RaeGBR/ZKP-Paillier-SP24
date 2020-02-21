@@ -77,7 +77,8 @@ TEST(CircuitZKP, Test_1)
   auto prover = make_shared<CircuitZKPProver>(verifier, A, B, C);
 
   // P->V commit
-  vector<shared_ptr<Integer>> commits = prover->commit();
+  vector<shared_ptr<Integer>> commits;
+  prover->commit(commits);
 
   // V->P challenge y
   verifier->setCommits(commits);
@@ -99,7 +100,8 @@ TEST(CircuitZKP, Test_1)
   EXPECT_EQ(y1->toHex(), y3->toHex());
 
   // P->V polyCommit
-  auto pc = prover->polyCommit(y3);
+  vector<shared_ptr<Integer>> pc;
+  prover->polyCommit(y3, pc);
 
   EXPECT_EQ(pc.size(), verifier->txM1 + verifier->txM2 + 1);
 
@@ -118,7 +120,8 @@ TEST(CircuitZKP, Test_1)
   EXPECT_EQ(x1->toHex(), x3->toHex());
 
   // P->V proofs
-  auto proofs = prover->prove(y3, x3);
+  vector<shared_ptr<Integer>> proofs;
+  prover->prove(y3, x3, proofs);
 
   EXPECT_EQ(proofs.size(), verifier->txN + 1 + verifier->n + 1);
 
@@ -205,7 +208,8 @@ TEST(CircuitZKP, Test_2)
   auto prover = make_shared<CircuitZKPProver>(verifier, A, B, C);
 
   // P->V commit
-  vector<shared_ptr<Integer>> commits = prover->commit();
+  vector<shared_ptr<Integer>> commits;
+  prover->commit(commits);
 
   // V->P challenge y
   verifier->setCommits(commits);
@@ -227,7 +231,8 @@ TEST(CircuitZKP, Test_2)
   EXPECT_EQ(y1->toHex(), y3->toHex());
 
   // P->V polyCommit
-  auto pc = prover->polyCommit(y3);
+  vector<shared_ptr<Integer>> pc;
+  prover->polyCommit(y3, pc);
 
   EXPECT_EQ(pc.size(), verifier->txM1 + verifier->txM2 + 1);
 
@@ -246,7 +251,8 @@ TEST(CircuitZKP, Test_2)
   EXPECT_EQ(x1->toHex(), x3->toHex());
 
   // P->V proofs
-  auto proofs = prover->prove(y3, x3);
+  vector<shared_ptr<Integer>> proofs;
+  prover->prove(y3, x3, proofs);
 
   EXPECT_EQ(proofs.size(), verifier->txN + 1 + verifier->n + 1);
 
@@ -301,21 +307,24 @@ TEST(CircuitZKP, Test_3)
   auto prover = make_shared<CircuitZKPProver>(verifier, A, B, C);
 
   // P->V commit
-  vector<shared_ptr<Integer>> commits = prover->commit();
+  vector<shared_ptr<Integer>> commits;
+  prover->commit(commits);
 
   // V->P challenge y
   verifier->setCommits(commits);
   auto y = make_shared<IntegerImpl>(3);
 
   // P->V polyCommit
-  auto pc = prover->polyCommit(y);
+  vector<shared_ptr<Integer>> pc;
+  prover->polyCommit(y, pc);
 
   // V->P challenge x
   verifier->setPolyCommits(pc);
   auto x = make_shared<IntegerImpl>(4);
 
   // P->V proofs
-  auto proofs = prover->prove(y, x);
+  vector<shared_ptr<Integer>> proofs;
+  prover->prove(y, x, proofs);
 
   EXPECT_EQ(proofs.size(), verifier->txN + 1 + verifier->n + 1);
 

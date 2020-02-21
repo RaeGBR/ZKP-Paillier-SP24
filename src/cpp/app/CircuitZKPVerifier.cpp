@@ -68,22 +68,20 @@ vector<size_t> CircuitZKPVerifier::calcM1M2N(size_t m)
   return ret;
 }
 
-vector<shared_ptr<Integer>> CircuitZKPVerifier::getY_Mq(const shared_ptr<Integer> &y)
+vector<shared_ptr<Integer>> &CircuitZKPVerifier::getY_Mq(const shared_ptr<Integer> &y)
 {
   if (cachedY_Mq.size() > 0)
     return cachedY_Mq;
 
-  vector<shared_ptr<Integer>> ret;
   auto M = make_shared<IntegerImpl>(this->M);
   auto y_M = y->modPow(M, GP_P);
 
-  ret.push_back(y_M->modMul(y, GP_P)); // y^(M+1)
+  cachedY_Mq.push_back(y_M->modMul(y, GP_P)); // y^(M+1)
   for (size_t q = 1; q < Q; q++)
   {
-    ret.push_back(ret[q - 1]->modMul(y, GP_P)); // y^(M+q)
+    cachedY_Mq.push_back(cachedY_Mq[q - 1]->modMul(y, GP_P)); // y^(M+q)
   }
-  cachedY_Mq = ret;
-  return ret;
+  return cachedY_Mq;
 }
 
 shared_ptr<Integer> CircuitZKPVerifier::getY_Mq(const shared_ptr<Integer> &y, size_t q)
@@ -138,9 +136,18 @@ shared_ptr<Matrix> CircuitZKPVerifier::Wai(size_t i, const shared_ptr<Integer> &
     // zero row may trimmed, only process on non-zero rows
     if (Wqa[q - 1]->rowExists(i - 1))
     {
-      auto w = Wqa[q - 1]->rowAsMatrix(i - 1);
-      w = w->mul(getY_Mq(y, q), GP_P);
-      ret = ret->add(w, GP_P);
+      auto yMq = getY_Mq(y, q);
+      for (auto it : Wqa[q - 1]->values[i - 1])
+      {
+        size_t j = it.first;
+        auto v = it.second;
+        v = v->eq(Integer::ONE()) ? yMq : v->modMul(yMq, GP_P);
+        if (ret->cellExists(0, j))
+        {
+          v = ret->cell(0, j)->add(v)->mod(GP_P);
+        }
+        ret->cell(0, j, v);
+      }
     }
   }
   return ret;
@@ -157,9 +164,18 @@ shared_ptr<Matrix> CircuitZKPVerifier::Wbi(size_t i, const shared_ptr<Integer> &
     // zero row may trimmed, only process on non-zero rows
     if (Wqb[q - 1]->rowExists(i - 1))
     {
-      auto w = Wqb[q - 1]->rowAsMatrix(i - 1);
-      w = w->mul(getY_Mq(y, q), GP_P);
-      ret = ret->add(w, GP_P);
+      auto yMq = getY_Mq(y, q);
+      for (auto it : Wqb[q - 1]->values[i - 1])
+      {
+        size_t j = it.first;
+        auto v = it.second;
+        v = v->eq(Integer::ONE()) ? yMq : v->modMul(yMq, GP_P);
+        if (ret->cellExists(0, j))
+        {
+          v = ret->cell(0, j)->add(v)->mod(GP_P);
+        }
+        ret->cell(0, j, v);
+      }
     }
   }
   return ret;
@@ -176,14 +192,25 @@ shared_ptr<Matrix> CircuitZKPVerifier::Wci(size_t i, const shared_ptr<Integer> &
     // zero row may trimmed, only process on non-zero rows
     if (Wqc[q - 1]->rowExists(i - 1))
     {
-      auto w = Wqc[q - 1]->rowAsMatrix(i - 1);
-      w = w->mul(getY_Mq(y, q), GP_P);
-      ret = ret->add(w, GP_P);
+      auto yMq = getY_Mq(y, q);
+      for (auto it : Wqc[q - 1]->values[i - 1])
+      {
+        size_t j = it.first;
+        auto v = it.second;
+        v = v->eq(Integer::ONE()) ? yMq : v->modMul(yMq, GP_P);
+        if (ret->cellExists(0, j))
+        {
+          v = ret->cell(0, j)->add(v)->mod(GP_P);
+        }
+        ret->cell(0, j, v);
+      }
     }
   }
 
   auto Y_ = getY_(y);
-  auto _y_i = Integer::ZERO()->sub(y->modPow(make_shared<IntegerImpl>(i), GP_P));
+  vector<shared_ptr<Integer>> Y;
+  getY(y)->row(0, Y);
+  auto _y_i = Integer::ZERO()->sub(Y[i]);
   auto Y_y_i = Y_->mul(_y_i, GP_P);
 
   ret = ret->add(Y_y_i, GP_P);
@@ -195,7 +222,19 @@ shared_ptr<Integer> CircuitZKPVerifier::K(const shared_ptr<Integer> &y)
   auto ret = Integer::ZERO();
   for (size_t q = 1; q <= Q; q++)
   {
-    auto KqYmq = Kq[q - 1]->modMul(getY_Mq(y, q), GP_P);
+    auto kq = Kq[q - 1];
+    if (kq->eq(Integer::ZERO()))
+      continue;
+
+    shared_ptr<Integer> KqYmq;
+    if (kq->eq(Integer::ONE()))
+    {
+      KqYmq = getY_Mq(y, q);
+    }
+    else
+    {
+      KqYmq = kq->modMul(getY_Mq(y, q), GP_P);
+    }
     ret = ret->add(KqYmq)->mod(GP_P);
   }
   return ret;
@@ -206,7 +245,8 @@ shared_ptr<Polynomial> CircuitZKPVerifier::createSx(const shared_ptr<Integer> &y
   // s(X) = SUM(Wai(y) * y^-i * X^-i) + SUM(Wbi(y) * X^i) + X^-m * SUM(Wci(y) * X^-i)
   auto sx = make_shared<Polynomial>();
 
-  auto Y = getY(y)->values[0]; // [1, y, y^2, ... , y^m]
+  vector<shared_ptr<Integer>> Y; // [1, y, y^2, ... , y^m]
+  getY(y)->row(0, Y);
 
   for (size_t i = 1; i <= m; i++)
   {

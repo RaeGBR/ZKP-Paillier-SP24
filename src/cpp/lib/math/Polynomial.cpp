@@ -173,17 +173,19 @@ shared_ptr<Polynomial> Polynomial::mul(const shared_ptr<Polynomial> &b, const sh
   auto isVectorPoly = aFirst->m == 1 && bFirst->m == 1 && aFirst->n == bFirst->n;
   auto isMod = !modulus->eq(Integer::ZERO());
 
-  for (auto it1 : values)
+  if (isVectorPoly)
   {
-    int d1 = it1.first;
-    auto ai = it1.second;
-    for (auto it2 : b->values)
+    unordered_map<int, shared_ptr<Integer>> poly;
+
+    for (auto it1 : values)
     {
-      int d2 = it2.first;
-      auto bi = it2.second;
-      shared_ptr<Matrix> ab;
-      if (isVectorPoly)
+      int d1 = it1.first;
+      auto ai = it1.second;
+      for (auto it2 : b->values)
       {
+        int d2 = it2.first;
+        auto bi = it2.second;
+
         shared_ptr<Integer> sum = Integer::ZERO();
         for (auto it3 : ai->values[0])
         {
@@ -192,21 +194,48 @@ shared_ptr<Polynomial> Polynomial::mul(const shared_ptr<Polynomial> &b, const sh
           if (bi->cellExists(0, j))
           {
             auto v2 = bi->cell(0, j);
-            sum = isMod ? sum->add(v1->modMul(v2, modulus))->mod(modulus) : sum->add(v1->mul(v2));
+            sum = isMod ? sum->add(v1->modMul(v2, modulus)) : sum->add(v1->mul(v2));
           }
         }
-        ab = make_shared<Matrix>(1, 1);
-        ab->cell(0, 0, sum);
+        auto d = d1 + d2;
+        if (poly.find(d) != poly.end())
+        {
+          sum = sum->add(poly[d]);
+        }
+        poly[d] = sum;
       }
-      else
+    }
+
+    for (auto it : poly)
+    {
+      int d = it.first;
+      auto v = it.second;
+      if (isMod && v->gte(modulus))
       {
-        ab = ai->mul(bi, modulus);
+        v = v->mod(modulus);
       }
-      auto d = d1 + d2;
-      ab = ret->degreeExists(d) ? ret->get(d)->add(ab, modulus) : ab;
-      ret->put(d, ab);
+      auto mat = make_shared<Matrix>(vector<shared_ptr<Integer>>({v}));
+      ret->put(d, mat);
     }
   }
+  else
+  {
+    for (auto it1 : values)
+    {
+      int d1 = it1.first;
+      auto ai = it1.second;
+      for (auto it2 : b->values)
+      {
+        int d2 = it2.first;
+        auto bi = it2.second;
+        auto ab = ai->mul(bi, modulus);
+        auto d = d1 + d2;
+        ab = ret->degreeExists(d) ? ret->get(d)->add(ab, modulus) : ab;
+        ret->put(d, ab);
+      }
+    }
+  }
+
   return ret;
 }
 

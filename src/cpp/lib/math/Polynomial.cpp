@@ -57,15 +57,20 @@ vector<int> Polynomial::getDegrees()
   return ret;
 }
 
-shared_ptr<Matrix> Polynomial::get(int i, const shared_ptr<Matrix> &defaultValue)
+bool Polynomial::degreeExists(int i)
 {
   auto it = values.find(i);
-  if (it == values.end())
+  return it != values.end();
+}
+
+shared_ptr<Matrix> Polynomial::get(int i, const shared_ptr<Matrix> &defaultValue)
+{
+  if (!degreeExists(i))
   {
     return defaultValue != nullptr ? defaultValue : zero();
   }
 
-  return it->second;
+  return values[i];
 }
 
 shared_ptr<Matrix> Polynomial::zero()
@@ -163,6 +168,10 @@ shared_ptr<Polynomial> Polynomial::inner(const shared_ptr<Matrix> &b, const shar
 shared_ptr<Polynomial> Polynomial::mul(const shared_ptr<Polynomial> &b, const shared_ptr<Integer> modulus)
 {
   auto ret = make_shared<Polynomial>();
+  auto aFirst = get(getSmallestDegree());
+  auto bFirst = b->get(b->getSmallestDegree());
+  auto isVectorPoly = aFirst->m == 1 && bFirst->m == 1 && aFirst->n == bFirst->n;
+  auto isMod = !modulus->eq(Integer::ZERO());
 
   for (auto it1 : values)
   {
@@ -172,9 +181,30 @@ shared_ptr<Polynomial> Polynomial::mul(const shared_ptr<Polynomial> &b, const sh
     {
       int d2 = it2.first;
       auto bi = it2.second;
-      auto ab = ai->mul(bi, modulus);
+      shared_ptr<Matrix> ab;
+      if (isVectorPoly)
+      {
+        shared_ptr<Integer> sum = Integer::ZERO();
+        for (auto it3 : ai->values[0])
+        {
+          size_t j = it3.first;
+          auto v1 = it3.second;
+          if (bi->cellExists(0, j))
+          {
+            auto v2 = bi->cell(0, j);
+            sum = isMod ? sum->add(v1->modMul(v2, modulus))->mod(modulus) : sum->add(v1->mul(v2));
+          }
+        }
+        ab = make_shared<Matrix>(1, 1);
+        ab->cell(0, 0, sum);
+      }
+      else
+      {
+        ab = ai->mul(bi, modulus);
+      }
       auto d = d1 + d2;
-      ret->put(d, ret->get(d)->add(ab, modulus));
+      ab = ret->degreeExists(d) ? ret->get(d)->add(ab, modulus) : ab;
+      ret->put(d, ab);
     }
   }
   return ret;

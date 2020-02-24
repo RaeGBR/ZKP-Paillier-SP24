@@ -74,7 +74,7 @@ void CircuitZKPProver::polyCommit(const shared_ptr<Integer> &y, vector<shared_pt
   auto kyMatrix = make_shared<Matrix>(vector<shared_ptr<Integer>>({ky}));
   auto kyPoly = make_shared<Polynomial>();
   kyPoly->put(0, kyMatrix);
-  auto tx = rx->mul(rx_->t(), p);
+  auto tx = rx->mul(rx_, p);
   tx = tx->add(kyPoly, p);
 
   if (!tx->get(0)->eq(Matrix::ZERO()))

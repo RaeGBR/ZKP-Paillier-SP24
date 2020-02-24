@@ -45,6 +45,8 @@ public:
 
   vector<int> getDegrees();
 
+  bool degreeExists(int i);
+
   // get term ci * x^i, return nullptr if not exists
   shared_ptr<Matrix> get(int i, const shared_ptr<Matrix> &defaultValue = nullptr);
 

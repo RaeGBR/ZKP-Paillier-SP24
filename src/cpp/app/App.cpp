@@ -186,7 +186,7 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
   auto pSize = GP_P->toBinary().size();
   auto qSize = GP_Q->toBinary().size();
   double cipherSize = pSize;
-  double proofSize = 1.0 * qSize * (proverCir->batchCount + rangeProofCount); // Cm', CRj
+  double proofSize = 1.0 * pSize * (proverCir->batchCount + rangeProofCount); // Cm', CRj
   proofSize += pSize * Lj.size();
   proofSize += qSize * commits.size();
   proofSize += qSize * pc.size();

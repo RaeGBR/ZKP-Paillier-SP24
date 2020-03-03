@@ -24,7 +24,7 @@ namespace
 
 TEST(App, Run)
 {
-  string filename = "../../test5.csv";
+  string filename = "../../test6.csv";
   ifstream ifile(filename);
   ofstream fs;
   if (ifile)

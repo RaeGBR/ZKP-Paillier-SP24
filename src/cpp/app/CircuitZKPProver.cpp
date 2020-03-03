@@ -1,6 +1,7 @@
 #include "./CircuitZKPProver.hpp"
 
 using namespace polyu;
+using namespace NTL;
 
 CircuitZKPProver::CircuitZKPProver(
     const shared_ptr<CircuitZKPVerifier> &zkp,
@@ -37,6 +38,7 @@ void CircuitZKPProver::commit(vector<shared_ptr<Integer>> &ret)
 void CircuitZKPProver::polyCommit(const shared_ptr<Integer> &y, vector<shared_ptr<Integer>> &ret)
 {
   const size_t m = zkp->m;
+  const size_t n = zkp->n;
   const auto p = zkp->GP_P;
 
   zkp->setY(y);                  // recalculate cachedY_ and cachedY_Mq
@@ -74,7 +76,68 @@ void CircuitZKPProver::polyCommit(const shared_ptr<Integer> &y, vector<shared_pt
   auto kyMatrix = make_shared<Matrix>(vector<shared_ptr<Integer>>({ky}));
   auto kyPoly = make_shared<Polynomial>();
   kyPoly->put(0, kyMatrix);
-  auto tx = rx->mul(rx_, p);
+  shared_ptr<Polynomial> tx;
+  // convert to NTL object
+  ZZ zzP = conv<ZZ>(p->toString().c_str());
+  ZZ_p::init(zzP); // init mod p
+  vector<ZZ_pX> rXs;
+  vector<ZZ_pX> rX_s;
+
+  for (size_t i = 0; i < n; i++)
+  {
+    rXs.push_back(ZZ_pX());
+    rX_s.push_back(ZZ_pX());
+  }
+
+  int rxD0 = rx->getSmallestDegree();
+  int rxDn = rx->getLargestDegree();
+  int rx_D0 = rx_->getSmallestDegree();
+  int rx_Dn = rx_->getLargestDegree();
+  auto maxD = rxDn + rx_Dn - rxD0 - rx_D0;
+  for (auto d : rx->getDegrees())
+  {
+    auto vec = rx->get(d)->values[0];
+    int zzD = d - rxD0;
+    for (auto it : vec)
+    {
+      size_t j = it.first;
+      auto v = it.second;
+      ZZ_p zz = conv<ZZ_p>(v->toString().c_str());
+      SetCoeff(rXs[j], zzD, zz);
+    }
+  }
+  for (auto d : rx_->getDegrees())
+  {
+    auto vec = rx_->get(d)->values[0];
+    int zzD = d - rx_D0;
+    for (auto it : vec)
+    {
+      size_t j = it.first;
+      auto v = it.second;
+      ZZ_p zz = conv<ZZ_p>(v->toString().c_str());
+      SetCoeff(rX_s[j], zzD, zz);
+    }
+  }
+  // rx * rx_
+  ZZ_pX rrX;
+  ZZ_pX f;
+  for (size_t i = 0; i < n; i++)
+  {
+    mul(f, rXs[i], rX_s[i]);
+    add(rrX, rrX, f);
+  }
+  // convert back to polynomial object
+  tx = make_shared<Polynomial>();
+  stringstream ss;
+  for (size_t i = 0; i <= maxD; i++)
+  {
+    int d = i + rxD0 + rx_D0;
+    ss.str("");
+    ss << rrX[i];
+    auto ti = make_shared<IntegerImpl>(ss.str().c_str(), 10);
+    auto tiMatrix = make_shared<Matrix>(vector<shared_ptr<Integer>>({ti}));
+    tx->put(d, tiMatrix);
+  }
   tx = tx->add(kyPoly, p);
 
   if (!tx->get(0)->eq(Matrix::ZERO()))

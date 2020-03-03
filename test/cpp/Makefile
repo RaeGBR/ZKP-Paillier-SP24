@@ -78,6 +78,7 @@ compile_test:
 		$(GTEST_DIR)/build/gtest_main.a -o $(TEST_OUT)/$(TEST_NAME) \
 			$(COVERAGE_FLAG) \
 			-L$(CRYPTOPP_DIR) \
+			-lntl -lgmp -lm \
 			-lcryptopp;
 
 	@echo "\033[32mOutput:\033[0m\n$(TEST_OUT)"

@@ -7,7 +7,7 @@ DJINNI_SUP_DIR ?= $(ROOT_DIR)/deps/djinni/support-lib
 DJINNI_GEN_DIR ?= $(ROOT_DIR)/generated-src
 CPP_OUT ?= $(OUT_DIR)/cpp/cryptoplus
 JNI_OUT ?= $(OUT_DIR)/jni/cryptoplus
-FLAGS := -std=c++11
+FLAGS := -std=c++11 -g -O2 -pthread -march=native
 JAVA_HOME ?= $(shell jrunscript -e 'java.lang.System.out.println(new java.io.File(java.lang.System.getProperty("java.home")).getParent());')
 
 ifeq ($(findstring :,$(JAVA_HOME)),)

@@ -154,51 +154,69 @@ TEST(CEnc, Run_circuit)
   EXPECT_TRUE(isValid);
 }
 
+/*
 TEST(CEnc, Speed_test)
 {
-  // size_t runTest = 1000;
-  // int byteLengths[] = {16, 32, 64, 128, 256};
-  // for (size_t i = 0; i < 5; i++)
-  // {
-  //   int byteLength = byteLengths[i];
-  //   auto crypto = PaillierEncryption::generate(byteLength);
-  //   auto GP_Q = crypto->getGroupQ();
-  //   auto GP_P = crypto->getGroupP();
-  //   auto GP_G = crypto->getGroupG();
-  //   auto pk = crypto->getPublicKey();
-  //   auto sk = crypto->getPrivateKey();
-  //   cout << "\"GP_P\"," << GP_P->toBinary().size() * 8 << endl;
-  //   cout << "\"GP_Q\"," << GP_Q->toBinary().size() * 8 << endl;
-  //   cout << "\"msg\"," << pk->toBinary().size() * 8 << endl;
+  const size_t groupTry = 5;
+  const size_t runTestMax = 50000;
+  int byteLengths[] = {8, 16, 32, 64, 128, 256};
+  for (size_t i = 0; i < 5; i++)
+  {
+    int byteLength = byteLengths[i];
+    double mulThroughput = 0;
+    double powThroughput = 0;
+    size_t qSize = 0;
+    size_t pSize = 0;
+    size_t mSize = 0;
 
-  //   auto a = Random::genInteger(byteLength)->mod(pk);
-  //   auto b = Random::genInteger(byteLength)->mod(pk);
-  //   double diff;
+    for (size_t j = 0; j < groupTry; j++)
+    {
+      auto crypto = PaillierEncryption::generate(byteLength);
+      auto GP_Q = crypto->getGroupQ();
+      auto GP_P = crypto->getGroupP();
+      auto GP_G = crypto->getGroupG();
+      auto pk = crypto->getPublicKey();
+      auto sk = crypto->getPrivateKey();
+      qSize = max(qSize, GP_Q->toBinary().size() * 8);
+      pSize = max(pSize, GP_P->toBinary().size() * 8);
+      mSize = max(mSize, pk->toBinary().size() * 8);
 
-  //   Timer::start("mod p");
-  //   for (size_t i = 0; i < runTest; i++)
-  //   {
-  //     a = a->modMul(b, GP_P);
-  //   }
-  //   diff = Timer::end("mod p");
-  //   cout << "a: " << a->toHex() << endl;
-  //   cout << "b: " << b->toHex() << endl;
-  //   cout << "through put: " << runTest / diff << " op/sec" << endl;
-  //   EXPECT_TRUE(a->gt(Integer::ZERO()));
+      auto a = Random::genInteger(byteLength)->mod(GP_Q);
+      auto b = Random::genInteger(byteLength)->mod(GP_Q);
+      double diff, throughput;
 
-  //   b = a;
-  //   a = GP_G;
-  //   Timer::start("mod Q");
-  //   for (size_t i = 0; i < runTest; i++)
-  //   {
-  //     a = a->modMul(b, GP_Q);
-  //   }
-  //   diff = Timer::end("mod Q");
-  //   cout << "a: " << a->toHex() << endl;
-  //   cout << "b: " << b->toHex() << endl;
-  //   cout << "through put: " << runTest / diff << " op/sec" << endl;
-  //   EXPECT_TRUE(a->gt(Integer::ZERO()));
-  // }
+      size_t runTest = runTestMax;
+      Timer::start("mod");
+      for (size_t i = 0; i < runTestMax; i++)
+      {
+        a = a->modMul(b, GP_Q);
+      }
+      diff = Timer::end("mod", true);
+      throughput = runTest / diff;
+      mulThroughput += throughput;
+      EXPECT_TRUE(a->gt(Integer::ZERO()));
+
+      b = a;
+      a = GP_G;
+      runTest = runTestMax / byteLength;
+      Timer::start("pow");
+      for (size_t i = 0; i < runTest; i++)
+      {
+        a = a->modPow(b, GP_Q);
+      }
+      diff = Timer::end("pow", true);
+      throughput = runTest / diff;
+      powThroughput += throughput;
+      EXPECT_TRUE(a->gt(Integer::ZERO()));
+    }
+
+    cout << "key length: " << mSize << " bit" << endl;
+    cout << "group p size: " << pSize << " bit" << endl;
+    cout << "group Q size: " << qSize << " bit" << endl;
+    cout << "average throughput: " << (mulThroughput / groupTry) << " mul/sec" << endl;
+    cout << "average throughput: " << (powThroughput / groupTry) << " pow/sec" << endl;
+  }
 }
+//*/
 
 } // namespace

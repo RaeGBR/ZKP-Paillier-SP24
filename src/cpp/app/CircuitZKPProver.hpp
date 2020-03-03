@@ -5,6 +5,10 @@
 #include <stdexcept>
 #include <vector>
 
+#include <NTL/ZZ.h>
+#include <NTL/ZZ_p.h>
+#include <NTL/ZZ_pX.h>
+
 #include "./CircuitZKPVerifier.hpp"
 #include "./PolynomialCommitment.hpp"
 #include "../lib/math/Matrix.hpp"

@@ -7,7 +7,7 @@ SRC_DIR ?= .
 PROJ_NAME ?= libcryptoplus
 TEST_NAME ?= cryptoplustest
 PROJ_OUT ?= $(ROOT_DIR)/build/cpp
-TEST_OUT ?= $(SRC_DIR)/build
+TEST_OUT ?= $(SRC_DIR)
 COVERAGE_OUT ?= $(TEST_OUT)/coverage
 
 GTEST_DIR:= $(ROOT_DIR)/deps/googletest/googletest
@@ -33,6 +33,7 @@ CPP_TARGET := $(wildcard \
 
 TEST_FILES := $(wildcard ${SRC_DIR}/*.cpp)
 TEST_LIST := $(patsubst ${SRC_DIR}/%.cpp,%,${TEST_FILES})
+TEST_OBJS := $(patsubst %.cpp,%.o,${TEST_FILES})
 
 FLAGS := -std=c++11 -isystem ${GTEST_DIR}/include -pthread
 COVERAGE_FLAG:=
@@ -43,12 +44,17 @@ else
 	COVERAGE_FLAG = -lgcov
 endif
 
+.PHONY: all
 all: compile_program clean compile_test
 
+.PHONY: clean
 clean:
 	@echo "\033[33mClean unit test project...\033[0m"
-	rm -rf $(TEST_OUT)
+	rm *.o ||:
+	rm -rf $(TEST_OUT)/$(TEST_NAME) ||:
+	rm -rf $(COVERAGE_OUT) ||:
 
+.PHONY: compile_gtest
 compile_gtest:
 	@echo "\033[33mBuild google test...\033[0m"
 	@cd $(GTEST_DIR) && mkdir -p build
@@ -59,20 +65,24 @@ compile_gtest:
 	ar rv $(GTEST_DIR)/build/gtest_main.a \
 		$(GTEST_DIR)/build/gtest-all.o $(GTEST_DIR)/build/gtest_main.o
 
+.PHONY: compile_program
 compile_program:
 	@echo "\033[33mBuild core project...\033[0m"
 	@cd $(CPP_DIR) && make clean library
 
-compile_test:
-	@echo "\033[33mBuild test...\033[0m"
+$(TEST_OUT):
 	mkdir -p $(TEST_OUT)
 
-	$(foreach f, $(TEST_LIST), \
+$(COVERAGE_OUT):
+	mkdir -p $(COVERAGE_OUT)
+
+%.o: %.cpp
 		g++ $(FLAGS) \
 			$(foreach d, $(CPP_INCLUDES), -I$d) \
-			-c $(SRC_DIR)/$f.cpp -o $(TEST_OUT)/$f.o; )
+		-c $< -o $@;
 
-	@echo "\033[33mRun test...\033[0m"
+.PHONY: compile_test
+compile_test: $(TEST_OUT) $(TEST_OBJS)
 	g++ $(FLAGS) -lpthread $(CPP_TARGET) \
 		$(foreach f, $(TEST_LIST), $(TEST_OUT)/$f.o) \
 		$(GTEST_DIR)/build/gtest_main.a -o $(TEST_OUT)/$(TEST_NAME) \
@@ -80,17 +90,18 @@ compile_test:
 			-L$(CRYPTOPP_DIR) \
 			-lntl -lgmp -lm \
 			-lcryptopp;
+	@echo "\033[33mTest build done...\033[0m"
 
-	@echo "\033[32mOutput:\033[0m\n$(TEST_OUT)"
-	@echo "\033[32mRunning:\033[0m"
-
+.PHONY: run_test
+run_test:
+	@echo "\033[32mTest Running:\033[0m"
 	$(TEST_OUT)/$(TEST_NAME) --gtest_output="xml:$(TEST_OUT)/$(TEST_NAME).xml";
 
-test_coverage:
+.PHONY: test_coverage
+test_coverage: $(COVERAGE_OUT)
 	@echo "\033[33mRun coverage report...\033[0m"
 	cd $(CPP_DIR) && gcov $(foreach f, $(CPP_OBJS), $f) > /dev/null
 
-	@mkdir -p $(COVERAGE_OUT)
 	@lcov -q --no-external -c -b $(CPP_DIR)/lib -d $(CPP_DIR)/lib --ignore-errors graph -o $(COVERAGE_OUT)/coverage.info
 	@lcov -r $(COVERAGE_OUT)/coverage.info '$(CPP_DIR)/lib/*/*.hpp' '$(CPP_DIR)/lib/*.hpp' '*.hpp' -o $(COVERAGE_OUT)/coverage.info
 	@genhtml $(COVERAGE_OUT)/coverage.info -o $(COVERAGE_OUT)

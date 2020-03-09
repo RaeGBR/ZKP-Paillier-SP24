@@ -20,7 +20,7 @@ release: full_build pack_release
 deps_build: cryptopp_os gtest_build
 
 .PHONY: lib_build
-lib_build: test_vars djinni_build cpp_clean cpp_build cpp_test cpp_coverage pack_cpp
+lib_build: test_vars djinni_build cpp_clean cpp_build cpp_test_clean cpp_test cpp_coverage pack_cpp
 
 .PHONY: os_build
 os_build: deps_build lib_build
@@ -141,7 +141,7 @@ cpp_clean:
 # Build project
 .PHONY: cpp_build
 cpp_build:
-	@cd src/cpp && make library
+	@cd src/cpp && make -j 16 library
 
 # Print out environment variables
 .PHONY: test_vars
@@ -155,9 +155,15 @@ test_vars:
 	@echo DEPS_DJINNI_DIR=$(DEPS_DJINNI_DIR)
 
 # Run test case
+.PHONY: cpp_test_clean
+cpp_test_clean:
+	@cd test/cpp && make clean
+
+# Run test case
 .PHONY: cpp_test
 cpp_test:
-	@cd test/cpp && make clean compile_test
+	@cd test/cpp && make -j 16 compile_test
+	@cd test/cpp && make run_test
 
 .PHONY: cpp_coverage
 cpp_coverage:

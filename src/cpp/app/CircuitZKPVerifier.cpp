@@ -315,6 +315,7 @@ shared_ptr<Integer> CircuitZKPVerifier::calculateX()
 
 bool CircuitZKPVerifier::verify(const vector<shared_ptr<Integer>> &proofs, const shared_ptr<Integer> &y, const shared_ptr<Integer> &x)
 {
+  Timer::start("verifier.verify");
   // check proof size
   if (proofs.size() != txN + 1 + n + 1)
     return false;
@@ -324,27 +325,44 @@ bool CircuitZKPVerifier::verify(const vector<shared_ptr<Integer>> &proofs, const
   auto r = make_shared<Matrix>(rArray);
   auto rr = proofs[proofs.size() - 1];
 
+  Timer::start("verifier.polyVerify");
   // check PolyVerify
   if (!commitScheme->verify(txM1, txM2, txN, pc, pe, x))
     return false;
+  Timer::end("verifier.polyVerify");
 
+  Timer::start("verifier.calcV1");
   // setting: u = 0
   // check PolyEval = r dot r' - 2K
   auto v1 = commitScheme->calcV(txN, pe, x);
+  Timer::end("verifier.calcV1");
 
-  setY(y);                                                         // recalculate cachedY_ and cachedY_Mq
+  Timer::start("verifier.calcV2");
+  Timer::start("verifier.setY");
+  setY(y); // recalculate cachedY_ and cachedY_Mq
+  Timer::end("verifier.setY");
+  Timer::start("verifier.sx");
   auto s2 = createSx(y)->eval(x, GP_P)->mul(Integer::TWO(), GP_P); // 2s(x)
-  auto r_ = r->inner(getY_(y), GP_P)->add(s2, GP_P);               // r' = r inner y' + 2s(x)
-  auto rr_ = r->dot(r_, GP_P);                                     // r dot r'
+  Timer::end("verifier.sx");
+  Timer::start("verifier.r_");
+  auto r_ = r->inner(getY_(y), GP_P)->add(s2, GP_P); // r' = r inner y' + 2s(x)
+  Timer::end("verifier.r_");
+  Timer::start("verifier.rr_");
+  auto rr_ = r->dot(r_, GP_P); // r dot r'
+  Timer::end("verifier.rr_");
   if (rr_->m != 1 || rr_->n != 1)
     return false;
   auto v2 = rr_->cell(0, 0)->sub(K(y)->modMul(Integer::TWO(), GP_P))->mod(GP_P); // r dot r' - 2K
+  Timer::end("verifier.calcV2");
 
   if (!v1->eq(v2))
     return false;
 
   // check commit(r, rr) is correct
+  Timer::start("verifier.commitR1");
   auto c1 = commitScheme->commit(rArray, rr);
+  Timer::end("verifier.commitR1");
+  Timer::start("verifier.commitR2");
   auto c2 = Integer::ONE();
 
   auto prevX = Integer::ONE();
@@ -366,6 +384,9 @@ bool CircuitZKPVerifier::verify(const vector<shared_ptr<Integer>> &proofs, const
   auto x2m1 = x->modPow(make_shared<IntegerImpl>(2 * m + 1), GP_P);
   auto d = commitD->modPow(x2m1, GP_Q);
   c2 = c2->modMul(d, GP_Q);
+  Timer::end("verifier.commitR2");
+
+  Timer::end("verifier.verify");
 
   if (!c1->eq(c2))
     return false;

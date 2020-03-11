@@ -37,15 +37,19 @@ void CircuitZKPProver::commit(vector<shared_ptr<Integer>> &ret)
 
 void CircuitZKPProver::polyCommit(const shared_ptr<Integer> &y, vector<shared_ptr<Integer>> &ret)
 {
+  Timer::start("prover.polyCommit");
   const size_t m = zkp->m;
   const size_t n = zkp->n;
   const auto p = zkp->GP_P;
 
+  Timer::start("prover.setY");
   zkp->setY(y);                  // recalculate cachedY_ and cachedY_Mq
   vector<shared_ptr<Integer>> Y; // [1, y, y^2, ... , y^m]
   zkp->getY(y)->row(0, Y);
   auto Y_ = zkp->getY_(y); // [y^m, y^2m, ... , y^mn]
+  Timer::end("prover.setY");
 
+  Timer::start("prover.rx");
   // r(X) = SUM(ai * y^i * X^i) + SUM(bi * X^-i) + X^m * SUM(ci * X^i) + d * X^2m+1
   auto rx = make_shared<Polynomial>();
   for (size_t i = 1; i <= m; i++)
@@ -62,21 +66,31 @@ void CircuitZKPProver::polyCommit(const shared_ptr<Integer> &y, vector<shared_pt
   }
   auto di = make_shared<Matrix>(D);
   rx->put(2 * m + 1, di);
+  Timer::end("prover.rx");
 
+  Timer::start("prover.sx");
   // s(X) = SUM(Wai(y) * y^-i * X^-i) + SUM(Wbi(y) * X^i) + X^-m * SUM(Wci(y) * X^-i)
   auto sx = zkp->createSx(y);
+  Timer::end("prover.sx");
 
+  Timer::start("prover.rx_");
   // r_(X) = r(X) inner Y_ + 2 * s(X)
   auto rx_ = rx->inner(Y_, p);
   auto sx2 = sx->mul(Integer::TWO(), p);
   rx_ = rx_->add(sx2, p);
+  Timer::end("prover.rx_");
 
   // t(X) = r(X) * r_(X) - 2K(y)
+  Timer::start("prover.ky");
   auto ky = p->sub(zkp->K(y)->modMul(Integer::TWO(), p));
   auto kyMatrix = make_shared<Matrix>(vector<shared_ptr<Integer>>({ky}));
   auto kyPoly = make_shared<Polynomial>();
   kyPoly->put(0, kyMatrix);
+  Timer::end("prover.ky");
+
   shared_ptr<Polynomial> tx;
+  Timer::start("prover.tx.new");
+  Timer::start("prover.tx.conv");
   // convert to NTL object
   ZZ zzP = conv<ZZ>(p->toString().c_str());
   ZZ_p::init(zzP); // init mod p
@@ -118,6 +132,8 @@ void CircuitZKPProver::polyCommit(const shared_ptr<Integer> &y, vector<shared_pt
       SetCoeff(rX_s[j], zzD, zz);
     }
   }
+  Timer::end("prover.tx.conv");
+  Timer::start("prover.tx.mul");
   // rx * rx_
   ZZ_pX rrX;
   ZZ_pX f;
@@ -126,6 +142,8 @@ void CircuitZKPProver::polyCommit(const shared_ptr<Integer> &y, vector<shared_pt
     mul(f, rXs[i], rX_s[i]);
     add(rrX, rrX, f);
   }
+  Timer::end("prover.tx.mul");
+  Timer::start("prover.tx.conv2");
   // convert back to polynomial object
   tx = make_shared<Polynomial>();
   stringstream ss;
@@ -139,10 +157,13 @@ void CircuitZKPProver::polyCommit(const shared_ptr<Integer> &y, vector<shared_pt
     tx->put(d, tiMatrix);
   }
   tx = tx->add(kyPoly, p);
+  Timer::end("prover.tx.conv2");
+  Timer::end("prover.tx.new");
 
   if (!tx->get(0)->eq(Matrix::ZERO()))
     throw invalid_argument("t0 should be zero, the arguments A, B, C do not match with constrains Wa, Wb, Wc, Kq");
 
+  Timer::start("prover.txri");
   int d1 = zkp->txM1 * zkp->txN;
   int d2 = zkp->txM2 * zkp->txN;
   vector<shared_ptr<Integer>> ti;
@@ -157,9 +178,13 @@ void CircuitZKPProver::polyCommit(const shared_ptr<Integer> &y, vector<shared_pt
   txT = zkp->commitScheme->calcT(zkp->txM1, zkp->txM2, zkp->txN, ti);
   txRi.clear();
   txRi = Random::getRandoms(zkp->txM1 + zkp->txM2 + 1, p);
+  Timer::end("prover.txri");
 
+  Timer::start("prover.txCommit");
   // polyCommit( t(X) )
   zkp->commitScheme->commit(zkp->txM1, zkp->txM2, zkp->txN, txT, txRi, ret);
+  Timer::end("prover.txCommit");
+  Timer::end("prover.polyCommit");
 }
 
 void CircuitZKPProver::prove(const shared_ptr<Integer> &y, const shared_ptr<Integer> &x, vector<shared_ptr<Integer>> &ret)

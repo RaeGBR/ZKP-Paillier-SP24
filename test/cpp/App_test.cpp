@@ -22,9 +22,10 @@ using namespace polyu;
 namespace
 {
 
+/*/
 TEST(App, Run)
 {
-  string filename = "../../test6.csv";
+  string filename = "../../test7.csv";
   ifstream ifile(filename);
   ofstream fs;
   if (ifile)
@@ -74,8 +75,8 @@ TEST(App, Run)
 
   // vector<size_t> bls({8, 16, 32, 64, 128, 256});
   // vector<size_t> ms({10, 20, 50, 100, 200});
-  vector<size_t> bls({8});
-  vector<size_t> ms({10, 20, 50});
+  vector<size_t> bls({32, 64});
+  vector<size_t> ms({10, 20, 50, 100, 200});
   for (size_t i = 0; i < bls.size(); i++)
   {
     byteLength = bls[i];
@@ -90,5 +91,6 @@ TEST(App, Run)
 
   fs.close();
 }
+//*/
 
 } // namespace

@@ -3,6 +3,8 @@
 #include <NTL/ZZ.h>
 #include <NTL/ZZ_p.h>
 #include <NTL/ZZX.h>
+#include <NTL/vector.h>
+#include <NTL/matrix.h>
 
 #include "lib/namespace.hpp"
 
@@ -13,6 +15,9 @@
 #include "lib/utils/Timer.hpp"
 #include "lib/paillier/PaillierEncryption.hpp"
 
+#include "app/ConvertUtils.hpp"
+#include "app/MathUtils.hpp"
+
 using namespace cryptoplus;
 using namespace NTL;
 
@@ -21,159 +26,44 @@ namespace
 
 TEST(Ntl, test)
 {
-  ZZ c = conv<ZZ>("7");
-  ZZ_p::init(c);
+  ZZ p = ConvertUtils::toZZ(make_shared<IntegerImpl>(7));
+  ZZ_p::init(p);
 
-  ZZ_p a = conv<ZZ_p>("2");
-  ZZ_p b = conv<ZZ_p>("5");
+  ZZ_p a = ConvertUtils::toZZ_p(make_shared<IntegerImpl>(5));
+  ZZ_p b = ConvertUtils::toZZ_p(make_shared<IntegerImpl>(6));
+  ZZ_p c = a + b;
 
-  auto ret = power(a, conv<ZZ>(b));
-  cout << "ret: " << ret << endl;
+  vector<shared_ptr<Integer>> vecA;
+  vecA.push_back(make_shared<IntegerImpl>(10));
+  vecA.push_back(make_shared<IntegerImpl>(20));
+  vecA.push_back(make_shared<IntegerImpl>(30));
 
-  // ZZ_pX f1;
-  // ZZ_pX f2;
+  Vec<ZZ> vecAZZ;
+  Vec<ZZ_p> vecAZZ_p;
+  ConvertUtils::toVecZZ(vecA, vecAZZ);
+  ConvertUtils::toVecZZ_p(vecA, vecAZZ_p);
 
-  // SetCoeff(f1, 0, 5);
-  // SetCoeff(f1, 2, a);
-  // SetCoeff(f2, 0, 3);
-  // SetCoeff(f2, 2, b);
+  // Mat<ZZ> mat;
+  // mat.SetDims(2, 3);
 
-  // cout << "f1: " << f1 << endl;
-  // cout << "f2: " << f2 << endl;
+  // cout << mat << endl;
 
-  // auto ret = f1 * f2;
+  // mat[0][1] = conv<ZZ>("2");
+  // mat[1][2] = conv<ZZ>("3");
+  // cout << mat << endl;
 
-  // cout << "ret: " << ret << endl;
+  // cout << mat.NumRows() << endl;
+  // cout << mat.NumCols() << endl;
 
-  // ZZ_p ret = a + b;
-  // ZZ_p expect = conv<ZZ_p>("4");
+  // // ZZ_pX f;
+  // // SetCoeff(f, 0, a);
+  // // SetCoeff(f, 1, b);
+  // // SetCoeff(f, 7, c);
+  // // cout << f << endl;
+  // // cout << deg(f) << endl;
 
-  // cout << "a: " << a << endl;
-  // cout << "b: " << b << endl;
-  // cout << "c: " << c << endl;
-  // cout << "ret: " << ret << endl;
-
-  // EXPECT_EQ(ret, expect);
-}
-
-TEST(Ntl, mul)
-{
-  size_t m = 1;
-  size_t n = 2;
-  auto p = make_shared<IntegerImpl>(101);
-
-  auto ky = make_shared<IntegerImpl>(-39)->mod(p);
-  auto kyMatrix = make_shared<Matrix>(vector<shared_ptr<Integer>>({ky}));
-  auto kyPoly = make_shared<Polynomial>();
-  kyPoly->put(0, kyMatrix);
-
-  auto rx = make_shared<Polynomial>();
-  rx->put(-1, make_shared<Matrix>(vector<int>({1, 2})));
-  rx->put(1, make_shared<Matrix>(vector<int>({3, 4})));
-
-  auto rx_ = make_shared<Polynomial>();
-  rx_->put(-1, make_shared<Matrix>(vector<int>({5, 6})));
-  rx_->put(2, make_shared<Matrix>(vector<int>({7, 8})));
-
-  auto tx = rx->mul(rx_, p);
-  auto tx0 = tx->get(0);
-
-  cout << "rx: " << rx->toString() << endl;
-  cout << "rx_: " << rx_->toString() << endl;
-  cout << "tx: " << tx->toString() << endl;
-  cout << "ky: " << ky->toString() << endl;
-
-  tx = tx->add(kyPoly, p);
-  cout << "tx + ky: " << tx->toString() << endl;
-
-  ZZ zzP = conv<ZZ>(p->toString().c_str());
-  ZZ_p::init(zzP); // init mod p
-  vector<ZZ_pX> rXs;
-  vector<ZZ_pX> rX_s;
-
-  for (size_t i = 0; i < n; i++)
-  {
-    rXs.push_back(ZZ_pX());
-    rX_s.push_back(ZZ_pX());
-  }
-
-  int rxD0 = rx->getSmallestDegree();
-  int rxDn = rx->getLargestDegree();
-  int rx_D0 = rx_->getSmallestDegree();
-  int rx_Dn = rx_->getLargestDegree();
-  cout << "rxD0: " << rxD0 << endl;
-  cout << "rx_D0: " << rx_D0 << endl;
-  for (auto d : rx->getDegrees())
-  {
-    auto vec = rx->get(d)->values[0];
-    int zzD = d - rxD0;
-    cout << "d: " << d << ", zzD: " << zzD << endl;
-    for (auto it : vec)
-    {
-      size_t j = it.first;
-      auto v = it.second;
-      ZZ_p zz = conv<ZZ_p>(v->toString().c_str());
-      SetCoeff(rXs[j], zzD, zz);
-    }
-  }
-  for (auto d : rx_->getDegrees())
-  {
-    auto vec = rx_->get(d)->values[0];
-    int zzD = d - rx_D0;
-    cout << "d: " << d << ", zzD: " << zzD << endl;
-    for (auto it : vec)
-    {
-      size_t j = it.first;
-      auto v = it.second;
-      ZZ_p zz = conv<ZZ_p>(v->toString().c_str());
-      SetCoeff(rX_s[j], zzD, zz);
-    }
-  }
-
-  for (size_t j = 0; j < n; j++)
-  {
-    cout << "j: " << j << "; ";
-    for (size_t i = 0; i <= rxDn - rxD0; i++)
-    {
-      int d = i + rxD0;
-      cout << "i: " << i << ", f(" << d << "): " << rXs[j][i] << "; ";
-    }
-    cout << endl;
-  }
-
-  for (size_t j = 0; j < n; j++)
-  {
-    cout << "j: " << j << "; ";
-    for (size_t i = 0; i <= rx_Dn - rx_D0; i++)
-    {
-      int d = i + rx_D0;
-      cout << "i: " << i << ", f(" << d << "): " << rX_s[j][i] << "; ";
-    }
-    cout << endl;
-  }
-
-  ZZ_pX rrX;
-  ZZ_pX f;
-  for (size_t i = 0; i < n; i++)
-  {
-    mul(f, rXs[i], rX_s[i]);
-    add(rrX, rrX, f);
-  }
-
-  stringstream ss;
-  ss.str("");
-  ss << zzP;
-  cout << "zzP: " << zzP << endl;
-  cout << "p: " << p->toString() << endl;
-
-  auto maxD = rxDn + rx_Dn - rxD0 - rx_D0;
-  for (size_t i = 0; i <= maxD; i++)
-  {
-    int d = i + rxD0 + rx_D0;
-
-    cout << "i: " << i << ", rrX(" << d << "): " << rrX[i] << "; ";
-  }
-  cout << endl;
+  // // random(a);
+  // // cout << "a: " << a << endl;
 }
 
 /*/
@@ -181,7 +71,7 @@ TEST(Ntl, Speed_test)
 {
 
   const size_t groupTry = 5;
-  const size_t runTestMax = 50000;
+  const size_t runTestMax = 5000000;
   int byteLengths[] = {8, 16, 32, 64, 128, 256};
   for (size_t i = 0; i < 5; i++)
   {
@@ -227,7 +117,7 @@ TEST(Ntl, Speed_test)
 
       zzB = zzA;
       zzA = zzG;
-      runTest = runTestMax / byteLength;
+      runTest = runTestMax / byteLength / 100;
       Timer::start("pow");
       ZZ zzb = conv<ZZ>(zzB);
       for (size_t i = 0; i < runTest; i++)

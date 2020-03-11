@@ -1,120 +1,109 @@
 #include "./PolynomialCommitment.hpp"
 
-using namespace polyu;
-
-PolynomialCommitment::PolynomialCommitment(
-    const shared_ptr<Integer> &Q,
-    const shared_ptr<Integer> &p,
-    const shared_ptr<Integer> &g,
-    size_t n)
+PolynomialCommitment::PolynomialCommitment(const ZZ &Q, const ZZ &p, const ZZ_p &g, size_t n)
 {
   this->Q = Q;
   this->p = p;
   this->g = g;
-  this->gi.push_back(g);
+  this->gi.SetLength(n + 1);
 
-  auto gx = g;
+  ZZ_pPush push(Q);
+  ZZ_p gx = g;
   for (size_t i = 0; i < n; i++)
   {
-    gx = gx->modMul(g, Q);
-    this->gi.push_back(gx);
+    mul(gx, gx, g);
+    this->gi[i] = gx;
   }
 }
 
-shared_ptr<Integer> PolynomialCommitment::commit(
-    const vector<shared_ptr<Integer>> &mi,
-    const shared_ptr<Integer> &r)
+ZZ_p PolynomialCommitment::commit(const Vec<ZZ_p> &mi, const ZZ_p &r)
 {
-  auto ms = make_shared<Matrix>(mi);
-  vector<shared_ptr<Integer>> rs({r});
-  vector<shared_ptr<Integer>> ret;
-  commit(ms, rs, ret);
-  return ret[0];
-}
+  ZZ_pPush push(Q);
 
-void PolynomialCommitment::commit(
-    const shared_ptr<Matrix> &ms,
-    const vector<shared_ptr<Integer>> &rs,
-    vector<shared_ptr<Integer>> &ret)
-{
-  if (gi.size() < ms->n + 1)
-    throw invalid_argument("number of generators and messages do not match");
+  ZZ_p gx;
+  ZZ_p ret = power(g, conv<ZZ>(r));
 
-  for (size_t i = 0; i < ms->m; i++)
+  for (size_t i = 0; i < mi.length(); i++)
   {
-    auto c = gi[0]->modPow(rs[i], Q); // c = g^ri
+    power(gx, gi[i], conv<ZZ>(mi[i]));
+    mul(ret, ret, gx);
+  }
+  return ret;
+}
 
-    // c = g^ri * g0^m0 * g1^m1 * ...
-    if (ms->rowExists(i))
-    {
-      for (auto it : ms->values[i]) // skip mi = 0, where gi^0 = 1
-      {
-        size_t j = it.first;
-        auto v = it.second;
+void PolynomialCommitment::commit(const Mat<ZZ_p> &ms, const Vec<ZZ_p> &rs, Vec<ZZ_p> &ret)
+{
+  auto m = ms.NumRows();
+  auto n = ms.NumCols();
 
-        if (v->eq(Integer::ZERO()))
-          continue;
-
-        auto gm = gi[j + 1];
-        if (!v->eq(Integer::ONE()))
-        {
-          gm = gm->modPow(v, Q);
-        }
-        c = c->modMul(gm, Q);
-      }
-    }
-    ret.push_back(c);
+  ret.SetLength(m);
+  for (size_t i = 0; i < m; i++)
+  {
+    ret[i] = commit(ms[i], rs[i]);
   }
 }
 
-shared_ptr<Matrix> PolynomialCommitment::calcT(
+void PolynomialCommitment::calcT(
     size_t m1, size_t m2, size_t n,
-    const vector<shared_ptr<Integer>> &tx)
+    const ZZ_pX &tx, Mat<ZZ_p> &ret)
 {
-  if ((m1 + m2) * n != tx.size())
+  if ((m1 + m2) * n < deg(tx))
     throw invalid_argument("m1, m2, n do not match with the t(x) length");
   if (m1 <= 0 || m2 <= 0)
     throw invalid_argument("m1, m2 must be positive integer");
 
+  ZZ_pPush push(p);
+
   // group to m1+m2 x n matrix
-  auto T = make_shared<Matrix>(tx);
-  T = T->group(n);
+  ret.SetDims(m1 + m2 + 1, n);
+
+  auto t1Max = m1 * n;
+  auto t2Max = t1Max + m2 * n + 1;
+  size_t i, j;
+  i = j = 0;
+  for (size_t d = 0; d < t1Max; d++)
+  {
+    ret[i][j] = tx[d];
+    ++j == n && (i++);
+    j == n && (j = 0);
+  }
+  for (size_t d = t1Max + 1; d < t2Max; d++)
+  {
+    ret[i][j] = tx[d];
+    ++j == n && (i++);
+    j == n && (j = 0);
+  }
 
   // Random vector u
-  vector<shared_ptr<Integer>> u;
-  if (n > 1)
-  {
-    u = Random::getRandoms(n - 1, p, true);
-  }
-  u.push_back(Integer::ZERO());
-  T->appendRow(u);
+  Vec<ZZ_p> u;
+  u.SetLength(n);
+  MathUtils::randVecZZ_p(n, p, u, true);
+  u[n - 1] = ZZ_p();
+
+  ret[i] = u;
 
   // mask vector t0'
   for (size_t i = 0; i < n - 1; i++)
   {
-    auto v = T->cell(m1, i + 1)->sub(u[i])->mod(p);
-    T->cell(m1, i + 1, v);
+    ret[m1][i + 1] -= u[i];
   }
-  return T;
 }
 
 void PolynomialCommitment::commit(
     size_t m1, size_t m2, size_t n,
-    const shared_ptr<Matrix> &T,
-    vector<shared_ptr<Integer>> &ri,
-    vector<shared_ptr<Integer>> &ret)
+    const Mat<ZZ_p> &T, Vec<ZZ_p> &ri,
+    Vec<ZZ_p> &ret)
 {
   size_t m = m1 + m2 + 1;
-  if (T->m != m || T->n != n)
+  if (T.NumRows() != m || T.NumCols() != n)
     throw invalid_argument("m1, m2, n do not match with the dimension of matrix T");
-  if (ri.size() != 0 && ri.size() != m)
+  if (ri.length() != 0 && ri.length() != m)
     throw invalid_argument("ri.size() do not match (m1 + m2 + 1)");
 
   // Generate randomness if it isn't provided
-  if (ri.size() == 0)
+  if (IsZero(ri))
   {
-    auto rs = Random::getRandoms(m, p, true);
-    ri.insert(ri.begin(), rs.begin(), rs.end());
+    MathUtils::randVecZZ_p(m, p, ri, true);
   }
 
   // calculate commitment
@@ -123,106 +112,125 @@ void PolynomialCommitment::commit(
 
 void PolynomialCommitment::eval(
     size_t m1, size_t m2, size_t n,
-    const shared_ptr<Matrix> &T,
-    const vector<shared_ptr<Integer>> &ri,
-    const shared_ptr<Integer> &x,
-    vector<shared_ptr<Integer>> &ret)
+    const Mat<ZZ_p> &T, const Vec<ZZ_p> &ri, const ZZ_p &x,
+    Vec<ZZ_p> &ret)
 {
   size_t m = m1 + m2 + 1;
-  if (T->m != m || T->n != n)
+  if (T.NumRows() != m || T.NumCols() != n)
     throw invalid_argument("m1, m2, n do not match with the dimension of matrix T");
-  if (ri.size() != 0 && ri.size() != m)
+  if (ri.length() != 0 && ri.length() != m)
     throw invalid_argument("ri.size() do not match (m1 + m2 + 1)");
 
-  // Compute Z(X)
-  auto xn = x->modPow(make_shared<IntegerImpl>(n), p);
-  vector<shared_ptr<Integer>> xns; // [1, x^n, x^2n, ... , x^m1n or x^(m2-1)n]
-  Matrix::powerVector(xn, max(m1 + 1, m2))->row(0, xns);
-  vector<shared_ptr<Integer>> zx;
-  for (size_t i = m1; i > 0; i--)
-  {
-    auto z = xns[i]->inv(p);
-    zx.push_back(z);
-  }
-  if (m2 > 0)
-  {
-    zx.push_back(x);
-  }
-  for (size_t i = 1; i < m2; i++)
-  {
-    auto z = xns[i]->modMul(x, p);
-    zx.push_back(z);
-  }
-  zx.push_back(x->modMul(x, p));
-  auto Z = make_shared<Matrix>(zx);
+  ZZ_pPush push(p);
 
+  // Compute Z(X)
+  auto xn = power(x, n);
+  Vec<ZZ_p> xns;
+  MathUtils::powerVecZZ_p(xn, max(m1 + 1, m2), p, xns);
+
+  Vec<ZZ_p> Z;
+  Z.SetLength(m1 + m2 + 1);
+  for (size_t i = 0; i < m1; i++)
+  {
+    inv(Z[i], xns[m1 - i]);
+  }
+  for (size_t i = 0; i < m2; i++)
+  {
+    mul(Z[m1 + i], xns[i], x);
+  }
+  mul(Z[m1 + m2], x, x);
+
+  // ret = [t_..., r_]
   // t_ = Z * T
-  auto t_ = Z->mul(T, p);
+  mul(ret, Z, T);
 
   // r_ = Z * r
-  auto r_ = make_shared<Matrix>(ri);
-  r_ = r_->t();
+  Mat<ZZ_p> r_;
+  r_.SetDims(1, ri.length());
+  r_[0] = ri;
+  transpose(r_, r_);
 
-  r_ = Z->mul(r_, p);
+  Vec<ZZ_p> r__;
+  mul(r__, Z, r_);
 
-  // return result vector
-  t_->row(0, ret);
-  ret.push_back(r_->cell(0, 0));
+  ret.append(r__);
 }
 
 bool PolynomialCommitment::verify(
     size_t m1, size_t m2, size_t n,
-    const vector<shared_ptr<Integer>> &pc,
-    const vector<shared_ptr<Integer>> &pe,
-    const shared_ptr<Integer> &x)
+    const Vec<ZZ_p> &pc, const Vec<ZZ_p> &pe, const ZZ_p &x)
 {
   size_t m = m1 + m2 + 1;
-  if (pc.size() != m)
+  if (pc.length() != m)
     throw invalid_argument("commitments count does not match with (m1 + m2 + 1)");
-  if (pe.size() != n + 1)
+  if (pe.length() != n + 1)
     throw invalid_argument("evaluate results count does not match with (n + 1)");
 
-  vector<shared_ptr<Integer>> t_(pe.begin(), pe.end() - 1);
-  auto r = pe.back();
+  ZZ_pPush push;
+
+  Vec<ZZ_p> t_;
+  ConvertUtils::subVec(pe, t_, 0, n);
+  ZZ_p r = pe[n];
+
   auto c1 = commit(t_, r);
 
   // U ^ (x ^ 2)
-  auto c2 = pc.back();
+  ZZ_p exp;
+  ZZ_p Ti;
+  ZZ_p c2 = pc[pc.length() - 1];
   {
-    auto exp = x->modMul(x, p);
-    c2 = c2->modPow(exp, Q);
+    ZZ_p::init(p);
+
+    mul(exp, x, x);
+
+    ZZ_p::init(Q);
+    power(c2, c2, conv<ZZ>(exp));
   }
 
   // Product(Ti' ^ (x ^ ((i - m1) * n)))
   for (size_t i = 0; i < m1; i++)
   {
-    auto exp = x->modPow(make_shared<IntegerImpl>((m1 - i) * n), p);
-    exp = exp->inv(p);
-    auto Ti = pc[i]->modPow(exp, Q);
-    c2 = c2->modMul(Ti, Q);
+    // TODO: use powerVec to calc
+    ZZ_p::init(p);
+    power(exp, x, (m1 - i) * n);
+    inv(exp, exp);
+
+    ZZ_p::init(Q);
+    power(Ti, pc[i], conv<ZZ>(exp));
+    mul(c2, c2, Ti);
   }
 
   // Product(Ti'' ^ (x ^ (i * n + 1)))
   for (size_t i = 0; i < m2; i++)
   {
-    auto exp = x->modPow(make_shared<IntegerImpl>(i * n + 1), p);
-    auto Ti = pc[m1 + i]->modPow(exp, Q);
-    c2 = c2->modMul(Ti, Q);
+    ZZ_p::init(p);
+    power(exp, x, i * n + 1);
+
+    ZZ_p::init(Q);
+    power(Ti, pc[m1 + i], conv<ZZ>(exp));
+    mul(c2, c2, Ti);
   }
 
   // verify
-  return c1->eq(c2);
+  return c1 == c2;
 }
 
-shared_ptr<Integer> PolynomialCommitment::calcV(
-    size_t n,
-    const vector<shared_ptr<Integer>> &pe,
-    const shared_ptr<Integer> &x)
+ZZ_p PolynomialCommitment::calcV(size_t n, const Vec<ZZ_p> &pe, const ZZ_p &x)
 {
+  ZZ_pPush push(p);
+
   // v = t_ * X(x)
-  vector<shared_ptr<Integer>> t_(pe.begin(), pe.end() - 1);
-  auto t = make_shared<Matrix>(t_);
-  auto X = Matrix::powerVector(x, n)->t();
-  auto v = t->mul(X, p);
-  return v->cell(0, 0);
+  Vec<ZZ_p> t;
+  ConvertUtils::subVec(pe, t, 0, pe.length() - 1);
+
+  Vec<ZZ_p> X;
+  MathUtils::powerVecZZ_p(x, n, p, X);
+  Mat<ZZ_p> X_;
+  X_.SetDims(1, X.length());
+  X_[0] = X;
+  transpose(X_, X_);
+
+  Vec<ZZ_p> v;
+  mul(v, t, X_);
+  return v[0];
 }

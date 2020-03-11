@@ -23,6 +23,7 @@ PaillierEncryption::PaillierEncryption(size_t byteLength, const binary_t &seed)
   } while (p == q);
 
   init();
+  ZZ_p::init(Q);
 }
 
 // Import KeyPair from N (public key) and group elements, can perform encrypt
@@ -33,6 +34,7 @@ PaillierEncryption::PaillierEncryption(const ZZ &N, const ZZ &GP_Q, ZZ &GP_P, ZZ
   Q = GP_Q;
   n2 = GP_P;
   G = GP_G;
+  ZZ_p::init(Q);
 }
 
 // Import KeyPair from Lambda and N (private & public key) and group elements, can perform encrypt, decrypt
@@ -44,6 +46,7 @@ PaillierEncryption::PaillierEncryption(const ZZ &N, const ZZ &lambda, const ZZ &
   Q = GP_Q;
   n2 = GP_P;
   G = GP_G;
+  ZZ_p::init(Q);
 }
 
 // Import KeyPair From p, q and N (private & public key), can perform encrypt, decrypt
@@ -55,6 +58,7 @@ PaillierEncryption::PaillierEncryption(const ZZ &N,
   this->p = p;
   this->q = q;
   init();
+  ZZ_p::init(Q);
 }
 
 // init value n2, g, mu

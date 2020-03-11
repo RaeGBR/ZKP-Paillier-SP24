@@ -53,6 +53,7 @@ void PolynomialCommitment::calcT(
     throw invalid_argument("m1, m2 must be positive integer");
 
   ZZ_pPush push(p);
+  auto maxDeg = deg(tx);
 
   // group to m1+m2 x n matrix
   ret.SetDims(m1 + m2 + 1, n);
@@ -61,13 +62,13 @@ void PolynomialCommitment::calcT(
   auto t2Max = t1Max + m2 * n + 1;
   size_t i, j;
   i = j = 0;
-  for (size_t d = 0; d < t1Max; d++)
+  for (size_t d = 0; d < t1Max && d <= maxDeg; d++)
   {
     ret[i][j] = tx[d];
     ++j == n && (i++);
     j == n && (j = 0);
   }
-  for (size_t d = t1Max + 1; d < t2Max; d++)
+  for (size_t d = t1Max + 1; d < t2Max && d <= maxDeg; d++)
   {
     ret[i][j] = tx[d];
     ++j == n && (i++);

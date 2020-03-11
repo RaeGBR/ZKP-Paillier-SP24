@@ -2,9 +2,7 @@
 
 #include "../lib/namespace.hpp"
 
-#include <algorithm>
 #include <stdexcept>
-#include <vector>
 
 #include <NTL/vector.h>
 #include <NTL/matrix.h>
@@ -14,11 +12,6 @@
 
 #include "./ConvertUtils.hpp"
 #include "./MathUtils.hpp"
-
-// #include "Integer.hpp"
-// #include "../lib/math/Matrix.hpp"
-// #include "../lib/math/Random.hpp"
-// #include "../lib/utils/HexUtils.hpp"
 
 using namespace std;
 using namespace NTL;

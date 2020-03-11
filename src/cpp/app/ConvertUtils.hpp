@@ -2,10 +2,7 @@
 
 #include "../lib/namespace.hpp"
 
-#include <fstream>
-#include <stdexcept>
 #include <vector>
-#include <math.h>
 
 #include <NTL/ZZ.h>
 #include <NTL/ZZ_p.h>
@@ -13,7 +10,6 @@
 #include <NTL/vector.h>
 
 #include "../lib/math/IntegerImpl.hpp"
-#include "../lib/math/Matrix.hpp"
 
 using namespace std;
 using namespace NTL;

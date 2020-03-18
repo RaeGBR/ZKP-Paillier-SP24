@@ -40,6 +40,7 @@ public:
   static ZZ_p hexToZZ_p(const string &input);
 
   static binary_t toBinary(const ZZ &input);
+  static binary_t toBinary(const ZZ_p &input);
   static binary_t toBinary(const string &input);
   static string toString(const binary_t &input);
 

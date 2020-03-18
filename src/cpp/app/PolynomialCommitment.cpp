@@ -5,7 +5,7 @@ PolynomialCommitment::PolynomialCommitment(const ZZ &Q, const ZZ &p, const ZZ_p 
   this->Q = Q;
   this->p = p;
   this->g = g;
-  this->gi.SetLength(n + 1);
+  this->gi.SetLength(n);
 
   ZZ_pPush push(Q);
   ZZ_p gx = g;

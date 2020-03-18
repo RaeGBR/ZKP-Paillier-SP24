@@ -179,6 +179,11 @@ binary_t ConvertUtils::toBinary(const ZZ &input)
   return output;
 }
 
+binary_t ConvertUtils::toBinary(const ZZ_p &input)
+{
+  return toBinary(conv<ZZ>(input));
+}
+
 binary_t ConvertUtils::toBinary(const string &input)
 {
   return binary_t(input.begin(), input.end());

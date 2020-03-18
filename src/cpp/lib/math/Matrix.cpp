@@ -1,41 +1,33 @@
 #include "./Matrix.hpp"
 
+using namespace cryptoplus;
+
 shared_ptr<Matrix> Matrix::ZERO()
 {
   return make_shared<Matrix>();
 }
 
-shared_ptr<Matrix> Matrix::identity(size_t size)
-{
-  auto I = make_shared<Matrix>(size, size);
-  for (size_t i = 0; i < size; i++)
-  {
-    I->cell(i, i, Integer::ONE());
-  }
-  return I;
-}
+// shared_ptr<Matrix> Matrix::powerVector(const shared_ptr<Integer> &x,
+//                                        size_t n,
+//                                        const shared_ptr<Integer> &modulus)
+// {
+//   bool isMod = !Integer::ZERO()->eq(modulus);
 
-shared_ptr<Matrix> Matrix::powerVector(const shared_ptr<Integer> &x,
-                                       size_t n,
-                                       const shared_ptr<Integer> &modulus)
-{
-  bool isMod = !Integer::ZERO()->eq(modulus);
-
-  auto ret = make_shared<Matrix>(1, n);
-  ret->cell(0, 0, Integer::ONE());
-  for (size_t i = 1; i < n; i++)
-  {
-    if (isMod)
-    {
-      ret->cell(0, i, ret->cell(0, i - 1)->modMul(x, modulus));
-    }
-    else
-    {
-      ret->cell(0, i, ret->cell(0, i - 1)->mul(x));
-    }
-  }
-  return ret;
-}
+//   auto ret = make_shared<Matrix>(1, n);
+//   ret->cell(0, 0, Integer::ONE());
+//   for (size_t i = 1; i < n; i++)
+//   {
+//     if (isMod)
+//     {
+//       ret->cell(0, i, ret->cell(0, i - 1)->modMul(x, modulus));
+//     }
+//     else
+//     {
+//       ret->cell(0, i, ret->cell(0, i - 1)->mul(x));
+//     }
+//   }
+//   return ret;
+// }
 
 Matrix::Matrix() : Matrix(1, 1) {}
 
@@ -48,7 +40,7 @@ Matrix::Matrix(size_t m, size_t n)
   this->n = n;
   for (size_t i = 0; i < m; i++)
   {
-    values.push_back(map<size_t, shared_ptr<Integer>>());
+    values.push_back(map<size_t, ZZ_p>());
   }
 }
 
@@ -56,290 +48,35 @@ Matrix::Matrix(const vector<int> &values) : Matrix::Matrix(1, values.size())
 {
   for (size_t i = 0; i < n; i++)
   {
-    this->cell(0, i, make_shared<IntegerImpl>(values[i]));
+    this->cell(0, i, values[i]);
   }
 }
 
-Matrix::Matrix(const vector<shared_ptr<Integer>> &values) : Matrix(vector<vector<shared_ptr<Integer>>>{values})
-{
-}
+// Matrix::Matrix(const vector<shared_ptr<Integer>> &values) : Matrix(vector<vector<shared_ptr<Integer>>>{values})
+// {
+// }
 
-Matrix::Matrix(const vector<vector<shared_ptr<Integer>>> &values)
-{
-  m = values.size();
-  if (m <= 0)
-    throw invalid_argument("m and n cannot be zero");
-  n = values[0].size();
-  if (n <= 0)
-    throw invalid_argument("m and n cannot be zero");
+// Matrix::Matrix(const vector<vector<shared_ptr<Integer>>> &values)
+// {
+//   m = values.size();
+//   if (m <= 0)
+//     throw invalid_argument("m and n cannot be zero");
+//   n = values[0].size();
+//   if (n <= 0)
+//     throw invalid_argument("m and n cannot be zero");
 
-  for (size_t i = 0; i < m; i++)
-  {
-    if (values[i].size() != n)
-      throw invalid_argument("matrix initial values does not fit the matrix size");
+//   for (size_t i = 0; i < m; i++)
+//   {
+//     if (values[i].size() != n)
+//       throw invalid_argument("matrix initial values does not fit the matrix size");
 
-    this->values.push_back(map<size_t, shared_ptr<Integer>>());
-    for (size_t j = 0; j < n; j++)
-    {
-      this->cell(i, j, values[i][j]);
-    }
-  }
-}
-
-shared_ptr<Matrix> Matrix::t()
-{
-  auto b = make_shared<Matrix>(n, m);
-  for (size_t i = 0; i < m; i++)
-  {
-    for (auto it : values[i])
-    {
-      size_t j = it.first;
-      auto v = it.second;
-      b->cell(j, i, v);
-    }
-  }
-
-  return b;
-}
-
-shared_ptr<Matrix> Matrix::add(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus)
-{
-  if (m != b->m || n != b->n)
-    throw invalid_argument("matrix dimension not match for addition");
-
-  bool isMod = !Integer::ZERO()->eq(modulus);
-
-  auto ret = clone();
-  for (size_t i = 0; i < m; i++)
-  {
-    for (auto it : b->values[i])
-    {
-      size_t j = it.first;
-      auto v1 = it.second;
-      auto v2 = ret->cell(i, j);
-      auto v = v1->add(v2);
-      v = isMod ? v->mod(modulus) : v;
-      ret->cell(i, j, v);
-    }
-  }
-  return ret;
-}
-
-shared_ptr<Matrix> Matrix::mul(const shared_ptr<Integer> &b, const shared_ptr<Integer> &modulus)
-{
-  if (b->eq(Integer::ZERO()))
-    return make_shared<Matrix>(m, n);
-
-  if (b->eq(Integer::ONE()))
-    return this->clone();
-
-  bool isMod = !Integer::ZERO()->eq(modulus);
-
-  auto ret = make_shared<Matrix>(m, n);
-  for (size_t i = 0; i < m; i++)
-  {
-    for (auto it : values[i])
-    {
-      size_t j = it.first;
-      auto v = it.second;
-      v = isMod ? v->modMul(b, modulus) : v->mul(b);
-      ret->cell(i, j, v);
-    }
-  }
-  return ret;
-}
-
-shared_ptr<Matrix> Matrix::mul(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus)
-{
-  if (n != b->m)
-    throw invalid_argument("matrix dimension not match for cross product");
-
-  auto p = b->n;
-  bool isMod = !Integer::ZERO()->eq(modulus);
-
-  // TODO: improve performance?
-  auto ret = make_shared<Matrix>(m, p);
-  for (size_t i = 0; i < m; i++)
-  {
-    for (size_t j = 0; j < p; j++)
-    {
-      for (size_t r = 0; r < n; r++)
-      {
-        if (isMod)
-        {
-          auto v = this->cell(i, r)->modMul(b->cell(r, j), modulus);
-          ret->cell(i, j, ret->cell(i, j)->add(v));
-          ret->cell(i, j, ret->cell(i, j)->mod(modulus));
-        }
-        else
-        {
-          auto v = this->cell(i, r)->mul(b->cell(r, j));
-          ret->cell(i, j, ret->cell(i, j)->add(v));
-        }
-      }
-    }
-  }
-  return ret;
-}
-
-shared_ptr<Matrix> Matrix::inner(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus)
-{
-  if (m != b->m || n != b->n)
-    throw invalid_argument("matrix dimension not match for inner product");
-
-  bool isMod = !Integer::ZERO()->eq(modulus);
-
-  auto ret = make_shared<Matrix>(m, n);
-  for (size_t i = 0; i < m; i++)
-  {
-    for (auto it : values[i])
-    {
-      size_t j = it.first;
-      auto v1 = it.second;
-      auto v2 = b->cell(i, j);
-      auto v = isMod ? v1->modMul(v2, modulus) : v1->mul(v2);
-      ret->cell(i, j, v);
-    }
-  }
-  return ret;
-}
-
-shared_ptr<Matrix> Matrix::dot(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus)
-{
-  if (m != b->m || n != b->n)
-    throw invalid_argument("matrix dimension not match for cross product");
-
-  auto t = b->t();
-  return this->mul(t, modulus);
-}
-
-bool Matrix::rowExists(size_t i)
-{
-  return i < m && values[i].size() > 0;
-}
-
-bool Matrix::cellExists(size_t i, size_t j)
-{
-  return i < m && j < n && values[i].find(j) != values[i].end();
-}
-
-shared_ptr<Matrix> Matrix::rowAsMatrix(size_t i)
-{
-  auto ret = make_shared<Matrix>(1, n);
-
-  if (rowExists(i))
-  {
-    for (auto it : values[i])
-    {
-      size_t j = it.first;
-      auto v = it.second;
-      ret->cell(0, j, v);
-    }
-  }
-
-  return ret;
-}
-
-void Matrix::row(size_t i, vector<shared_ptr<Integer>> &ret)
-{
-  for (size_t j = 0; j < n; j++)
-  {
-    ret.push_back(cell(i, j));
-  }
-}
-
-shared_ptr<Integer> Matrix::cell(size_t i, size_t j)
-{
-  return cellExists(i, j) ? values[i][j] : Integer::ZERO();
-}
-
-void Matrix::cell(size_t i, size_t j, const shared_ptr<Integer> &x)
-{
-  if (i >= m || j >= n)
-    throw invalid_argument("index out of the matrix dimension");
-
-  if (x->eq(Integer::ZERO()))
-  {
-    values[i].erase(j);
-  }
-  else
-  {
-    values[i][j] = x;
-  }
-}
-
-void Matrix::shift(size_t n)
-{
-  if (n == 0)
-    return;
-
-  this->n += n;
-
-  for (size_t i = 0; i < m; i++)
-  {
-    vector<size_t> keys;
-    vector<shared_ptr<Integer>> cells;
-    for (auto it : this->values[i])
-    {
-      keys.push_back(it.first);
-      cells.push_back(it.second);
-    }
-    this->values[i].clear();
-    for (size_t j = 0; j < keys.size(); j++)
-    {
-      auto key = n + keys[j];
-      this->cell(i, key, cells[j]);
-    }
-  }
-}
-
-void Matrix::extend(size_t n)
-{
-  this->n += n;
-}
-
-void Matrix::trim()
-{
-  for (size_t i = 0; i < m; i++)
-  {
-    for (size_t j = 0; j < n; j++)
-    {
-      if (cellExists(i, j))
-      {
-        if (values[i][j]->eq(Integer::ZERO()))
-        {
-          values[i].erase(j);
-        }
-      }
-    }
-  }
-}
-
-void Matrix::appendRow(const vector<shared_ptr<Integer>> &row)
-{
-  if (row.size() != n)
-    throw invalid_argument("matrix dimension not match for append row");
-
-  m++;
-  values.push_back(map<size_t, shared_ptr<Integer>>());
-
-  for (size_t i = 0; i < n; i++)
-  {
-    this->cell(m - 1, i, row[i]);
-  }
-}
-
-void Matrix::appendCol(const vector<shared_ptr<Integer>> &col)
-{
-  if (col.size() != m)
-    throw invalid_argument("matrix dimension not match for append row");
-
-  n++;
-  for (size_t i = 0; i < m; i++)
-  {
-    this->cell(i, n - 1, col[i]);
-  }
-}
+//     this->values.push_back(map<size_t, shared_ptr<Integer>>());
+//     for (size_t j = 0; j < n; j++)
+//     {
+//       this->cell(i, j, values[i][j]);
+//     }
+//   }
+// }
 
 shared_ptr<Matrix> Matrix::clone()
 {
@@ -355,6 +92,96 @@ shared_ptr<Matrix> Matrix::clone()
   }
 
   return ret;
+}
+
+bool Matrix::cellExists(size_t i, size_t j)
+{
+  return i < m && j < n && values[i].find(j) != values[i].end();
+}
+
+ZZ_p Matrix::cell(size_t i, size_t j)
+{
+  return cellExists(i, j) ? values[i][j] : ZZ_p();
+}
+
+void Matrix::cell(size_t i, size_t j, long x)
+{
+  cell(i, j, conv<ZZ_p>(x));
+}
+
+void Matrix::cell(size_t i, size_t j, const ZZ_p &x)
+{
+  if (i >= m || j >= n)
+    throw invalid_argument("index out of the matrix dimension");
+
+  if (IsZero(x))
+  {
+    values[i].erase(j);
+  }
+  else
+  {
+    values[i][j] = x;
+  }
+}
+
+bool Matrix::rowExists(size_t i)
+{
+  return i < m && values[i].size() > 0;
+}
+
+// shared_ptr<Matrix> Matrix::rowAsMatrix(size_t i)
+// {
+//   auto ret = make_shared<Matrix>(1, n);
+
+//   if (rowExists(i))
+//   {
+//     for (auto it : values[i])
+//     {
+//       size_t j = it.first;
+//       auto v = it.second;
+//       ret->cell(0, j, v);
+//     }
+//   }
+
+//   return ret;
+// }
+
+// void Matrix::row(size_t i, vector<shared_ptr<Integer>> &ret)
+// {
+//   for (size_t j = 0; j < n; j++)
+//   {
+//     ret.push_back(cell(i, j));
+//   }
+// }
+
+void Matrix::row(size_t i, Vec<ZZ_p> &output)
+{
+  output.SetLength(n);
+
+  if (!rowExists(i))
+    return;
+
+  for (auto it : values[i])
+  {
+    size_t j = it.first;
+    auto v = it.second;
+    output[j] = v;
+  }
+}
+
+void Matrix::toMat(Mat<ZZ_p> &output)
+{
+  output.SetDims(m, n);
+
+  for (size_t i = 0; i < m; i++)
+  {
+    for (auto it : values[i])
+    {
+      size_t j = it.first;
+      auto v = it.second;
+      output[i][j] = v;
+    }
+  }
 }
 
 shared_ptr<Matrix> Matrix::group(size_t newN, size_t newM)
@@ -383,6 +210,206 @@ shared_ptr<Matrix> Matrix::group(size_t newN, size_t newM)
   return ret;
 }
 
+// shared_ptr<Matrix> Matrix::t()
+// {
+//   auto b = make_shared<Matrix>(n, m);
+//   for (size_t i = 0; i < m; i++)
+//   {
+//     for (auto it : values[i])
+//     {
+//       size_t j = it.first;
+//       auto v = it.second;
+//       b->cell(j, i, v);
+//     }
+//   }
+
+//   return b;
+// }
+
+// shared_ptr<Matrix> Matrix::add(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus)
+// {
+//   if (m != b->m || n != b->n)
+//     throw invalid_argument("matrix dimension not match for addition");
+
+//   bool isMod = !Integer::ZERO()->eq(modulus);
+
+//   auto ret = clone();
+//   for (size_t i = 0; i < m; i++)
+//   {
+//     for (auto it : b->values[i])
+//     {
+//       size_t j = it.first;
+//       auto v1 = it.second;
+//       auto v2 = ret->cell(i, j);
+//       auto v = v1->add(v2);
+//       v = isMod ? v->mod(modulus) : v;
+//       ret->cell(i, j, v);
+//     }
+//   }
+//   return ret;
+// }
+
+// shared_ptr<Matrix> Matrix::mul(const shared_ptr<Integer> &b, const shared_ptr<Integer> &modulus)
+// {
+//   if (b->eq(Integer::ZERO()))
+//     return make_shared<Matrix>(m, n);
+
+//   if (b->eq(Integer::ONE()))
+//     return this->clone();
+
+//   bool isMod = !Integer::ZERO()->eq(modulus);
+
+//   auto ret = make_shared<Matrix>(m, n);
+//   for (size_t i = 0; i < m; i++)
+//   {
+//     for (auto it : values[i])
+//     {
+//       size_t j = it.first;
+//       auto v = it.second;
+//       v = isMod ? v->modMul(b, modulus) : v->mul(b);
+//       ret->cell(i, j, v);
+//     }
+//   }
+//   return ret;
+// }
+
+// shared_ptr<Matrix> Matrix::mul(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus)
+// {
+//   if (n != b->m)
+//     throw invalid_argument("matrix dimension not match for cross product");
+
+//   auto p = b->n;
+//   bool isMod = !Integer::ZERO()->eq(modulus);
+
+//   // TODO: improve performance?
+//   auto ret = make_shared<Matrix>(m, p);
+//   for (size_t i = 0; i < m; i++)
+//   {
+//     for (size_t j = 0; j < p; j++)
+//     {
+//       for (size_t r = 0; r < n; r++)
+//       {
+//         if (isMod)
+//         {
+//           auto v = this->cell(i, r)->modMul(b->cell(r, j), modulus);
+//           ret->cell(i, j, ret->cell(i, j)->add(v));
+//           ret->cell(i, j, ret->cell(i, j)->mod(modulus));
+//         }
+//         else
+//         {
+//           auto v = this->cell(i, r)->mul(b->cell(r, j));
+//           ret->cell(i, j, ret->cell(i, j)->add(v));
+//         }
+//       }
+//     }
+//   }
+//   return ret;
+// }
+
+// shared_ptr<Matrix> Matrix::inner(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus)
+// {
+//   if (m != b->m || n != b->n)
+//     throw invalid_argument("matrix dimension not match for inner product");
+
+//   bool isMod = !Integer::ZERO()->eq(modulus);
+
+//   auto ret = make_shared<Matrix>(m, n);
+//   for (size_t i = 0; i < m; i++)
+//   {
+//     for (auto it : values[i])
+//     {
+//       size_t j = it.first;
+//       auto v1 = it.second;
+//       auto v2 = b->cell(i, j);
+//       auto v = isMod ? v1->modMul(v2, modulus) : v1->mul(v2);
+//       ret->cell(i, j, v);
+//     }
+//   }
+//   return ret;
+// }
+
+// shared_ptr<Matrix> Matrix::dot(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus)
+// {
+//   if (m != b->m || n != b->n)
+//     throw invalid_argument("matrix dimension not match for cross product");
+
+//   auto t = b->t();
+//   return this->mul(t, modulus);
+// }
+
+// void Matrix::shift(size_t n)
+// {
+//   if (n == 0)
+//     return;
+
+//   this->n += n;
+
+//   for (size_t i = 0; i < m; i++)
+//   {
+//     vector<size_t> keys;
+//     vector<shared_ptr<Integer>> cells;
+//     for (auto it : this->values[i])
+//     {
+//       keys.push_back(it.first);
+//       cells.push_back(it.second);
+//     }
+//     this->values[i].clear();
+//     for (size_t j = 0; j < keys.size(); j++)
+//     {
+//       auto key = n + keys[j];
+//       this->cell(i, key, cells[j]);
+//     }
+//   }
+// }
+
+// void Matrix::extend(size_t n)
+// {
+//   this->n += n;
+// }
+
+// void Matrix::appendRow(const vector<shared_ptr<Integer>> &row)
+// {
+//   if (row.size() != n)
+//     throw invalid_argument("matrix dimension not match for append row");
+
+//   m++;
+//   values.push_back(map<size_t, shared_ptr<Integer>>());
+
+//   for (size_t i = 0; i < n; i++)
+//   {
+//     this->cell(m - 1, i, row[i]);
+//   }
+// }
+
+// void Matrix::appendCol(const vector<shared_ptr<Integer>> &col)
+// {
+//   if (col.size() != m)
+//     throw invalid_argument("matrix dimension not match for append row");
+
+//   n++;
+//   for (size_t i = 0; i < m; i++)
+//   {
+//     this->cell(i, n - 1, col[i]);
+//   }
+// }
+
+void Matrix::trim()
+{
+  for (size_t i = 0; i < m; i++)
+  {
+    for (size_t j = 0; j < n; j++)
+    {
+      if (cellExists(i, j))
+      {
+        if (IsZero(values[i][j]))
+        {
+          values[i].erase(j);
+        }
+      }
+    }
+  }
+}
+
 bool Matrix::eq(const shared_ptr<Matrix> &b)
 {
   if (this->m != b->m || this->n != b->n || this->values.size() != b->values.size())
@@ -395,7 +422,7 @@ bool Matrix::eq(const shared_ptr<Matrix> &b)
 
     for (size_t j = 0; j < this->values[i].size(); j++)
     {
-      if (!this->cell(i, j)->eq(b->cell(i, j)))
+      if (this->cell(i, j) != b->cell(i, j))
         return false;
     }
   }
@@ -411,7 +438,7 @@ json Matrix::toJson()
     output[i] = json::array();
     for (size_t j = 0; j < n; j++)
     {
-      output[i][j] = cell(i, j)->toString();
+      output[i][j] = ConvertUtils::toString(cell(i, j));
     }
   }
   return output;

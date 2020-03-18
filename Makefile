@@ -219,10 +219,6 @@ pack_android:
 	@mkdir -p build/android/aar
 	@cp android_project/AndroidCryptoLibrary/cryptoplus/build/outputs/aar/* build/android/aar
 
-# TODO: remove
-# Build Emscripten for CryptoPP to WebAssembly compatible
-.PHONY: build_emscripten
-build_emscripten: cryptopp_wasm
 
 CPP_SRC_FILES := $(wildcard \
 	src/cpp/lib/*.cpp \

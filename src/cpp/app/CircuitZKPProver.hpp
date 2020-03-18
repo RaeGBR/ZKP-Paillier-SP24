@@ -8,12 +8,18 @@
 #include <NTL/ZZ.h>
 #include <NTL/ZZ_p.h>
 #include <NTL/ZZ_pX.h>
+#include <NTL/vector.h>
+#include <NTL/matrix.h>
 
 #include "./CircuitZKPVerifier.hpp"
 #include "./PolynomialCommitment.hpp"
+#include "./MathUtils.hpp"
+#include "./ConvertUtils.hpp"
 #include "../lib/math/Matrix.hpp"
-#include "../lib/math/Polynomial.hpp"
 #include "../lib/utils/Timer.hpp"
+
+using namespace std;
+using namespace NTL;
 
 namespace polyu
 {
@@ -24,18 +30,18 @@ private:
 public:
   shared_ptr<CircuitZKPVerifier> zkp;
 
-  shared_ptr<Matrix> A;
-  shared_ptr<Matrix> B;
-  shared_ptr<Matrix> C;
-  vector<shared_ptr<Integer>> D;
+  Mat<ZZ_p> A;
+  Mat<ZZ_p> B;
+  Mat<ZZ_p> C;
+  Vec<ZZ_p> D;
 
-  vector<shared_ptr<Integer>> randA;
-  vector<shared_ptr<Integer>> randB;
-  vector<shared_ptr<Integer>> randC;
-  shared_ptr<Integer> randD;
+  Vec<ZZ_p> randA;
+  Vec<ZZ_p> randB;
+  Vec<ZZ_p> randC;
+  ZZ_p randD;
 
-  shared_ptr<Matrix> txT;
-  vector<shared_ptr<Integer>> txRi;
+  Mat<ZZ_p> txT;
+  Vec<ZZ_p> txRi;
 
   CircuitZKPProver(
       const shared_ptr<CircuitZKPVerifier> &zkp,
@@ -43,9 +49,15 @@ public:
       const shared_ptr<Matrix> &B,
       const shared_ptr<Matrix> &C);
 
-  void commit(vector<shared_ptr<Integer>> &result);
-  void polyCommit(const shared_ptr<Integer> &y, vector<shared_ptr<Integer>> &result);
-  void prove(const shared_ptr<Integer> &y, const shared_ptr<Integer> &x, vector<shared_ptr<Integer>> &result);
+  CircuitZKPProver(
+      const shared_ptr<CircuitZKPVerifier> &zkp,
+      const Mat<ZZ_p> &A,
+      const Mat<ZZ_p> &B,
+      const Mat<ZZ_p> &C);
+
+  void commit(Vec<ZZ_p> &result);
+  void polyCommit(const ZZ_p &y, Vec<ZZ_p> &result);
+  void prove(const ZZ_p &y, const ZZ_p &x, Vec<ZZ_p> &result);
 };
 
 } // namespace polyu

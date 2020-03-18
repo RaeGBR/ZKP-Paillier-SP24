@@ -81,7 +81,7 @@ void PolynomialCommitment::calcT(
   MathUtils::randVecZZ_p(n, p, u, true);
   u[n - 1] = ZZ_p();
 
-  ret[i] = u;
+  ret[m1 + m2] = u;
 
   // mask vector t0'
   for (size_t i = 0; i < n - 1; i++)

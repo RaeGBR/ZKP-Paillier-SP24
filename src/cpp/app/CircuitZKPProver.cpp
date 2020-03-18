@@ -1,7 +1,6 @@
 #include "./CircuitZKPProver.hpp"
 
 using namespace polyu;
-using namespace NTL;
 
 CircuitZKPProver::CircuitZKPProver(
     const shared_ptr<CircuitZKPVerifier> &zkp,
@@ -9,232 +8,249 @@ CircuitZKPProver::CircuitZKPProver(
     const shared_ptr<Matrix> &B,
     const shared_ptr<Matrix> &C)
 {
+  ZZ_pPush push(zkp->GP_P);
+
+  this->zkp = zkp;
+  A->toMat(this->A);
+  B->toMat(this->B);
+  C->toMat(this->C);
+
+  if (this->A.NumRows() != zkp->m || this->A.NumCols() != zkp->n ||
+      this->B.NumRows() != zkp->m || this->B.NumCols() != zkp->n ||
+      this->C.NumRows() != zkp->m || this->C.NumCols() != zkp->n)
+    throw invalid_argument("the matrix dimension of A, B and C are different to linear constrains");
+}
+
+CircuitZKPProver::CircuitZKPProver(
+    const shared_ptr<CircuitZKPVerifier> &zkp,
+    const Mat<ZZ_p> &A,
+    const Mat<ZZ_p> &B,
+    const Mat<ZZ_p> &C)
+{
+  ZZ_pPush push(zkp->GP_P);
+
   this->zkp = zkp;
   this->A = A;
   this->B = B;
   this->C = C;
 
-  if (A->m != zkp->m || A->n != zkp->n || B->m != zkp->m || B->n != zkp->n || C->m != zkp->m || C->n != zkp->n)
+  if (this->A.NumRows() != zkp->m || this->A.NumCols() != zkp->n ||
+      this->B.NumRows() != zkp->m || this->B.NumCols() != zkp->n ||
+      this->C.NumRows() != zkp->m || this->C.NumCols() != zkp->n)
     throw invalid_argument("the matrix dimension of A, B and C are different to linear constrains");
 }
 
-void CircuitZKPProver::commit(vector<shared_ptr<Integer>> &ret)
+void CircuitZKPProver::commit(Vec<ZZ_p> &ret)
 {
-  randA.clear();
-  randB.clear();
-  randC.clear();
-  randA = Random::getRandoms(zkp->m, zkp->GP_P);
-  randB = Random::getRandoms(zkp->m, zkp->GP_P);
-  randC = Random::getRandoms(zkp->m, zkp->GP_P);
-  D = Random::getRandoms(zkp->n, zkp->GP_P);
-  randD = Random::genInteger(zkp->GP_P);
+  MathUtils::randVecZZ_p(zkp->m, zkp->GP_P, randA);
+  MathUtils::randVecZZ_p(zkp->m, zkp->GP_P, randB);
+  MathUtils::randVecZZ_p(zkp->m, zkp->GP_P, randC);
+  MathUtils::randVecZZ_p(zkp->n, zkp->GP_P, D);
+  randD = MathUtils::randZZ_p(zkp->GP_P);
 
-  zkp->commitScheme->commit(A, randA, ret);
-  zkp->commitScheme->commit(B, randB, ret);
-  zkp->commitScheme->commit(C, randC, ret);
-  ret.push_back(zkp->commitScheme->commit(D, randD));
+  ret.SetLength(0);
+  Vec<ZZ_p> tmp;
+  zkp->commitScheme->commit(A, randA, tmp);
+  ret.append(tmp);
+  zkp->commitScheme->commit(B, randB, tmp);
+  ret.append(tmp);
+  zkp->commitScheme->commit(C, randC, tmp);
+  ret.append(tmp);
+  ret.append(zkp->commitScheme->commit(D, randD));
 }
 
-void CircuitZKPProver::polyCommit(const shared_ptr<Integer> &y, vector<shared_ptr<Integer>> &ret)
+void CircuitZKPProver::polyCommit(const ZZ_p &y, Vec<ZZ_p> &ret)
 {
   Timer::start("prover.polyCommit");
   const size_t m = zkp->m;
   const size_t n = zkp->n;
-  const auto p = zkp->GP_P;
 
   Timer::start("prover.setY");
-  zkp->setY(y);                  // recalculate cachedY_ and cachedY_Mq
-  vector<shared_ptr<Integer>> Y; // [1, y, y^2, ... , y^m]
-  zkp->getY(y)->row(0, Y);
+  zkp->setY(y);            // recalculate cachedY_ and cachedY_Mq
+  auto Y = zkp->getY(y);   // [1, y, y^2, ... , y^m]
   auto Y_ = zkp->getY_(y); // [y^m, y^2m, ... , y^mn]
   Timer::end("prover.setY");
 
-  Timer::start("prover.rx");
+  ZZ_pPush push(zkp->GP_P);
+  vector<ZZ_pX> rx;
+  vector<ZZ_pX> sx;
+  vector<ZZ_pX> rx_;
+  ZZ_pX tx;
+  ZZ_p tmp;
+  ZZ_pX tmpX;
+
+  for (size_t i = 0; i < n; i++)
+  {
+    rx.push_back(ZZ_pX());
+    rx_.push_back(ZZ_pX());
+  }
+
   // r(X) = SUM(ai * y^i * X^i) + SUM(bi * X^-i) + X^m * SUM(ci * X^i) + d * X^2m+1
-  auto rx = make_shared<Polynomial>();
+  //      = (X^-m) * ( SUM(ai * y^i * X^(m+i)) + SUM(bi * X^(m-i)) + SUM(ci * X^(2m+i)) + d * X^3m+1 )
+  Timer::start("prover.rx");
   for (size_t i = 1; i <= m; i++)
   {
-    auto ai = A->rowAsMatrix(i - 1);
-    ai = ai->mul(Y[i], p);
-    rx->put(i, ai);
+    for (size_t j = 1; j <= n; j++)
+    {
+      mul(tmp, A(i, j), Y[i]);
+      SetCoeff(rx[j - 1], m + i, tmp);
 
-    auto bi = B->rowAsMatrix(i - 1);
-    rx->put(-i, bi);
+      SetCoeff(rx[j - 1], m - i, B(i, j));
 
-    auto ci = C->rowAsMatrix(i - 1);
-    rx->put(m + i, ci);
+      SetCoeff(rx[j - 1], 2 * m + i, C(i, j));
+    }
   }
-  auto di = make_shared<Matrix>(D);
-  rx->put(2 * m + 1, di);
+  for (size_t j = 1; j <= n; j++)
+  {
+    if (!IsZero(D(j)))
+    {
+      SetCoeff(rx[j - 1], 3 * m + 1, D(j));
+    }
+  }
   Timer::end("prover.rx");
 
-  Timer::start("prover.sx");
   // s(X) = SUM(Wai(y) * y^-i * X^-i) + SUM(Wbi(y) * X^i) + X^-m * SUM(Wci(y) * X^-i)
-  auto sx = zkp->createSx(y);
+  //      = (X^2m) * ( SUM(Wai(y) * y^-i * X^(2m-i)) + SUM(Wbi(y) * X^(2m+i)) + SUM(Wci(y) * X^(m-i)) )
+  Timer::start("prover.sx");
+  zkp->createSx(y, sx);
   Timer::end("prover.sx");
 
-  Timer::start("prover.rx_");
   // r_(X) = r(X) inner Y_ + 2 * s(X)
-  auto rx_ = rx->inner(Y_, p);
-  auto sx2 = sx->mul(Integer::TWO(), p);
-  rx_ = rx_->add(sx2, p);
+  //       = rX^-m + ... + rX^(2m+1) + sX^-2m + ... + sX^m
+  //       = X^-m * (rX^0 + ... + rX^(3m+1)) + X^-2m * (sX^0 + ... + sX^3m)
+  //       = X^-m * X^-m * X^m * (rX^0 + ... + rX^(3m+1)) + X^-2m * (sX^0 + ... + sX^3m)
+  //       = X^-2m * (rX^m + ... + rX^(4m+1)) + X^-2m * (sX^0 + ... + sX^3m)
+  Timer::start("prover.rx_");
+  ZZ_pX xm;
+  SetCoeff(xm, m, 1);
+  for (size_t j = 0; j < n; j++)
+  {
+    mul(tmpX, sx[j], 2);       // 2 * s(X)
+    mul(rx_[j], rx[j], Y_[j]); // r(X) inner Y_
+    mul(rx_[j], rx_[j], xm);   // * X^-m * X^m
+    add(rx_[j], rx_[j], tmpX); // r(X) inner Y_ + 2 * s(X)
+  }
+
+  //   auto rx_ = rx->inner(Y_, p);
+  //   auto sx2 = sx->mul(Integer::TWO(), p);
+  //   rx_ = rx_->add(sx2, p);
   Timer::end("prover.rx_");
 
   // t(X) = r(X) * r_(X) - 2K(y)
+  //      = X^(-3m) * ( r(X) * r_(X) - 2K(y) * X^3m )
   Timer::start("prover.ky");
-  auto ky = p->sub(zkp->K(y)->modMul(Integer::TWO(), p));
-  auto kyMatrix = make_shared<Matrix>(vector<shared_ptr<Integer>>({ky}));
-  auto kyPoly = make_shared<Polynomial>();
-  kyPoly->put(0, kyMatrix);
+  auto ky = zkp->K(y);
+  ZZ_pX kyX;
+  SetCoeff(kyX, 3 * m, ky * 2);
   Timer::end("prover.ky");
 
-  shared_ptr<Polynomial> tx;
-  Timer::start("prover.tx.new");
-  Timer::start("prover.tx.conv");
-  // convert to NTL object
-  ZZ zzP = conv<ZZ>(p->toString().c_str());
-  ZZ_p::init(zzP); // init mod p
-  vector<ZZ_pX> rXs;
-  vector<ZZ_pX> rX_s;
-
-  for (size_t i = 0; i < n; i++)
-  {
-    rXs.push_back(ZZ_pX());
-    rX_s.push_back(ZZ_pX());
-  }
-
-  int rxD0 = rx->getSmallestDegree();
-  int rxDn = rx->getLargestDegree();
-  int rx_D0 = rx_->getSmallestDegree();
-  int rx_Dn = rx_->getLargestDegree();
-  auto maxD = rxDn + rx_Dn - rxD0 - rx_D0;
-  for (auto d : rx->getDegrees())
-  {
-    auto vec = rx->get(d)->values[0];
-    int zzD = d - rxD0;
-    for (auto it : vec)
-    {
-      size_t j = it.first;
-      auto v = it.second;
-      ZZ_p zz = conv<ZZ_p>(v->toString().c_str());
-      SetCoeff(rXs[j], zzD, zz);
-    }
-  }
-  for (auto d : rx_->getDegrees())
-  {
-    auto vec = rx_->get(d)->values[0];
-    int zzD = d - rx_D0;
-    for (auto it : vec)
-    {
-      size_t j = it.first;
-      auto v = it.second;
-      ZZ_p zz = conv<ZZ_p>(v->toString().c_str());
-      SetCoeff(rX_s[j], zzD, zz);
-    }
-  }
-  Timer::end("prover.tx.conv");
   Timer::start("prover.tx.mul");
   // rx * rx_
-  ZZ_pX rrX;
-  ZZ_pX f;
   for (size_t i = 0; i < n; i++)
   {
-    mul(f, rXs[i], rX_s[i]);
-    add(rrX, rrX, f);
+    mul(tmpX, rx[i], rx_[i]);
+    add(tx, tx, tmpX);
   }
+  sub(tx, tx, kyX); // rx * rx_ - 2ky
   Timer::end("prover.tx.mul");
-  Timer::start("prover.tx.conv2");
-  // convert back to polynomial object
-  tx = make_shared<Polynomial>();
-  stringstream ss;
-  for (size_t i = 0; i <= maxD; i++)
-  {
-    int d = i + rxD0 + rx_D0;
-    ss.str("");
-    ss << rrX[i];
-    auto ti = make_shared<IntegerImpl>(ss.str().c_str(), 10);
-    auto tiMatrix = make_shared<Matrix>(vector<shared_ptr<Integer>>({ti}));
-    tx->put(d, tiMatrix);
-  }
-  tx = tx->add(kyPoly, p);
-  Timer::end("prover.tx.conv2");
-  Timer::end("prover.tx.new");
 
-  if (!tx->get(0)->eq(Matrix::ZERO()))
+  if (!IsZero(tx[3 * m]))
     throw invalid_argument("t0 should be zero, the arguments A, B, C do not match with constrains Wa, Wb, Wc, Kq");
 
-  Timer::start("prover.txri");
-  int d1 = zkp->txM1 * zkp->txN;
-  int d2 = zkp->txM2 * zkp->txN;
-  vector<shared_ptr<Integer>> ti;
-  for (int i = d1; i >= 1; i--)
+  // shift t(X) degree and calcT for polyCommit
+  // t(X) = X^(-3m) * ( t0 + t1 * X^1 + ... )
+  //      = X^(-txM1 * txN) * (...)
+  Timer::start("prover.txT");
+  size_t degDiff = zkp->txM1 * zkp->txN - 3 * m;
+  if (degDiff > 0)
   {
-    ti.push_back(tx->get(-i)->cell(0, 0));
+    tmpX = ZZ_pX();
+    SetCoeff(tmpX, degDiff, 1);
+    mul(tx, tx, tmpX);
   }
-  for (int i = 1; i <= d2; i++)
-  {
-    ti.push_back(tx->get(i)->cell(0, 0));
-  }
-  txT = zkp->commitScheme->calcT(zkp->txM1, zkp->txM2, zkp->txN, ti);
-  txRi.clear();
-  txRi = Random::getRandoms(zkp->txM1 + zkp->txM2 + 1, p);
-  Timer::end("prover.txri");
+  zkp->commitScheme->calcT(zkp->txM1, zkp->txM2, zkp->txN, tx, txT);
+
+  MathUtils::randVecZZ_p(zkp->txM1 + zkp->txM2 + 1, zkp->GP_P, txRi);
+  Timer::end("prover.txT");
 
   Timer::start("prover.txCommit");
   // polyCommit( t(X) )
   zkp->commitScheme->commit(zkp->txM1, zkp->txM2, zkp->txN, txT, txRi, ret);
   Timer::end("prover.txCommit");
+
   Timer::end("prover.polyCommit");
 }
 
-void CircuitZKPProver::prove(const shared_ptr<Integer> &y, const shared_ptr<Integer> &x, vector<shared_ptr<Integer>> &ret)
+void CircuitZKPProver::prove(const ZZ_p &y, const ZZ_p &x, Vec<ZZ_p> &ret)
 {
-  // proofs contains: (pe..., r..., rr)
-  zkp->commitScheme->eval(zkp->txM1, zkp->txM2, zkp->txN, txT, txRi, x, ret);
-
   const auto m = zkp->m;
   const auto n = zkp->n;
   const auto p = zkp->GP_P;
 
+  ZZ_pPush push(p);
+
+  // proofs contains: (pe..., r..., rr)
+  // Mat<ZZ_p> txT;
+  // zkp->commitScheme->calcT(zkp->txM1, zkp->txM2, zkp->txN, tx, txT);
+  // txTMat->toMat(txT);
+  zkp->commitScheme->eval(zkp->txM1, zkp->txM2, zkp->txN, txT, txRi, x, ret);
+
   // r =   SUM(ai * x^i * y^i) +  SUM(bi * x^-i) + x^m *  SUM(ci * x^i) + d * x^(2m+1)
   // rr = SUM(rai * x^i * y^i) + SUM(rbi * x^-i) + x^m * SUM(rci * x^i) + d * x^(2m+1)
-  auto prevX = Integer::ONE();
-  auto prevY = Integer::ONE();
-  auto prevXM = x->modPow(make_shared<IntegerImpl>(m), p);
-  auto r = make_shared<Matrix>(1, n);
-  auto rr = Integer::ZERO();
+  ZZ_p xi = conv<ZZ_p>(1);
+  ZZ_p yi = conv<ZZ_p>(1);
+  ZZ_p xmi = power(x, m);
+  ZZ_p xi_;
+
+  Vec<ZZ_p> r;
+  r.SetLength(n);
+  ZZ_p rr;
+  ZZ_p tmp;
+  Vec<ZZ_p> tmpVec;
+
   for (int i = 1; i <= m; i++)
   {
-    auto xi = prevX = prevX->modMul(x, p);
-    auto yi = prevY = prevY->modMul(y, p);
-    auto xmi = prevXM = prevXM->modMul(x, p);
-    auto xi_ = xi->inv(p);
+    mul(xi, xi, x);   // x^1, x^2, ... x^m
+    mul(yi, yi, y);   // y^1, y^2, ... y^m
+    mul(xmi, xmi, x); // x^m+1, x^m+2, ..., x^2m
+    inv(xi_, xi);     // x^-1, x^-2, ... x^-m
 
-    auto a = A->rowAsMatrix(i - 1);
-    auto b = B->rowAsMatrix(i - 1);
-    auto c = C->rowAsMatrix(i - 1);
-    a = a->mul(xi, p)->mul(yi, p);
-    b = b->mul(xi_, p);
-    c = c->mul(xmi, p);
-    r = r->add(a, p)->add(b, p)->add(c, p);
+    // ai * x^i * y^i
+    mul(tmpVec, A(i), xi);
+    mul(tmpVec, tmpVec, yi);
+    add(r, r, tmpVec);
 
-    auto ra = randA[i - 1];
-    auto rb = randB[i - 1];
-    auto rc = randC[i - 1];
-    ra = ra->modMul(xi, p)->modMul(yi, p);
-    rb = rb->modMul(xi_, p);
-    rc = rc->modMul(xmi, p);
-    rr = rr->add(ra)->add(rb)->add(rc)->mod(p);
+    // bi * x^-i
+    mul(tmpVec, B(i), xi_);
+    add(r, r, tmpVec);
+
+    // ci * x^m+i
+    mul(tmpVec, C(i), xmi);
+    add(r, r, tmpVec);
+
+    // randAi * x^i * y^i
+    mul(tmp, randA(i), xi);
+    mul(tmp, tmp, yi);
+    add(rr, rr, tmp);
+
+    // randBi * x^-i
+    mul(tmp, randB(i), xi_);
+    add(rr, rr, tmp);
+
+    // randCi * x^m+i
+    mul(tmp, randC(i), xmi);
+    add(rr, rr, tmp);
   }
-  auto x2m1 = x->modPow(make_shared<IntegerImpl>(2 * m + 1), p);
-  auto d = make_shared<Matrix>(D);
-  d = d->mul(x2m1, p);
-  r = r->add(d, p);
 
-  auto rd = randD;
-  rd = rd->modMul(x2m1, p);
-  rr = rr->add(rd)->mod(p);
+  // D * x^2m+1
+  mul(xmi, xmi, x); // x^2m+1
+  mul(tmpVec, D, xmi);
+  add(r, r, tmpVec);
 
-  r->row(0, ret); // append r... to result
-  ret.push_back(rr);
+  // randD * x^2m+1
+  mul(tmp, randD, xmi);
+  add(rr, rr, tmp);
+
+  ret.append(r);
+  ret.append(rr);
 }

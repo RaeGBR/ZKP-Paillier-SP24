@@ -3,6 +3,7 @@
 #include "../lib/namespace.hpp"
 
 #include <vector>
+#include <bitset>
 
 #include <NTL/ZZ.h>
 #include <NTL/ZZ_p.h>
@@ -25,6 +26,8 @@ public:
 
   static string toString(const ZZ &input);
   static string toString(const ZZ_p &input);
+  static string toBinaryString(const ZZ &input);
+  static string toBinaryString(const ZZ_p &input);
 
   static void toVecZZ(const Vec<ZZ_p> &input, Vec<ZZ> &output, size_t len = 0);
   static void toVecZZ_p(const Vec<ZZ> &input, Vec<ZZ_p> &output, size_t len = 0);

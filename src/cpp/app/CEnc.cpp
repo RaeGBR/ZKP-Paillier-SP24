@@ -8,22 +8,25 @@ CEnc::CEnc(const shared_ptr<PaillierEncryption> &crypto)
   N = crypto->getPublicKey();
 }
 
-void CEnc::wireUp(const shared_ptr<Integer> &C)
+void CEnc::wireUp(const ZZ_p &C)
 {
-  const auto NEG_ONE = make_shared<IntegerImpl>(-1);
-  const auto ONE = Integer::ONE();
+  ZZ_pPush push(GP_P);
+  const auto NEG_ONE = conv<ZZ_p>(-1);
+  const auto ONE = conv<ZZ_p>(1);
 
   // gate: m * N = mN
   auto n = addGate();
 
   // linear: b0 = N
   auto q = addLinear();
+
   Wqb[q - 1]->cell(0, n - 1, ONE);
-  Kq[q - 1] = N;
+  Kq[q - 1] = conv<ZZ_p>(N);
 
   // eg. N = 101 = 0b 110 0101
   //       = 2^6 + 2^5 + 2^2 + 2^0
-  auto nBinStr = N->toBinaryString();
+  auto nBinStr = ConvertUtils::toBinaryString(N);
+
   auto maxPow = nBinStr.size() - 1;
 
   if (maxPow < 2)
@@ -109,7 +112,7 @@ void CEnc::wireUp(const shared_ptr<Integer> &C)
   Kq[q - 1] = C;
 }
 
-void CEnc::updateCipher(const shared_ptr<Integer> &C)
+void CEnc::updateCipher(const ZZ_p &C)
 {
   Kq[linearCount - 1] = C;
 }
@@ -120,19 +123,23 @@ void CEnc::updateCipher(const shared_ptr<Integer> &C)
  * C[0][q-1] = c
  * Kq[0][q-1] = c
  */
-void CEnc::run(const shared_ptr<Integer> &m, const shared_ptr<Integer> &r)
+void CEnc::run(const ZZ &m, const ZZ_p &r)
 {
+  ZZ_pPush push(GP_P);
+  ZZ_p tmp;
+
   auto n = 0;
 
   // gate: m * N = mN
-  A->cell(0, n, m);
-  B->cell(0, n, N);
-  C->cell(0, n, A->cell(0, n)->modMul(B->cell(0, n), GP_P));
+  A->cell(0, n, conv<ZZ_p>(m));
+  B->cell(0, n, conv<ZZ_p>(N));
+  mul(tmp, A->cell(0, n), B->cell(0, n));
+  C->cell(0, n, tmp);
   n++;
 
   // eg. N = 101 = 0b 110 0101
   //       = 2^6 + 2^5 + 2^2 + 2^0
-  auto nBinStr = N->toBinaryString();
+  auto nBinStr = ConvertUtils::toBinaryString(N);
   auto maxPow = nBinStr.size() - 1;
 
   if (maxPow < 2)
@@ -141,7 +148,8 @@ void CEnc::run(const shared_ptr<Integer> &m, const shared_ptr<Integer> &r)
   // gate: r * r = r^2
   A->cell(0, n, r);
   B->cell(0, n, r);
-  C->cell(0, n, A->cell(0, n)->modMul(B->cell(0, n), GP_P));
+  mul(tmp, A->cell(0, n), B->cell(0, n));
+  C->cell(0, n, tmp);
   n++;
 
   // gate: r^x * r^x = r^y
@@ -150,7 +158,8 @@ void CEnc::run(const shared_ptr<Integer> &m, const shared_ptr<Integer> &r)
   {
     A->cell(0, n, C->cell(0, n - 1));
     B->cell(0, n, C->cell(0, n - 1));
-    C->cell(0, n, A->cell(0, n)->modMul(B->cell(0, n), GP_P));
+    mul(tmp, A->cell(0, n), B->cell(0, n));
+    C->cell(0, n, tmp);
     n++;
   }
 
@@ -180,13 +189,16 @@ void CEnc::run(const shared_ptr<Integer> &m, const shared_ptr<Integer> &r)
       A->cell(0, n, C->cell(0, n - 1)); // input a <- last output
 
     B->cell(0, n, C->cell(0, curPow2));
-    C->cell(0, n, A->cell(0, n)->modMul(B->cell(0, n), GP_P));
+    mul(tmp, A->cell(0, n), B->cell(0, n));
+    C->cell(0, n, tmp);
     n++;
   }
 
   // gate: T * r^N = c
-  A->cell(0, n, C->cell(0, 0)->add(Integer::ONE())->mod(GP_P));
+  add(tmp, C->cell(0, 0), 1);
+  A->cell(0, n, tmp);
   B->cell(0, n, C->cell(0, n - 1));
-  C->cell(0, n, A->cell(0, n)->modMul(B->cell(0, n), GP_P));
+  mul(tmp, A->cell(0, n), B->cell(0, n));
+  C->cell(0, n, tmp);
   n++;
 }

@@ -5,10 +5,16 @@
 #include <stdexcept>
 #include <vector>
 
+#include <NTL/ZZ.h>
+#include <NTL/ZZ_p.h>
+#include <NTL/vector.h>
+#include <NTL/matrix.h>
+
+#include "./ConvertUtils.hpp"
 #include "../lib/math/Matrix.hpp"
-#include "../lib/math/IntegerImpl.hpp"
 
 using namespace std;
+using namespace NTL;
 
 namespace polyu
 {
@@ -18,14 +24,14 @@ class CBase
 public:
   static void copyCircuit(const shared_ptr<CBase> &values, const shared_ptr<CBase> &target);
 
-  shared_ptr<Integer> GP_Q;
-  shared_ptr<Integer> GP_P;
-  shared_ptr<Integer> GP_G;
+  ZZ GP_Q;
+  ZZ GP_P;
+  ZZ_p GP_G;
 
   vector<shared_ptr<Matrix>> Wqa;
   vector<shared_ptr<Matrix>> Wqb;
   vector<shared_ptr<Matrix>> Wqc;
-  vector<shared_ptr<Integer>> Kq;
+  Vec<ZZ_p> Kq;
 
   shared_ptr<Matrix> A = nullptr;
   shared_ptr<Matrix> B = nullptr;
@@ -38,13 +44,18 @@ public:
   explicit CBase();
 
   explicit CBase(
-      const shared_ptr<Integer> &GP_Q,
-      const shared_ptr<Integer> &GP_P,
-      const shared_ptr<Integer> &GP_G,
-      const vector<shared_ptr<Matrix>> &Wqa = vector<shared_ptr<Matrix>>(),
-      const vector<shared_ptr<Matrix>> &Wqb = vector<shared_ptr<Matrix>>(),
-      const vector<shared_ptr<Matrix>> &Wqc = vector<shared_ptr<Matrix>>(),
-      const vector<shared_ptr<Integer>> &Kq = vector<shared_ptr<Integer>>(),
+      const ZZ &GP_Q,
+      const ZZ &GP_P,
+      const ZZ_p &GP_G);
+
+  explicit CBase(
+      const ZZ &GP_Q,
+      const ZZ &GP_P,
+      const ZZ_p &GP_G,
+      const vector<shared_ptr<Matrix>> &Wqa,
+      const vector<shared_ptr<Matrix>> &Wqb,
+      const vector<shared_ptr<Matrix>> &Wqc,
+      const Vec<ZZ_p> &Kq,
       const shared_ptr<Matrix> &A = nullptr,
       const shared_ptr<Matrix> &B = nullptr,
       const shared_ptr<Matrix> &C = nullptr);

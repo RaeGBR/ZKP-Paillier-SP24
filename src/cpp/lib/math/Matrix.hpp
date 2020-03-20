@@ -67,8 +67,8 @@ public:
   // shared_ptr<Matrix> inner(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus = Integer::ZERO());
   // shared_ptr<Matrix> dot(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus = Integer::ZERO());
 
-  // void shift(size_t n);
-  // void extend(size_t n);
+  void shift(size_t n);
+  void extend(size_t n);
   void trim(); // trim all zero cells
 
   bool eq(const shared_ptr<Matrix> &b);

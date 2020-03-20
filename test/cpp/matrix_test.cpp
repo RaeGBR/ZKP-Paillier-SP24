@@ -371,55 +371,55 @@ TEST(Matrix, Group_to_big_matrix)
 //   EXPECT_EQ(f->toString(), "[[\"0\"]]");
 // }
 
-// TEST(Matrix, Shift)
-// {
-//   const size_t m = 2;
-//   const size_t n = 3;
-//   auto a = make_shared<Matrix>(m, n);
-//   for (size_t i = 0; i < m; i++)
-//   {
-//     for (size_t j = 0; j < n; j++)
-//     {
-//       a->cell(i, j, Integer::createWithString(to_string(i * n + j + 1)));
-//     }
-//   }
+TEST(Matrix, Shift)
+{
+  ZZ_p::init(conv<ZZ>(100));
+  const size_t m = 2;
+  const size_t n = 3;
+  auto a = make_shared<Matrix>(m, n);
+  for (size_t i = 0; i < m; i++)
+  {
+    for (size_t j = 0; j < n; j++)
+    {
+      a->cell(i, j, conv<ZZ_p>(i * n + j + 1));
+    }
+  }
 
-//   EXPECT_EQ(a->m, m);
-//   EXPECT_EQ(a->n, n);
-//   EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\"],[\"4\",\"5\",\"6\"]]");
+  EXPECT_EQ(a->m, m);
+  EXPECT_EQ(a->n, n);
+  EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\"],[\"4\",\"5\",\"6\"]]");
 
-//   size_t offset = 3;
-//   a->shift(offset);
-//   EXPECT_EQ(a->m, m);
-//   EXPECT_EQ(a->n, n + offset);
-//   EXPECT_EQ(a->toString(), "[[\"0\",\"0\",\"0\",\"1\",\"2\",\"3\"],[\"0\",\"0\",\"0\",\"4\",\"5\",\"6\"]]");
-//   EXPECT_EQ(a->rowAsMatrix(m + 1)->n, n + offset);
-// }
+  size_t offset = 3;
+  a->shift(offset);
+  EXPECT_EQ(a->m, m);
+  EXPECT_EQ(a->n, n + offset);
+  EXPECT_EQ(a->toString(), "[[\"0\",\"0\",\"0\",\"1\",\"2\",\"3\"],[\"0\",\"0\",\"0\",\"4\",\"5\",\"6\"]]");
+}
 
-// TEST(Matrix, Extend)
-// {
-//   const size_t m = 2;
-//   const size_t n = 3;
-//   auto a = make_shared<Matrix>(m, n);
-//   for (size_t i = 0; i < m; i++)
-//   {
-//     for (size_t j = 0; j < n; j++)
-//     {
-//       a->cell(i, j, Integer::createWithString(to_string(i * n + j + 1)));
-//     }
-//   }
+TEST(Matrix, Extend)
+{
+  ZZ_p::init(conv<ZZ>(100));
+  const size_t m = 2;
+  const size_t n = 3;
+  auto a = make_shared<Matrix>(m, n);
+  for (size_t i = 0; i < m; i++)
+  {
+    for (size_t j = 0; j < n; j++)
+    {
+      a->cell(i, j, conv<ZZ_p>(i * n + j + 1));
+    }
+  }
 
-//   EXPECT_EQ(a->m, m);
-//   EXPECT_EQ(a->n, n);
-//   EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\"],[\"4\",\"5\",\"6\"]]");
+  EXPECT_EQ(a->m, m);
+  EXPECT_EQ(a->n, n);
+  EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\"],[\"4\",\"5\",\"6\"]]");
 
-//   size_t offset = 3;
-//   a->extend(offset);
-//   EXPECT_EQ(a->m, m);
-//   EXPECT_EQ(a->n, n + offset);
-//   EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\",\"0\",\"0\",\"0\"],[\"4\",\"5\",\"6\",\"0\",\"0\",\"0\"]]");
-//   EXPECT_EQ(a->rowAsMatrix(m + 1)->n, n + offset);
-// }
+  size_t offset = 3;
+  a->extend(offset);
+  EXPECT_EQ(a->m, m);
+  EXPECT_EQ(a->n, n + offset);
+  EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\",\"0\",\"0\",\"0\"],[\"4\",\"5\",\"6\",\"0\",\"0\",\"0\"]]");
+}
 
 TEST(Matrix, Trim)
 {

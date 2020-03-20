@@ -78,6 +78,22 @@ string ConvertUtils::toString(const ZZ_p &input)
   return ss.str();
 }
 
+string ConvertUtils::toBinaryString(const ZZ &input)
+{
+  binary_t bin = toBinary(input);
+  stringstream ss;
+  for (int i = bin.size() - 1; i >= 0; i--)
+  {
+    ss << bitset<8>(bin[i]);
+  }
+  return ss.str();
+}
+
+string ConvertUtils::toBinaryString(const ZZ_p &input)
+{
+  return toBinaryString(toZZ(input));
+}
+
 void ConvertUtils::subVec(const Vec<ZZ_p> &input, Vec<ZZ_p> &output, size_t start, size_t end)
 {
   end == 0 && (end = input.length());

@@ -337,35 +337,35 @@ shared_ptr<Matrix> Matrix::group(size_t newN, size_t newM)
 //   return this->mul(t, modulus);
 // }
 
-// void Matrix::shift(size_t n)
-// {
-//   if (n == 0)
-//     return;
+void Matrix::shift(size_t n)
+{
+  if (n == 0)
+    return;
 
-//   this->n += n;
+  this->n += n;
 
-//   for (size_t i = 0; i < m; i++)
-//   {
-//     vector<size_t> keys;
-//     vector<shared_ptr<Integer>> cells;
-//     for (auto it : this->values[i])
-//     {
-//       keys.push_back(it.first);
-//       cells.push_back(it.second);
-//     }
-//     this->values[i].clear();
-//     for (size_t j = 0; j < keys.size(); j++)
-//     {
-//       auto key = n + keys[j];
-//       this->cell(i, key, cells[j]);
-//     }
-//   }
-// }
+  for (size_t i = 0; i < m; i++)
+  {
+    vector<size_t> keys;
+    vector<ZZ_p> cells;
+    for (auto it : this->values[i])
+    {
+      keys.push_back(it.first);
+      cells.push_back(it.second);
+    }
+    this->values[i].clear();
+    for (size_t j = 0; j < keys.size(); j++)
+    {
+      auto key = n + keys[j];
+      this->cell(i, key, cells[j]);
+    }
+  }
+}
 
-// void Matrix::extend(size_t n)
-// {
-//   this->n += n;
-// }
+void Matrix::extend(size_t n)
+{
+  this->n += n;
+}
 
 // void Matrix::appendRow(const vector<shared_ptr<Integer>> &row)
 // {

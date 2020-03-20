@@ -18,8 +18,7 @@ void CBase::copyCircuit(const shared_ptr<CBase> &values, const shared_ptr<CBase>
   for (auto v : values->Wqc)
     target->Wqc.push_back(v->clone());
 
-  target->Kq.clear();
-  target->Kq.insert(target->Kq.begin(), values->Kq.begin(), values->Kq.end());
+  target->Kq = values->Kq;
 
   target->A = values->A->clone();
   target->B = values->B->clone();
@@ -33,13 +32,27 @@ void CBase::copyCircuit(const shared_ptr<CBase> &values, const shared_ptr<CBase>
 CBase::CBase() {}
 
 CBase::CBase(
-    const shared_ptr<Integer> &GP_Q,
-    const shared_ptr<Integer> &GP_P,
-    const shared_ptr<Integer> &GP_G,
+    const ZZ &GP_Q,
+    const ZZ &GP_P,
+    const ZZ_p &GP_G)
+{
+  this->GP_Q = GP_Q;
+  this->GP_P = GP_P;
+  this->GP_G = GP_G;
+  this->A = nullptr;
+  this->B = nullptr;
+  this->C = nullptr;
+  ;
+}
+
+CBase::CBase(
+    const ZZ &GP_Q,
+    const ZZ &GP_P,
+    const ZZ_p &GP_G,
     const vector<shared_ptr<Matrix>> &Wqa,
     const vector<shared_ptr<Matrix>> &Wqb,
     const vector<shared_ptr<Matrix>> &Wqc,
-    const vector<shared_ptr<Integer>> &Kq,
+    const Vec<ZZ_p> &Kq,
     const shared_ptr<Matrix> &A,
     const shared_ptr<Matrix> &B,
     const shared_ptr<Matrix> &C)
@@ -138,7 +151,7 @@ void CBase::append(const shared_ptr<CBase> &b)
     this->Wqa.push_back(wqa);
     this->Wqb.push_back(wqb);
     this->Wqc.push_back(wqc);
-    this->Kq.push_back(b->Kq[i]);
+    this->Kq.append(b->Kq[i]);
   }
   linearCount += b->linearCount;
 }
@@ -201,7 +214,7 @@ size_t CBase::addLinear()
   Wqa.push_back(make_shared<Matrix>(1, gateCount));
   Wqb.push_back(make_shared<Matrix>(1, gateCount));
   Wqc.push_back(make_shared<Matrix>(1, gateCount));
-  Kq.push_back(Integer::ZERO());
+  Kq.append(ZZ_p());
   return ++linearCount;
 }
 
@@ -221,7 +234,7 @@ json CBase::toJson()
     output["Wqa"].push_back(Wqa[i]->toJson());
     output["Wqb"].push_back(Wqb[i]->toJson());
     output["Wqc"].push_back(Wqc[i]->toJson());
-    output["Kq"].push_back(Kq[i]->toString());
+    output["Kq"].push_back(ConvertUtils::toString(Kq[i]));
   }
   return output;
 }

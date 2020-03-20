@@ -16,44 +16,45 @@ CBatchEnc::CBatchEnc(const shared_ptr<PaillierEncryption> &crypto,
   this->slotSize = slotSize;
   this->msgPerBatch = msgPerBatch;
 
-  this->msgSize = crypto->getPublicKey()->toBinary().size();
+  this->msgSize = NumBytes(crypto->getPublicKey());
   this->batchCount = (size_t)ceil(msgCount * 1.0 / msgPerBatch);
   this->slotsPerMsg = (size_t)floor(msgSize * 1.0 / slotSize);
-  auto RjPow = make_shared<IntegerImpl>((int)round(slotsPerMsg * msgPerBatch / 3.4));
-  this->RjMax = Integer::TWO()->pow(RjPow);
+  long RjPow = round(slotsPerMsg * msgPerBatch / 3.4);
+  this->RjMax = conv<ZZ>(2) << (RjPow - 1); // 2^rRjPow
 }
 
-void CBatchEnc::encrypt(const vector<shared_ptr<Integer>> &msg)
+void CBatchEnc::encrypt(const Vec<ZZ> &msg)
 {
-  if (msg.size() != msgCount)
+  if (msg.length() != msgCount)
     throw invalid_argument("number of messages do not match with the configure");
 
-  m.clear();
-  m_.clear();
-  Rj.clear();
-  Rm.clear();
-  Rm_.clear();
-  RRj.clear();
-  Cm.clear();
-  Cm_.clear();
-  CRj.clear();
+  m.SetLength(0);
+  m_.SetLength(0);
+  Rj.SetLength(0);
+  Rm.SetLength(0);
+  Rm_.SetLength(0);
+  RRj.SetLength(0);
+  Cm.SetLength(0);
+  Cm_.SetLength(0);
+  CRj.SetLength(0);
 
-  m.insert(m.begin(), msg.begin(), msg.end());
+  m = msg;
+
   for (size_t i = 0; i < msgCount; i++)
   {
     auto r = crypto->pickRandom();
     auto c = crypto->encrypt(m[i], r);
-    Rm.push_back(r);
-    Cm.push_back(c);
+    Rm.append(r);
+    Cm.append(c);
   }
   for (size_t i = 0; i < rangeProofCount; i++)
   {
-    auto rj = Random::genInteger(RjMax);
+    auto rj = MathUtils::randZZ_p(RjMax);
     auto r = crypto->pickRandom();
-    auto c = crypto->encrypt(rj, r);
-    Rj.push_back(rj);
-    RRj.push_back(r);
-    CRj.push_back(c);
+    auto c = crypto->encrypt(conv<ZZ>(rj), r);
+    Rj.append(rj);
+    RRj.append(r);
+    CRj.append(c);
   }
   for (size_t i = 0; i < batchCount; i++)
   {
@@ -64,38 +65,36 @@ void CBatchEnc::encrypt(const vector<shared_ptr<Integer>> &msg)
       if (idx >= msgCount)
         break;
 
-      auto mi = m[idx]->toFixedBinary(msgSize);
+      auto mi = ConvertUtils::toBinary(m[idx]);
+      ConvertUtils::fixBinary(mi, msgSize);
+
       string miStr = "";
-      for (size_t k = 0; k < slotsPerMsg; k++)
+      for (size_t r = 0; r < slotsPerMsg; r++)
       {
-        auto r = slotsPerMsg - k - 1;
-        auto bi = mi[(k + 1) * slotSize - 1];
-        miStr += bi == 0 ? "0" : "1";
+        auto bi = mi[r * slotSize];
+        miStr = (bi == 0 ? "0" : "1") + miStr;
       }
       m_iStr = miStr + m_iStr;
     }
-    auto m_i = make_shared<IntegerImpl>(m_iStr.c_str(), 2);
+    auto m_i = ConvertUtils::binaryStringToZZ(m_iStr);
     auto r = crypto->pickRandom();
     auto c = crypto->encrypt(m_i, r);
-    m_.push_back(m_i);
-    Rm_.push_back(r);
-    Cm_.push_back(c);
+    m_.append(m_i);
+    Rm_.append(r);
+    Cm_.append(c);
   }
 }
 
-void CBatchEnc::setCipher(const vector<shared_ptr<Integer>> &Cm,
-                          const vector<shared_ptr<Integer>> &Cm_,
-                          const vector<shared_ptr<Integer>> &CRj)
+void CBatchEnc::setCipher(const Vec<ZZ_p> &Cm,
+                          const Vec<ZZ_p> &Cm_,
+                          const Vec<ZZ_p> &CRj)
 {
-  if (Cm.size() != msgCount || Cm_.size() != batchCount || CRj.size() != rangeProofCount)
+  if (Cm.length() != msgCount || Cm_.length() != batchCount || CRj.length() != rangeProofCount)
     throw invalid_argument("cipher count do not match with settings");
 
-  this->Cm.clear();
-  this->Cm_.clear();
-  this->CRj.clear();
-  this->Cm.insert(this->Cm.begin(), Cm.begin(), Cm.end());
-  this->Cm_.insert(this->Cm_.begin(), Cm_.begin(), Cm_.end());
-  this->CRj.insert(this->CRj.begin(), CRj.begin(), CRj.end());
+  this->Cm = Cm;
+  this->Cm_ = Cm_;
+  this->CRj = CRj;
 }
 
 size_t CBatchEnc::getLjLength()
@@ -108,22 +107,26 @@ binary_t CBatchEnc::calculateLjir()
   size_t len = getLjLength();
   binary_t seed;
   for (auto v : Cm)
-    HexUtils::append(seed, v->toBinary());
+    ConvertUtils::append(seed, ConvertUtils::toBinary(v));
   for (auto v : Cm_)
-    HexUtils::append(seed, v->toBinary());
+    ConvertUtils::append(seed, ConvertUtils::toBinary(v));
   for (auto v : CRj)
-    HexUtils::append(seed, v->toBinary());
+    ConvertUtils::append(seed, ConvertUtils::toBinary(v));
 
-  return Random::genBinary(len, seed);
+  SetSeed(seed.data(), seed.size());
+  auto Ljir = RandomBits_ZZ(len * 8);
+  return ConvertUtils::toBinary(Ljir);
 }
 
-vector<shared_ptr<Integer>> CBatchEnc::calculateLj(const binary_t &Ljir)
+Vec<ZZ_p> CBatchEnc::calculateLj(const binary_t &Ljir)
 {
-  vector<shared_ptr<Integer>> Lj;
+  ZZ_pPush push(GP_P);
 
-  auto two32 = Integer::TWO()->modPow(make_shared<IntegerImpl>(slotSize * 8), GP_P);
-  vector<shared_ptr<Integer>> two32s; // [1, 2^32, 2^64, ... , 2^(32 * (r-1))]
-  Matrix::powerVector(two32, slotsPerMsg, GP_P)->row(0, two32s);
+  Vec<ZZ_p> Lj;
+
+  auto two32 = conv<ZZ>(2) << (slotSize * 8 - 1);
+  Vec<ZZ_p> two32s; // [1, 2^32, 2^64, ... , 2^(32 * (r-1))]
+  MathUtils::powerVecZZ_p(conv<ZZ_p>(two32), slotsPerMsg, GP_P, two32s);
 
   // SUM( lj * bri ) + R'j = L'j
   for (size_t j = 0; j < rangeProofCount; j++)
@@ -132,12 +135,13 @@ vector<shared_ptr<Integer>> CBatchEnc::calculateLj(const binary_t &Ljir)
 
     for (size_t i = 0; i < msgCount; i++)
     {
-      auto mi = m[i]->toFixedBinary(msgSize);
+      auto mi = ConvertUtils::toBinary(m[i]);
+      ConvertUtils::fixBinary(mi, msgSize);
+
       size_t ji = j * msgCount * slotsPerMsg + i * slotsPerMsg;
-      for (size_t k = 0; k < slotsPerMsg; k++)
+      for (size_t r = 0; r < slotsPerMsg; r++)
       {
-        auto r = slotsPerMsg - k - 1;
-        auto bi = mi[(k + 1) * slotSize - 1];
+        auto bi = mi[r * slotSize];
         if (bi == 1)
         {
           auto jir = ji + r;
@@ -145,17 +149,19 @@ vector<shared_ptr<Integer>> CBatchEnc::calculateLj(const binary_t &Ljir)
           auto idx2 = jir >> 3; // div 8
           auto ljir = (Ljir[idx2] >> idx1) & 1;
           if (ljir == 1)
-            lj = lj->add(Integer::ONE()); // lj * bri
+            add(lj, lj, 1); // lj * bri
         }
       }
     }
-    Lj.push_back(lj);
+    Lj.append(lj);
   }
   return Lj;
 }
 
-void CBatchEnc::wireUp(const binary_t &Ljir, const vector<shared_ptr<Integer>> &Lj)
+void CBatchEnc::wireUp(const binary_t &Ljir, const Vec<ZZ_p> &Lj)
 {
+  ZZ_pPush push(GP_P);
+
   auto encCir = make_shared<CEnc>(crypto);
   encCir->wireUp();
   auto encCirN = encCir->gateCount;
@@ -195,17 +201,16 @@ void CBatchEnc::wireUp(const binary_t &Ljir, const vector<shared_ptr<Integer>> &
   }
 
   size_t n, q;
-  auto ZERO = Integer::ZERO();
-  auto ONE = Integer::ONE();
-  auto NEG_ONE = make_shared<IntegerImpl>(-1);
+  auto ZERO = ZZ_p();
+  auto ONE = conv<ZZ_p>(1);
+  auto NEG_ONE = conv<ZZ_p>(-1);
 
   // bri * (bri - 1) = 0
   size_t briOffset = gateCount;
   for (size_t i = 0; i < msgCount; i++)
   {
-    for (size_t k = 0; k < slotsPerMsg; k++)
+    for (size_t r = 0; r < slotsPerMsg; r++)
     {
-      auto r = slotsPerMsg - k - 1;
       // gate: bri * (bri - 1) = 0
       n = addGate();
 
@@ -221,9 +226,9 @@ void CBatchEnc::wireUp(const binary_t &Ljir, const vector<shared_ptr<Integer>> &
     }
   }
 
-  auto two32 = Integer::TWO()->modPow(make_shared<IntegerImpl>(slotSize * 8), GP_P);
-  vector<shared_ptr<Integer>> two32s; // [1, 2^32, 2^64, ... , 2^(32 * (r-1))]
-  Matrix::powerVector(two32, slotsPerMsg, GP_P)->row(0, two32s);
+  auto two32 = conv<ZZ>(2) << (slotSize * 8 - 1); // 2^32
+  Vec<ZZ_p> two32s;                               // [1, 2^32, 2^64, ... , 2^(32 * (r-1))]
+  MathUtils::powerVecZZ_p(conv<ZZ_p>(two32), slotsPerMsg, GP_P, two32s);
   // linear: SUM( 2^(32 * r)) * bri ) = mi
   //         SUM - mi = 0
   for (size_t i = 0; i < msgCount; i++)
@@ -235,10 +240,9 @@ void CBatchEnc::wireUp(const binary_t &Ljir, const vector<shared_ptr<Integer>> &
 
     auto bIdx = i * slotsPerMsg;
     auto offset = briOffset + bIdx;
-    for (size_t k = 0; k < slotsPerMsg; k++)
+    for (size_t r = 0; r < slotsPerMsg; r++)
     {
       // 2^(32 * r) * bri
-      auto r = slotsPerMsg - k - 1;
       Wqa[q - 1]->cell(0, offset + r, two32s[r]);
     }
   }
@@ -254,9 +258,8 @@ void CBatchEnc::wireUp(const binary_t &Ljir, const vector<shared_ptr<Integer>> &
     for (size_t i = 0; i < msgCount; i++)
     {
       size_t ji = j * msgCount * slotsPerMsg + i * slotsPerMsg;
-      for (size_t k = 0; k < slotsPerMsg; k++)
+      for (size_t r = 0; r < slotsPerMsg; r++)
       {
-        auto r = slotsPerMsg - k - 1;
         auto jir = ji + r;
         auto idx1 = jir & 7;  // mod 8
         auto idx2 = jir >> 3; // div 8
@@ -275,8 +278,8 @@ void CBatchEnc::wireUp(const binary_t &Ljir, const vector<shared_ptr<Integer>> &
 
   // linear: 2^959 * bri + ... 2^0 * bri = m*s
   //         2^959 * bri + ... 2^0 * bri - m*s = 0
-  vector<shared_ptr<Integer>> TWOs;
-  Matrix::powerVector(Integer::TWO(), slotsPerMsg * msgPerBatch, GP_P)->row(0, TWOs);
+  Vec<ZZ_p> TWOs;
+  MathUtils::powerVecZZ_p(conv<ZZ_p>(2), slotsPerMsg * msgPerBatch, GP_P, TWOs);
   for (size_t s = 0; s < batchCount; s++)
   {
     q = addLinear();
@@ -302,8 +305,10 @@ void CBatchEnc::wireUp(const binary_t &Ljir, const vector<shared_ptr<Integer>> &
   }
 }
 
-void CBatchEnc::run(const binary_t &Ljir, const vector<shared_ptr<Integer>> &Lj)
+void CBatchEnc::run(const binary_t &Ljir, const Vec<ZZ_p> &Lj)
 {
+  ZZ_pPush push(GP_P);
+
   auto encCir = make_shared<CEnc>(crypto);
   encCir->wireUp();
   auto encCirN = encCir->gateCount;
@@ -336,7 +341,7 @@ void CBatchEnc::run(const binary_t &Ljir, const vector<shared_ptr<Integer>> &Lj)
     auto m = this->Rj[i];
     auto r = this->RRj[i];
     cir->updateCipher(c);
-    cir->run(m, r);
+    cir->run(conv<ZZ>(m), r);
     offset = this->assignValues(cir, offset);
   }
 
@@ -353,9 +358,9 @@ void CBatchEnc::run(const binary_t &Ljir, const vector<shared_ptr<Integer>> &Lj)
     offset = this->assignValues(cir, offset);
   }
 
-  auto ONE = Integer::ONE();
-  auto ZERO = Integer::ZERO();
-  auto NEG_ONE = ZERO->sub(ONE)->mod(GP_P);
+  auto ONE = conv<ZZ_p>(1);
+  auto ZERO = ZZ_p();
+  auto NEG_ONE = conv<ZZ_p>(-1);
 
   // bri * (bri - 1) = 0
   size_t briOffset = offset;
@@ -363,12 +368,12 @@ void CBatchEnc::run(const binary_t &Ljir, const vector<shared_ptr<Integer>> &Lj)
   {
     auto bIdx = i * slotsPerMsg;
     offset = briOffset + bIdx;
-    auto mi = m[i]->toFixedBinary(msgSize);
-    for (size_t k = 0; k < slotsPerMsg; k++)
+    auto mi = ConvertUtils::toBinary(m[i]);
+    ConvertUtils::fixBinary(mi, msgSize);
+    for (size_t r = 0; r < slotsPerMsg; r++)
     {
       // gate: bri * (bri - 1) = 0
-      auto r = slotsPerMsg - k - 1;
-      auto bi = mi[(k + 1) * slotSize - 1];
+      auto bi = mi[r * slotSize];
       A->cell(0, offset + r, bi == 0 ? ZERO : ONE);
       B->cell(0, offset + r, bi == 0 ? NEG_ONE : ZERO);
     }

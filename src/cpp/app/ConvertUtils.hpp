@@ -42,6 +42,10 @@ public:
   static ZZ hexToZZ(const string &input);
   static ZZ_p hexToZZ_p(const string &input);
 
+  static binary_t binaryStringToBinary(const string &input);
+  static ZZ binaryStringToZZ(const string &input);
+  static ZZ_p binaryStringToZZ_p(const string &input);
+  static void fixBinary(binary_t &input, size_t len);
   static binary_t toBinary(const ZZ &input);
   static binary_t toBinary(const ZZ_p &input);
   static binary_t toBinary(const string &input);

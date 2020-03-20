@@ -187,6 +187,36 @@ ZZ_p ConvertUtils::hexToZZ_p(const string &input)
   return toZZ_p(hexToZZ(input));
 }
 
+binary_t ConvertUtils::binaryStringToBinary(const string &input)
+{
+  binary_t output;
+  for (int i = input.size(); i > 0; i -= 8)
+  {
+    int start = i - 8;
+    size_t n = start < 0 ? 8 + start : 8;
+    start = start < 0 ? 0 : start;
+    string str = input.substr(start, n);
+    uint8_t bit = bitset<8>(str).to_ulong();
+    output.push_back(bit);
+  }
+  return output;
+}
+
+ZZ ConvertUtils::binaryStringToZZ(const string &input)
+{
+  return toZZ(binaryStringToBinary(input));
+}
+
+ZZ_p ConvertUtils::binaryStringToZZ_p(const string &input)
+{
+  return toZZ_p(binaryStringToZZ(input));
+}
+
+void ConvertUtils::fixBinary(binary_t &input, size_t len)
+{
+  input.resize(len, 0);
+}
+
 binary_t ConvertUtils::toBinary(const ZZ &input)
 {
   auto size = NumBytes(input);

@@ -6,9 +6,9 @@
 #include "app/CBatchEnc.hpp"
 #include "app/CircuitZKPVerifier.hpp"
 #include "app/CircuitZKPProver.hpp"
-#include "lib/math/IntegerImpl.hpp"
+#include "app/PaillierEncryption.hpp"
+#include "app/ConvertUtils.hpp"
 #include "lib/math/Matrix.hpp"
-#include "lib/paillier/PaillierEncryption.hpp"
 #include "lib/utils/Timer.hpp"
 
 using namespace cryptoplus;
@@ -20,12 +20,14 @@ namespace
 TEST(CBatchEnc, Create_circuit)
 {
   int byteLength = 256;
-  auto crypto = PaillierEncryption::generate(byteLength);
+  auto crypto = make_shared<PaillierEncryption>(byteLength);
   auto GP_Q = crypto->getGroupQ();
   auto GP_P = crypto->getGroupP();
+  ZZ_p::init(GP_Q);
   auto GP_G = crypto->getGroupG();
   auto pk = crypto->getPublicKey();
   auto sk = crypto->getPrivateKey();
+  ZZ_p::init(GP_P);
 
   size_t msgCount = 150;
   size_t rangeProofCount = 3;
@@ -34,6 +36,8 @@ TEST(CBatchEnc, Create_circuit)
 
   auto circuit = make_shared<CBatchEnc>(crypto, msgCount, rangeProofCount, slotSize, msgPerBatch);
 
+  ZZ rjMax = (conv<ZZ>(2) << (281)); // 2^282
+
   EXPECT_EQ(circuit->msgSize, 256);
   EXPECT_EQ(circuit->msgCount, 150);
   EXPECT_EQ(circuit->msgPerBatch, 15);
@@ -41,19 +45,21 @@ TEST(CBatchEnc, Create_circuit)
   EXPECT_EQ(circuit->slotSize, 4);
   EXPECT_EQ(circuit->slotsPerMsg, 64);
   EXPECT_EQ(circuit->rangeProofCount, 3);
-  EXPECT_EQ(circuit->RjMax->toHex(), Integer::TWO()->pow(make_shared<IntegerImpl>(282))->toHex());
+  EXPECT_EQ(circuit->RjMax, rjMax);
 }
 
 TEST(CBatchEnc, Batch_encrypt_data)
 {
   // define crypto params
   int byteLength = 8;
-  auto crypto = PaillierEncryption::generate(byteLength);
+  auto crypto = make_shared<PaillierEncryption>(byteLength);
   auto GP_Q = crypto->getGroupQ();
   auto GP_P = crypto->getGroupP();
+  ZZ_p::init(GP_Q);
   auto GP_G = crypto->getGroupG();
   auto pk = crypto->getPublicKey();
   auto sk = crypto->getPrivateKey();
+  ZZ_p::init(GP_P);
 
   auto decryptor = make_shared<PaillierEncryption>(pk, sk, GP_Q, GP_P, GP_G);
   auto encryptor = make_shared<PaillierEncryption>(pk, GP_Q, GP_P, GP_G);
@@ -68,35 +74,35 @@ TEST(CBatchEnc, Batch_encrypt_data)
   auto verifierCir = make_shared<CBatchEnc>(encryptor, msgCount, rangeProofCount, slotSize, msgPerBatch);
 
   // P->V: prover batch encrypt message
-  vector<shared_ptr<Integer>> msg;
-  msg.push_back(make_shared<IntegerImpl>("0001000100010001", 16));
-  msg.push_back(make_shared<IntegerImpl>("0000000100010001", 16));
-  msg.push_back(make_shared<IntegerImpl>("0000000000010001", 16));
-  msg.push_back(make_shared<IntegerImpl>("0001000000000000", 16));
+  Vec<ZZ> msg;
+  msg.append(ConvertUtils::hexToZZ("0001000100010001"));
+  msg.append(ConvertUtils::hexToZZ("0000000100010001"));
+  msg.append(ConvertUtils::hexToZZ("0000000000010001"));
+  msg.append(ConvertUtils::hexToZZ("0001000000000000"));
 
   proverCir->encrypt(msg);
 
-  EXPECT_EQ(proverCir->m.size(), msgCount);
-  EXPECT_EQ(proverCir->Rm.size(), msgCount);
-  EXPECT_EQ(proverCir->Cm.size(), msgCount);
-  EXPECT_EQ(proverCir->Rj.size(), rangeProofCount);
-  EXPECT_EQ(proverCir->RRj.size(), rangeProofCount);
-  EXPECT_EQ(proverCir->CRj.size(), rangeProofCount);
-  EXPECT_EQ(proverCir->m_.size(), 2);
-  EXPECT_EQ(proverCir->Rm_.size(), 2);
-  EXPECT_EQ(proverCir->Cm_.size(), 2);
+  EXPECT_EQ(proverCir->m.length(), msgCount);
+  EXPECT_EQ(proverCir->Rm.length(), msgCount);
+  EXPECT_EQ(proverCir->Cm.length(), msgCount);
+  EXPECT_EQ(proverCir->Rj.length(), rangeProofCount);
+  EXPECT_EQ(proverCir->RRj.length(), rangeProofCount);
+  EXPECT_EQ(proverCir->CRj.length(), rangeProofCount);
+  EXPECT_EQ(proverCir->m_.length(), 2);
+  EXPECT_EQ(proverCir->Rm_.length(), 2);
+  EXPECT_EQ(proverCir->Cm_.length(), 2);
 
-  EXPECT_EQ(proverCir->m_[0]->toString(), make_shared<IntegerImpl>("01101111111", 2)->toString());
-  EXPECT_EQ(proverCir->m_[1]->toString(), make_shared<IntegerImpl>("1000", 2)->toString());
-  EXPECT_EQ(decryptor->decrypt(proverCir->Cm[0])->toBinaryString(), msg[0]->toBinaryString());
-  EXPECT_EQ(decryptor->decrypt(proverCir->Cm[1])->toBinaryString(), msg[1]->toBinaryString());
-  EXPECT_EQ(decryptor->decrypt(proverCir->Cm[2])->toBinaryString(), msg[2]->toBinaryString());
-  EXPECT_EQ(decryptor->decrypt(proverCir->Cm[3])->toBinaryString(), msg[3]->toBinaryString());
-  EXPECT_EQ(decryptor->decrypt(proverCir->Cm_[0])->toBinaryString(), proverCir->m_[0]->toBinaryString());
-  EXPECT_EQ(decryptor->decrypt(proverCir->Cm_[1])->toBinaryString(), proverCir->m_[1]->toBinaryString());
-  EXPECT_EQ(decryptor->decrypt(proverCir->CRj[0])->toBinaryString(), proverCir->Rj[0]->toBinaryString());
-  EXPECT_EQ(decryptor->decrypt(proverCir->CRj[1])->toBinaryString(), proverCir->Rj[1]->toBinaryString());
-  EXPECT_EQ(decryptor->decrypt(proverCir->CRj[2])->toBinaryString(), proverCir->Rj[2]->toBinaryString());
+  EXPECT_EQ(proverCir->m_[0], ConvertUtils::binaryStringToZZ("001101111111"));
+  EXPECT_EQ(proverCir->m_[1], ConvertUtils::binaryStringToZZ("1000"));
+  EXPECT_EQ(ConvertUtils::toBinaryString(decryptor->decrypt(proverCir->Cm[0])), ConvertUtils::toBinaryString(msg[0]));
+  EXPECT_EQ(ConvertUtils::toBinaryString(decryptor->decrypt(proverCir->Cm[1])), ConvertUtils::toBinaryString(msg[1]));
+  EXPECT_EQ(ConvertUtils::toBinaryString(decryptor->decrypt(proverCir->Cm[2])), ConvertUtils::toBinaryString(msg[2]));
+  EXPECT_EQ(ConvertUtils::toBinaryString(decryptor->decrypt(proverCir->Cm[3])), ConvertUtils::toBinaryString(msg[3]));
+  EXPECT_EQ(ConvertUtils::toBinaryString(decryptor->decrypt(proverCir->Cm_[0])), ConvertUtils::toBinaryString(proverCir->m_[0]));
+  EXPECT_EQ(ConvertUtils::toBinaryString(decryptor->decrypt(proverCir->Cm_[1])), ConvertUtils::toBinaryString(proverCir->m_[1]));
+  EXPECT_EQ(ConvertUtils::toBinaryString(decryptor->decrypt(proverCir->CRj[0])), ConvertUtils::toBinaryString(proverCir->Rj[0]));
+  EXPECT_EQ(ConvertUtils::toBinaryString(decryptor->decrypt(proverCir->CRj[1])), ConvertUtils::toBinaryString(proverCir->Rj[1]));
+  EXPECT_EQ(ConvertUtils::toBinaryString(decryptor->decrypt(proverCir->CRj[2])), ConvertUtils::toBinaryString(proverCir->Rj[2]));
 
   // V->P: verifier receive cipher and calculate challenge (lj)
   auto Cm = proverCir->Cm;
@@ -118,7 +124,7 @@ TEST(CBatchEnc, Batch_encrypt_data)
   // P->V: prover compute Lj for range proof
   auto Lj = proverCir->calculateLj(ljir1);
 
-  EXPECT_EQ(Lj.size(), rangeProofCount);
+  EXPECT_EQ(Lj.length(), rangeProofCount);
 
   // P+V: create circuit constrains
   verifierCir->wireUp(ljir1, Lj);
@@ -153,7 +159,7 @@ TEST(CBatchEnc, Batch_encrypt_data)
   auto prover = make_shared<CircuitZKPProver>(proverZkp, proverCir->A, proverCir->B, proverCir->C);
 
   // P->V: prover commit the circuit arguments
-  vector<shared_ptr<Integer>> commits;
+  Vec<ZZ_p> commits;
   prover->commit(commits);
 
   // V->P: verifier calculate challenge value Y
@@ -161,7 +167,7 @@ TEST(CBatchEnc, Batch_encrypt_data)
   auto y = verifier->calculateY();
 
   // P->V: prover perform polyComit
-  vector<shared_ptr<Integer>> pc;
+  Vec<ZZ_p> pc;
   prover->polyCommit(y, pc);
 
   // V->P: verifier calculate challenge value X
@@ -169,7 +175,7 @@ TEST(CBatchEnc, Batch_encrypt_data)
   auto x = verifier->calculateX();
 
   // P->V: prover calculate the ZKP
-  vector<shared_ptr<Integer>> proofs;
+  Vec<ZZ_p> proofs;
   prover->prove(y, x, proofs);
 
   // V: verify the proof

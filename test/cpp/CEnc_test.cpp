@@ -170,7 +170,7 @@ TEST(CEnc, Speed_test)
 
     for (size_t j = 0; j < groupTry; j++)
     {
-      auto crypto = PaillierEncryption::generate(byteLength);
+      auto crypto = make_shared<PaillierEncryption>(byteLength);
       auto GP_Q = crypto->getGroupQ();
       auto GP_P = crypto->getGroupP();
       auto GP_G = crypto->getGroupG();

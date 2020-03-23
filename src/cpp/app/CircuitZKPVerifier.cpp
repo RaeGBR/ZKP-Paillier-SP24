@@ -45,10 +45,6 @@ CircuitZKPVerifier::CircuitZKPVerifier(
   this->GP_Q = GP_Q;
   this->GP_P = GP_P;
   this->GP_G = GP_G;
-  this->Wqa = Wqa;
-  this->Wqb = Wqb;
-  this->Wqc = Wqc;
-  this->Kq = Kq;
 
   this->Q = Wqa.size();
   if (this->Q <= 0 || this->Q != Wqb.size() || this->Q != Wqc.size())
@@ -67,6 +63,39 @@ CircuitZKPVerifier::CircuitZKPVerifier(
   this->txN = txCfg[2];
 
   this->commitScheme = make_shared<PolynomialCommitment>(this->GP_Q, this->GP_P, this->GP_G, max(this->txN, this->n));
+
+  convertWire(Wqa, this->Wqa);
+  convertWire(Wqb, this->Wqb);
+  convertWire(Wqc, this->Wqc);
+  this->Kq = Kq;
+}
+void CircuitZKPVerifier::convertWire(const vector<shared_ptr<Matrix>> &source, map<size_t, map<size_t, map<size_t, ZZ_p>>> &target)
+{
+  for (size_t i = 0; i < m; i++)
+  {
+    target[i] = map<size_t, map<size_t, ZZ_p>>();
+
+    for (size_t q = 0; q < source.size(); q++)
+    {
+      if (source[q]->rowExists(i))
+      {
+        for (auto it : source[q]->values[i])
+        {
+          size_t j = it.first;
+          auto v = it.second;
+
+          if (IsZero(v))
+            continue;
+
+          if (target[i].find(q) == target[i].end())
+          {
+            target[i][q] = map<size_t, ZZ_p>();
+          }
+          target[i][q][j] = v;
+        }
+      }
+    }
+  }
 }
 
 Vec<ZZ_p> &CircuitZKPVerifier::getY_Mq(const ZZ_p &y)
@@ -135,31 +164,30 @@ shared_ptr<Matrix> CircuitZKPVerifier::Wai(size_t i, const ZZ_p &y)
   ZZ_p tmp;
 
   auto ret = make_shared<Matrix>(1, n);
-  for (size_t q = 1; q <= Q; q++)
+  for (auto it1 : Wqa[i - 1])
   {
-    // zero row may trimmed, only process on non-zero rows
-    if (Wqa[q - 1]->rowExists(i - 1))
-    {
-      auto yMq = getY_Mq(y, q);
-      for (auto it : Wqa[q - 1]->values[i - 1])
-      {
-        size_t j = it.first;
-        auto v = it.second;
+    size_t q = it1.first + 1;
+    auto Wqi = it1.second;
 
-        if (IsOne(v))
-        {
-          tmp = yMq;
-        }
-        else
-        {
-          mul(tmp, v, yMq);
-        }
-        if (ret->cellExists(0, j))
-        {
-          add(tmp, tmp, ret->cell(0, j));
-        }
-        ret->cell(0, j, tmp);
+    auto yMq = getY_Mq(y, q);
+    for (auto it2 : Wqi)
+    {
+      size_t j = it2.first;
+      auto v = it2.second;
+
+      if (IsOne(v))
+      {
+        tmp = yMq;
       }
+      else
+      {
+        mul(tmp, v, yMq);
+      }
+      if (ret->cellExists(0, j))
+      {
+        add(tmp, tmp, ret->cell(0, j));
+      }
+      ret->cell(0, j, tmp);
     }
   }
   return ret;
@@ -173,31 +201,30 @@ shared_ptr<Matrix> CircuitZKPVerifier::Wbi(size_t i, const ZZ_p &y)
   ZZ_p tmp;
 
   auto ret = make_shared<Matrix>(1, n);
-  for (size_t q = 1; q <= Q; q++)
+  for (auto it1 : Wqb[i - 1])
   {
-    // zero row may trimmed, only process on non-zero rows
-    if (Wqb[q - 1]->rowExists(i - 1))
-    {
-      auto yMq = getY_Mq(y, q);
-      for (auto it : Wqb[q - 1]->values[i - 1])
-      {
-        size_t j = it.first;
-        auto v = it.second;
+    size_t q = it1.first + 1;
+    auto Wqi = it1.second;
 
-        if (IsOne(v))
-        {
-          tmp = yMq;
-        }
-        else
-        {
-          mul(tmp, v, yMq);
-        }
-        if (ret->cellExists(0, j))
-        {
-          add(tmp, tmp, ret->cell(0, j));
-        }
-        ret->cell(0, j, tmp);
+    auto yMq = getY_Mq(y, q);
+    for (auto it2 : Wqi)
+    {
+      size_t j = it2.first;
+      auto v = it2.second;
+
+      if (IsOne(v))
+      {
+        tmp = yMq;
       }
+      else
+      {
+        mul(tmp, v, yMq);
+      }
+      if (ret->cellExists(0, j))
+      {
+        add(tmp, tmp, ret->cell(0, j));
+      }
+      ret->cell(0, j, tmp);
     }
   }
   return ret;
@@ -211,31 +238,30 @@ shared_ptr<Matrix> CircuitZKPVerifier::Wci(size_t i, const ZZ_p &y)
   ZZ_p tmp;
 
   auto ret = make_shared<Matrix>(1, n);
-  for (size_t q = 1; q <= Q; q++)
+  for (auto it1 : Wqc[i - 1])
   {
-    // zero row may trimmed, only process on non-zero rows
-    if (Wqc[q - 1]->rowExists(i - 1))
-    {
-      auto yMq = getY_Mq(y, q);
-      for (auto it : Wqc[q - 1]->values[i - 1])
-      {
-        size_t j = it.first;
-        auto v = it.second;
+    size_t q = it1.first + 1;
+    auto Wqi = it1.second;
 
-        if (IsOne(v))
-        {
-          tmp = yMq;
-        }
-        else
-        {
-          mul(tmp, v, yMq);
-        }
-        if (ret->cellExists(0, j))
-        {
-          add(tmp, tmp, ret->cell(0, j));
-        }
-        ret->cell(0, j, tmp);
+    auto yMq = getY_Mq(y, q);
+    for (auto it2 : Wqi)
+    {
+      size_t j = it2.first;
+      auto v = it2.second;
+
+      if (IsOne(v))
+      {
+        tmp = yMq;
       }
+      else
+      {
+        mul(tmp, v, yMq);
+      }
+      if (ret->cellExists(0, j))
+      {
+        add(tmp, tmp, ret->cell(0, j));
+      }
+      ret->cell(0, j, tmp);
     }
   }
 

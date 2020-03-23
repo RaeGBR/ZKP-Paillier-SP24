@@ -36,6 +36,8 @@ private:
   Vec<ZZ_p> &getY_Mq(const ZZ_p &y);
   ZZ_p getY_Mq(const ZZ_p &y, size_t q); // q: 1 to Q
 
+  void convertWire(const vector<shared_ptr<Matrix>> &source, map<size_t, map<size_t, map<size_t, ZZ_p>>> &target);
+
 public:
   static vector<size_t> calcMN(size_t N);
   static vector<size_t> calcM1M2N(size_t m);
@@ -44,9 +46,9 @@ public:
   ZZ GP_P;
   ZZ_p GP_G;
 
-  vector<shared_ptr<Matrix>> Wqa;
-  vector<shared_ptr<Matrix>> Wqb;
-  vector<shared_ptr<Matrix>> Wqc;
+  map<size_t, map<size_t, map<size_t, ZZ_p>>> Wqa; // map(i, q, j)
+  map<size_t, map<size_t, map<size_t, ZZ_p>>> Wqb; // map(i, q, j)
+  map<size_t, map<size_t, map<size_t, ZZ_p>>> Wqc; // map(i, q, j)
   Vec<ZZ_p> Kq;
 
   size_t N;

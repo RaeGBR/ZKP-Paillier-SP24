@@ -289,6 +289,7 @@ void CircuitZKPVerifier::createSx(const ZZ_p &y, vector<ZZ_pX> &sx)
   Vec<ZZ_p> Y = getY(y); // [1, y, y^2, ... , y^m]
   ZZ_p tmp;
 
+  Timer::start("sx.wai");
   for (size_t i = 1; i <= m; i++)
   {
     auto wai = Wai(i, y);
@@ -301,7 +302,12 @@ void CircuitZKPVerifier::createSx(const ZZ_p &y, vector<ZZ_pX> &sx)
       mul(tmp, v, yi);
       SetCoeff(sx[j], 2 * m - i, tmp);
     }
+  }
+  Timer::end("sx.wai");
 
+  Timer::start("sx.wbi");
+  for (size_t i = 1; i <= m; i++)
+  {
     auto wbi = Wbi(i, y);
     for (auto it : wbi->values[0])
     {
@@ -309,7 +315,12 @@ void CircuitZKPVerifier::createSx(const ZZ_p &y, vector<ZZ_pX> &sx)
       auto v = it.second;
       SetCoeff(sx[j], 2 * m + i, v);
     }
+  }
+  Timer::end("sx.wbi");
 
+  Timer::start("sx.wci");
+  for (size_t i = 1; i <= m; i++)
+  {
     auto wci = Wci(i, y);
     for (auto it : wci->values[0])
     {
@@ -318,6 +329,7 @@ void CircuitZKPVerifier::createSx(const ZZ_p &y, vector<ZZ_pX> &sx)
       SetCoeff(sx[j], m - i, v);
     }
   }
+  Timer::end("sx.wci");
 }
 
 void CircuitZKPVerifier::setCommits(const Vec<ZZ_p> &commits)

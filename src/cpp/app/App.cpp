@@ -139,6 +139,11 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
   auto Cm_ = proverCir->Cm_;
   auto CRj = proverCir->CRj;
 
+  auto batchCount = proverCir->batchCount;
+  auto msgSize = proverCir->msgSize;
+  auto slotsPerMsg = proverCir->slotsPerMsg;
+  proverCir = nullptr;
+
   Timer::start("V.Ljir");
   verifierCir->setCipher(Cm, Cm_, CRj);
   auto ljir2 = verifierCir->calculateLjir();
@@ -181,13 +186,13 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
   verifyTime += Timer::end("V.verify");
 
   circuitTime /= 2;
-  auto batchCirN = proverCir->gateCount;
-  auto batchCirQ = proverCir->linearCount;
+  auto batchCirN = verifierCir->gateCount;
+  auto batchCirQ = verifierCir->linearCount;
 
   auto pSize = NumBytes(GP_P);
   auto qSize = NumBytes(GP_Q);
   double cipherSize = pSize;
-  double proofSize = 1.0 * pSize * (proverCir->batchCount + rangeProofCount); // Cm', CRj
+  double proofSize = 1.0 * pSize * (batchCount + rangeProofCount); // Cm', CRj
   proofSize += pSize * Lj.length();
   proofSize += qSize * commits.length();
   proofSize += qSize * pc.length();
@@ -196,15 +201,15 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
 
   cout << endl;
   cout << "==========" << endl;
-  cout << "message count: " << proverCir->msgCount << endl;
-  cout << "message/batch: " << proverCir->msgPerBatch << endl;
-  cout << "batch count: " << proverCir->batchCount << endl;
+  cout << "message count: " << msgCount << endl;
+  cout << "message/batch: " << msgPerBatch << endl;
+  cout << "batch count: " << batchCount << endl;
   cout << "byte length: " << byteLength * 8 << "-bit" << endl;
   cout << "byte length: " << byteLength << " bytes" << endl;
-  cout << "message size: " << proverCir->msgSize << " bytes" << endl;
-  cout << "slot size: " << proverCir->slotSize << " bytes" << endl;
-  cout << "slot/message: " << proverCir->slotsPerMsg << endl;
-  cout << "range proof count: " << proverCir->rangeProofCount << endl;
+  cout << "message size: " << msgSize << " bytes" << endl;
+  cout << "slot size: " << slotSize << " bytes" << endl;
+  cout << "slot/message: " << slotsPerMsg << endl;
+  cout << "range proof count: " << rangeProofCount << endl;
   cout << "cipher size: " << cipherSize << " bytes" << endl;
   cout << "proof size: " << proofSize << " bytes" << endl;
   cout << "proof size/message: " << proofSizePerMsg << " bytes" << endl;
@@ -226,15 +231,15 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
   cout << "verify time: " << verifyTime << endl;
   cout << "==========" << endl;
 
-  fs << proverCir->msgCount << ",";
-  fs << proverCir->msgPerBatch << ",";
-  fs << proverCir->batchCount << ",";
+  fs << msgCount << ",";
+  fs << msgPerBatch << ",";
+  fs << batchCount << ",";
   fs << byteLength * 8 << ",";
   fs << byteLength << ",";
-  fs << proverCir->msgSize << ",";
-  fs << proverCir->slotSize << ",";
-  fs << proverCir->slotsPerMsg << ",";
-  fs << proverCir->rangeProofCount << ",";
+  fs << msgSize << ",";
+  fs << slotSize << ",";
+  fs << slotsPerMsg << ",";
+  fs << rangeProofCount << ",";
   fs << cipherSize << ",";
   fs << proofSize << ",";
   fs << proofSizePerMsg << ",";

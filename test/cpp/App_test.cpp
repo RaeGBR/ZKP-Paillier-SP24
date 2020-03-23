@@ -72,10 +72,13 @@ TEST(App, Run)
   slotSize = 4;
   msgPerBatch = 15;
 
-  vector<size_t> bls({8, 16, 32, 64, 128, 256});
-  vector<size_t> ms({10, 20, 50, 100, 200});
+  // vector<size_t> bls({8, 16, 32, 64, 128, 256});
+  // vector<size_t> ms({10, 20, 50, 100, 200});
   // vector<size_t> bls({64});
-  // vector<size_t> ms({10});
+  vector<size_t> bls({8});
+  vector<size_t> ms({10});
+  // vector<size_t> bls({64, 128});
+  // vector<size_t> ms({300, 400, 500, 600, 700, 800, 900, 1000});
   for (size_t i = 0; i < bls.size(); i++)
   {
     byteLength = bls[i];

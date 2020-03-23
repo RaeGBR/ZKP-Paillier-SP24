@@ -10,8 +10,6 @@
 #include <NTL/ZZ_pX.h>
 #include <NTL/vector.h>
 
-#include "../lib/math/IntegerImpl.hpp"
-
 using namespace std;
 using namespace NTL;
 
@@ -57,12 +55,6 @@ public:
   static void append(binary_t &a, const binary_t &b);
   static binary_t padZero(const binary_t &data, const size_t length);
   static bool eq(const binary_t &a, const binary_t &b);
-
-  // TODO: remove
-  static ZZ toZZ(const shared_ptr<Integer> &input);
-  static ZZ_p toZZ_p(const shared_ptr<Integer> &input);
-  static void toVecZZ(const vector<shared_ptr<Integer>> &input, Vec<ZZ> &output, size_t len = 0);
-  static void toVecZZ_p(const vector<shared_ptr<Integer>> &input, Vec<ZZ_p> &output, size_t len = 0);
 };
 
 } // namespace polyu

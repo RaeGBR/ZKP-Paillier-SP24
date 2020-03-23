@@ -10,38 +10,6 @@ ZZ_p ConvertUtils::toZZ_p(const ZZ &input)
   return conv<ZZ_p>(input);
 }
 
-ZZ ConvertUtils::toZZ(const shared_ptr<Integer> &input)
-{
-  return conv<ZZ>(input->toString().c_str());
-}
-
-ZZ_p ConvertUtils::toZZ_p(const shared_ptr<Integer> &input)
-{
-  return conv<ZZ_p>(input->toString().c_str());
-}
-
-void ConvertUtils::toVecZZ(const vector<shared_ptr<Integer>> &input, Vec<ZZ> &output, size_t len)
-{
-  len = len == 0 ? input.size() : len;
-  output.SetLength(len);
-
-  for (size_t i = 0; i < len; i++)
-  {
-    output[i] = toZZ(input[i]);
-  }
-}
-
-void ConvertUtils::toVecZZ_p(const vector<shared_ptr<Integer>> &input, Vec<ZZ_p> &output, size_t len)
-{
-  len = len == 0 ? input.size() : len;
-  output.SetLength(len);
-
-  for (size_t i = 0; i < len; i++)
-  {
-    output[i] = toZZ_p(input[i]);
-  }
-}
-
 void ConvertUtils::toVecZZ(const Vec<ZZ_p> &input, Vec<ZZ> &output, size_t len)
 {
   len = len == 0 ? input.length() : len;

@@ -7,11 +7,10 @@
 #include "app/CBase.hpp"
 #include "app/CEnc.hpp"
 #include "app/CBatchEnc.hpp"
+#include "app/PaillierEncryption.hpp"
 #include "app/CircuitZKPVerifier.hpp"
 #include "app/CircuitZKPProver.hpp"
-#include "lib/math/IntegerImpl.hpp"
 #include "lib/math/Matrix.hpp"
-#include "lib/paillier/PaillierEncryption.hpp"
 #include "lib/utils/Timer.hpp"
 
 #include "app/App.hpp"
@@ -22,10 +21,10 @@ using namespace polyu;
 namespace
 {
 
-/*/
+//*/
 TEST(App, Run)
 {
-  string filename = "../../test7.csv";
+  string filename = "../../test8.csv";
   ifstream ifile(filename);
   ofstream fs;
   if (ifile)
@@ -73,14 +72,14 @@ TEST(App, Run)
   slotSize = 4;
   msgPerBatch = 15;
 
-  // vector<size_t> bls({8, 16, 32, 64, 128, 256});
-  // vector<size_t> ms({10, 20, 50, 100, 200});
-  vector<size_t> bls({32, 64});
+  vector<size_t> bls({8, 16, 32, 64, 128, 256});
   vector<size_t> ms({10, 20, 50, 100, 200});
+  // vector<size_t> bls({64});
+  // vector<size_t> ms({10});
   for (size_t i = 0; i < bls.size(); i++)
   {
     byteLength = bls[i];
-    auto crypto = PaillierEncryption::generate(byteLength);
+    auto crypto = make_shared<PaillierEncryption>(byteLength);
 
     for (size_t j = 0; j < ms.size(); j++)
     {

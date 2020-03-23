@@ -7,9 +7,15 @@
 #include <vector>
 #include <math.h>
 
-#include "../lib/math/IntegerImpl.hpp"
+#include <NTL/ZZ.h>
+#include <NTL/ZZ_p.h>
+#include <NTL/vector.h>
+#include <NTL/matrix.h>
+
 #include "../lib/utils/Timer.hpp"
-#include "../lib/paillier/PaillierEncryption.hpp"
+#include "./PaillierEncryption.hpp"
+#include "./ConvertUtils.hpp"
+#include "./MathUtils.hpp"
 #include "./CBatchEnc.hpp"
 #include "./CircuitZKPVerifier.hpp"
 #include "./CircuitZKPProver.hpp"

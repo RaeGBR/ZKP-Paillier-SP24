@@ -2,7 +2,7 @@
 
 void polyu::run(size_t byteLength, size_t msgCount, size_t rangeProofCount, size_t slotSize, size_t msgPerBatch, ofstream &fs)
 {
-  auto crypto = PaillierEncryption::generate(byteLength);
+  auto crypto = make_shared<PaillierEncryption>(byteLength);
   polyu::run(crypto, msgCount, rangeProofCount, slotSize, msgPerBatch, fs);
 }
 
@@ -10,10 +10,12 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
 {
   auto GP_Q = crypto->getGroupQ();
   auto GP_P = crypto->getGroupP();
+  ZZ_p::init(GP_Q);
   auto GP_G = crypto->getGroupG();
   auto pk = crypto->getPublicKey();
   auto sk = crypto->getPrivateKey();
-  auto byteLength = pk->toBinary().size();
+  auto byteLength = NumBytes(pk);
+  ZZ_p::init(GP_P);
 
   double encryptTime = 0;
   double circuitTime = 0;
@@ -34,23 +36,22 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
   auto proverCir = make_shared<CBatchEnc>(decryptor, msgCount, rangeProofCount, slotSize, msgPerBatch);
 
   // P: prover prepare structured message
-  vector<shared_ptr<Integer>> msg;
+  Vec<ZZ> msg;
   for (size_t i = 0; i < msgCount; i++)
   {
-    auto maxInt = (int)pow(2, proverCir->slotsPerMsg);
-    auto max = make_shared<IntegerImpl>(maxInt);
-    string mStr(proverCir->msgSize * 2, '0');
-    auto iStr = make_shared<IntegerImpl>(i)->mod(max)->toBinaryString();
+    ZZ max = conv<ZZ>(2) << (proverCir->slotsPerMsg - 1);
+    ZZ q;
+    ZZ r;
+    DivRem(q, r, conv<ZZ>(i), max);
+    auto rStr = ConvertUtils::toBinaryString(r);
 
-    for (int j = 0; j < iStr.size() && j < proverCir->slotsPerMsg; j++)
+    ZZ m;
+    for (size_t i = 0; i < rStr.size(); i++)
     {
-      int jIdx = iStr.size() - j - 1;
-      char v = iStr[jIdx];
-      size_t mIdx = (proverCir->slotsPerMsg - j) * slotSize * 2 - 1;
-      mStr[mIdx] = v;
+      m = m << (proverCir->slotSize * 8);
+      m += rStr[i] - '0';
     }
-    auto m = make_shared<IntegerImpl>(mStr.c_str(), 16);
-    msg.push_back(m);
+    msg.append(m);
   }
 
   // P: prover batch encrypt message
@@ -84,7 +85,7 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
   auto m1 = mnCfg1[0];
   auto n1 = mnCfg1[1];
   proverCir->group(n1, m1);
-  proverCir->trim();
+  // proverCir->trim(); // TODO: remove?
 
   auto proverZkp = make_shared<CircuitZKPVerifier>(
       GP_Q, GP_P, GP_G,
@@ -95,7 +96,7 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
 
   // P: prover commit the circuit arguments
   Timer::start("P.commit");
-  vector<shared_ptr<Integer>> commits;
+  Vec<ZZ_p> commits;
   prover->commit(commits);
   commitTime += Timer::end("P.commit");
 
@@ -107,7 +108,7 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
 
   // P: prover perform polyCommit
   Timer::start("P.polyCommit");
-  vector<shared_ptr<Integer>> pc;
+  Vec<ZZ_p> pc;
   prover->polyCommit(y1, pc);
   proveTime += Timer::end("P.polyCommit");
 
@@ -119,7 +120,7 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
 
   // P: prover calculate the ZKP
   Timer::start("P.prove");
-  vector<shared_ptr<Integer>> proofs;
+  Vec<ZZ_p> proofs;
   prover->prove(y1, x1, proofs);
   proveTime += Timer::end("P.prove");
 
@@ -154,7 +155,7 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
   auto m2 = mnCfg2[0];
   auto n2 = mnCfg2[1];
   verifierCir->group(n2, m2);
-  verifierCir->trim();
+  // verifierCir->trim();// TODO: remove?
 
   auto verifier = make_shared<CircuitZKPVerifier>(
       GP_Q, GP_P, GP_G,
@@ -183,14 +184,14 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
   auto batchCirN = proverCir->gateCount;
   auto batchCirQ = proverCir->linearCount;
 
-  auto pSize = GP_P->toBinary().size();
-  auto qSize = GP_Q->toBinary().size();
+  auto pSize = NumBytes(GP_P);
+  auto qSize = NumBytes(GP_Q);
   double cipherSize = pSize;
   double proofSize = 1.0 * pSize * (proverCir->batchCount + rangeProofCount); // Cm', CRj
-  proofSize += pSize * Lj.size();
-  proofSize += qSize * commits.size();
-  proofSize += qSize * pc.size();
-  proofSize += pSize * proofs.size();
+  proofSize += pSize * Lj.length();
+  proofSize += qSize * commits.length();
+  proofSize += qSize * pc.length();
+  proofSize += pSize * proofs.length();
   double proofSizePerMsg = proofSize / msgCount;
 
   cout << endl;

@@ -7,7 +7,7 @@ DJINNI_SUP_DIR ?= $(ROOT_DIR)/deps/djinni/support-lib
 DJINNI_GEN_DIR ?= $(ROOT_DIR)/generated-src
 CPP_OUT ?= $(OUT_DIR)/cpp/cryptoplus
 JNI_OUT ?= $(OUT_DIR)/jni/cryptoplus
-FLAGS := -std=c++11
+FLAGS := -std=c++11 -g -O3 -pthread -march=native
 JAVA_HOME ?= $(shell jrunscript -e 'java.lang.System.out.println(new java.io.File(java.lang.System.getProperty("java.home")).getParent());')
 
 ifeq ($(findstring :,$(JAVA_HOME)),)
@@ -22,6 +22,7 @@ CPP_SRC_FILES := $(wildcard \
 	${SRC_DIR}/**/**/*.cpp \
 )
 CPP_OBJS := $(patsubst %.cpp,%,${CPP_SRC_FILES})
+CPP_OBJS_OBJS := $(patsubst %.cpp,%.o,${CPP_SRC_FILES})
 
 JNI_SRC_FILES := $(wildcard \
 	${SRC_DIR}/*.cpp \
@@ -49,8 +50,10 @@ JNI_INCLUDES := \
 
 CPP_TARGET := $(CPP_OUT)/$(PROJ_NAME)
 
+.PHONY: all
 all: clean library
 
+.PHONY: clean
 clean:
 	@echo "\033[33mClean cpp project...\033[0m"
 	rm -rf $(CPP_OUT) $(SRC_DIR)/**/*.o $(SRC_DIR)/**/**/*.o
@@ -58,19 +61,19 @@ clean:
 	rm -rf $(CPP_OUT) $(SRC_DIR)/**/*.gcda $(SRC_DIR)/**/**/*.gcda
 	rm -rf $(DJINNI_GEN_DIR)/**/*.o
 
-library:
-	@echo "\033[33mBuild cpp library...\033[0m"
+%.o: %.cpp
+	g++ $(FLAGS) \
+		-fprofile-arcs \
+		-ftest-coverage \
+		$(foreach d, $(CPP_INCLUDES), -I$d) \
+		-c $< -o $@; \
+
+.PHONY: library
+library: ${CPP_OBJS_OBJS}
 	@mkdir -p $(CPP_OUT)
-	$(foreach f, $(CPP_OBJS), \
-		g++ $(FLAGS) \
-			-fprofile-arcs \
-			-ftest-coverage \
-			$(foreach d, $(CPP_INCLUDES), -I$d) \
-			-c $f.cpp -o $f.o; \
-	)
 	@echo "\033[32mOutput:\033[0m\n$(CPP_TARGET)"
 
-# jni_library: clean library
+.PHONY: jni_library
 jni_library:
 	@echo "\033[33mBuild JNI library...\033[0m"
 	@rm -rf $(JNI_OUT)

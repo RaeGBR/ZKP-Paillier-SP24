@@ -4,8 +4,6 @@
 
 #include "app/CircuitZKPVerifier.hpp"
 #include "app/CircuitZKPProver.hpp"
-#include "lib/math/IntegerImpl.hpp"
-#include "lib/math/Matrix.hpp"
 
 using namespace cryptoplus;
 using namespace polyu;
@@ -16,20 +14,27 @@ namespace
 TEST(CircuitZKP, Test_1)
 {
   // define group element
-  auto Q = make_shared<IntegerImpl>(607);
-  auto p = make_shared<IntegerImpl>(101);
-  auto g = make_shared<IntegerImpl>(8);
+  auto Q = conv<ZZ>(607);
+  auto p = conv<ZZ>(101);
+  ZZ_p::init(Q);
+  auto g = conv<ZZ_p>(8);
 
   // define circuit constrains
-  auto mnCfg = CircuitZKPVerifier::calcMN(123); // explicitly define a too big circuit
-  int m = mnCfg[0];
-  int n = mnCfg[1];
+  auto N = 6;
+  auto mnCfg = CircuitZKPVerifier::calcMN(N); // explicitly define a too big circuit
+  auto m = mnCfg[0];
+  auto n = mnCfg[1];
 
   vector<shared_ptr<Matrix>> Wqa;
   vector<shared_ptr<Matrix>> Wqb;
   vector<shared_ptr<Matrix>> Wqc;
-  vector<shared_ptr<Integer>> Kq;
+  Vec<ZZ_p> Kq;
+  Kq.SetLength(N);
 
+  cout << "m: " << m << endl;
+  cout << "n: " << n << endl;
+
+  ZZ_p::init(p);
   auto ZERO_MATRIX = make_shared<Matrix>(m, n);
 
   Wqa.push_back(make_shared<Matrix>(vector<int>({0, 0, 0, -1, 0, 0}))->group(n));
@@ -53,13 +58,6 @@ TEST(CircuitZKP, Test_1)
   Wqc.push_back(make_shared<Matrix>(vector<int>({0, 0, 4, 1, 0, 0}))->group(n));
   Wqc.push_back(make_shared<Matrix>(vector<int>({0, 0, 4, 0, 0, 0}))->group(n));
 
-  Kq.push_back(Integer::ZERO());
-  Kq.push_back(Integer::ZERO());
-  Kq.push_back(Integer::ZERO());
-  Kq.push_back(Integer::ZERO());
-  Kq.push_back(Integer::ZERO());
-  Kq.push_back(Integer::ZERO());
-
   // create verifier
   auto verifier = make_shared<CircuitZKPVerifier>(Q, p, g, Wqa, Wqb, Wqc, Kq, m, n); // difine the dimension explicitly
   EXPECT_EQ(verifier->Q, Wqa.size());
@@ -77,69 +75,85 @@ TEST(CircuitZKP, Test_1)
   auto prover = make_shared<CircuitZKPProver>(verifier, A, B, C);
 
   // P->V commit
-  vector<shared_ptr<Integer>> commits = prover->commit();
+  Vec<ZZ_p> commits;
+  prover->commit(commits);
 
   // V->P challenge y
   verifier->setCommits(commits);
   auto y1 = verifier->calculateY();
   auto y2 = verifier->calculateY();
 
-  EXPECT_EQ(prover->randA.size(), m);
-  EXPECT_EQ(prover->randB.size(), m);
-  EXPECT_EQ(prover->randC.size(), m);
-  EXPECT_EQ(prover->D.size(), n);
-  EXPECT_EQ(commits.size(), m * 3 + 1);
-  EXPECT_EQ(y1->toHex(), y2->toHex());
-  EXPECT_EQ(y1->gt(Integer::ZERO()), true);
+  EXPECT_EQ(prover->randA.length(), m);
+  EXPECT_EQ(prover->randB.length(), m);
+  EXPECT_EQ(prover->randC.length(), m);
+  EXPECT_EQ(prover->D.length(), n);
+  EXPECT_EQ(commits.length(), m * 3 + 1);
+  EXPECT_EQ(y1, y2);
+  EXPECT_EQ(conv<ZZ>(y1) > 0, true);
 
   // P get challenge value by his own (non-interactive mode)
   prover->zkp->setCommits(commits);
   auto y3 = prover->zkp->calculateY();
 
-  EXPECT_EQ(y1->toHex(), y3->toHex());
+  EXPECT_EQ(y1, y3);
 
   // P->V polyCommit
-  auto pc = prover->polyCommit(y3);
+  Vec<ZZ_p> pc;
+  prover->polyCommit(y3, pc);
 
-  EXPECT_EQ(pc.size(), verifier->txM1 + verifier->txM2 + 1);
+  EXPECT_EQ(pc.length(), verifier->txM1 + verifier->txM2 + 1);
 
   // V->P challenge x
   verifier->setPolyCommits(pc);
   auto x1 = verifier->calculateX();
   auto x2 = verifier->calculateX();
 
-  EXPECT_EQ(x1->toHex(), x2->toHex());
-  EXPECT_EQ(x1->gt(Integer::ZERO()), true);
+  EXPECT_EQ(x1, x2);
+  EXPECT_EQ(conv<ZZ>(x1) > 0, true);
 
   // P get challenge value by his own (non-interactive mode)
   prover->zkp->setPolyCommits(pc);
   auto x3 = prover->zkp->calculateX();
 
-  EXPECT_EQ(x1->toHex(), x3->toHex());
+  EXPECT_EQ(x1, x3);
 
   // P->V proofs
-  auto proofs = prover->prove(y3, x3);
+  Vec<ZZ_p> proofs;
+  prover->prove(y3, x3, proofs);
 
-  EXPECT_EQ(proofs.size(), verifier->txN + 1 + verifier->n + 1);
+  EXPECT_EQ(proofs.length(), verifier->txN + 1 + verifier->n + 1);
 
   // V verify
   auto isValid = verifier->verify(proofs, y1, x1);
 
   EXPECT_TRUE(isValid);
+
+  Vec<ZZ_p> fakeProofs1 = proofs;
+  fakeProofs1[0] = 1;
+  isValid = verifier->verify(fakeProofs1, y1, x1);
+
+  EXPECT_FALSE(isValid);
+
+  Vec<ZZ_p> fakeProofs2 = proofs;
+  fakeProofs2[fakeProofs2.length() - 1] = 1;
+  isValid = verifier->verify(fakeProofs2, y1, x1);
+
+  EXPECT_FALSE(isValid);
 }
 
 TEST(CircuitZKP, Test_2)
 {
-  // define group element
-  auto Q = make_shared<IntegerImpl>(607);
-  auto p = make_shared<IntegerImpl>(101);
-  auto g = make_shared<IntegerImpl>(8);
+  auto Q = conv<ZZ>(607);
+  auto p = conv<ZZ>(101);
+  ZZ_p::init(Q);
+  auto g = conv<ZZ_p>(8);
 
   // y = x ^ 9
   // 512 = 2 ^ 9
   // 7 = 2 ^ 9 mod 101
-  auto X = Integer::TWO();
-  auto Y = make_shared<IntegerImpl>(512)->mod(p);
+  ZZ_p::init(p);
+  ZZ_p X = conv<ZZ_p>(2);
+  ZZ_p Y = conv<ZZ_p>(512);
 
   // define circuit constrains
   int m = 2;
@@ -148,7 +162,8 @@ TEST(CircuitZKP, Test_2)
   vector<shared_ptr<Matrix>> Wqa;
   vector<shared_ptr<Matrix>> Wqb;
   vector<shared_ptr<Matrix>> Wqc;
-  vector<shared_ptr<Integer>> Kq;
+  Vec<ZZ_p> Kq;
+  Kq.SetLength(8);
 
   auto ZERO_MATRIX = make_shared<Matrix>(m, n);
 
@@ -179,14 +194,7 @@ TEST(CircuitZKP, Test_2)
   Wqc.push_back(ZERO_MATRIX);
   Wqc.push_back(make_shared<Matrix>(vector<int>({0, 0, 0, 1}))->group(n));
 
-  Kq.push_back(Integer::ZERO());
-  Kq.push_back(Integer::ZERO());
-  Kq.push_back(Integer::ZERO());
-  Kq.push_back(Integer::ZERO());
-  Kq.push_back(Integer::ZERO());
-  Kq.push_back(Integer::ZERO());
-  Kq.push_back(Integer::ZERO());
-  Kq.push_back(Y);
+  Kq[7] = Y;
 
   // create verifier
   auto verifier = make_shared<CircuitZKPVerifier>(Q, p, g, Wqa, Wqb, Wqc, Kq);
@@ -205,69 +213,86 @@ TEST(CircuitZKP, Test_2)
   auto prover = make_shared<CircuitZKPProver>(verifier, A, B, C);
 
   // P->V commit
-  vector<shared_ptr<Integer>> commits = prover->commit();
+  Vec<ZZ_p> commits;
+  prover->commit(commits);
 
   // V->P challenge y
   verifier->setCommits(commits);
   auto y1 = verifier->calculateY();
   auto y2 = verifier->calculateY();
 
-  EXPECT_EQ(prover->randA.size(), m);
-  EXPECT_EQ(prover->randB.size(), m);
-  EXPECT_EQ(prover->randC.size(), m);
-  EXPECT_EQ(prover->D.size(), n);
-  EXPECT_EQ(commits.size(), m * 3 + 1);
-  EXPECT_EQ(y1->toHex(), y2->toHex());
-  EXPECT_EQ(y1->gt(Integer::ZERO()), true);
+  EXPECT_EQ(prover->randA.length(), m);
+  EXPECT_EQ(prover->randB.length(), m);
+  EXPECT_EQ(prover->randC.length(), m);
+  EXPECT_EQ(prover->D.length(), n);
+  EXPECT_EQ(commits.length(), m * 3 + 1);
+  EXPECT_EQ(y1, y2);
+  EXPECT_EQ(conv<ZZ>(y1) > 0, true);
 
   // P get challenge value by his own (non-interactive mode)
   prover->zkp->setCommits(commits);
   auto y3 = prover->zkp->calculateY();
 
-  EXPECT_EQ(y1->toHex(), y3->toHex());
+  EXPECT_EQ(y1, y3);
 
   // P->V polyCommit
-  auto pc = prover->polyCommit(y3);
+  Vec<ZZ_p> pc;
+  prover->polyCommit(y3, pc);
 
-  EXPECT_EQ(pc.size(), verifier->txM1 + verifier->txM2 + 1);
+  EXPECT_EQ(pc.length(), verifier->txM1 + verifier->txM2 + 1);
 
   // V->P challenge x
   verifier->setPolyCommits(pc);
   auto x1 = verifier->calculateX();
   auto x2 = verifier->calculateX();
 
-  EXPECT_EQ(x1->toHex(), x2->toHex());
-  EXPECT_EQ(x1->gt(Integer::ZERO()), true);
+  EXPECT_EQ(x1, x2);
+  EXPECT_EQ(conv<ZZ>(x1) > 0, true);
 
   // P get challenge value by his own (non-interactive mode)
   prover->zkp->setPolyCommits(pc);
   auto x3 = prover->zkp->calculateX();
 
-  EXPECT_EQ(x1->toHex(), x3->toHex());
+  EXPECT_EQ(x1, x3);
 
   // P->V proofs
-  auto proofs = prover->prove(y3, x3);
+  Vec<ZZ_p> proofs;
+  prover->prove(y3, x3, proofs);
 
-  EXPECT_EQ(proofs.size(), verifier->txN + 1 + verifier->n + 1);
+  EXPECT_EQ(proofs.length(), verifier->txN + 1 + verifier->n + 1);
 
   // V verify
   auto isValid = verifier->verify(proofs, y1, x1);
 
   EXPECT_TRUE(isValid);
+
+  Vec<ZZ_p> fakeProofs1 = proofs;
+  fakeProofs1[0] = 1;
+  isValid = verifier->verify(fakeProofs1, y1, x1);
+
+  EXPECT_FALSE(isValid);
+
+  Vec<ZZ_p> fakeProofs2 = proofs;
+  fakeProofs2[fakeProofs2.length() - 1] = 1;
+  isValid = verifier->verify(fakeProofs2, y1, x1);
+
+  EXPECT_FALSE(isValid);
 }
 
 TEST(CircuitZKP, Test_3)
 {
   // define group element
-  auto Q = make_shared<IntegerImpl>(607);
-  auto p = make_shared<IntegerImpl>(101);
-  auto g = make_shared<IntegerImpl>(8);
+  auto Q = conv<ZZ>(607);
+  auto p = conv<ZZ>(101);
+  ZZ_p::init(Q);
+  auto g = conv<ZZ_p>(8);
 
   // c = a * b
-  auto inputA = make_shared<IntegerImpl>(2)->mod(p);
-  auto inputB = make_shared<IntegerImpl>(3)->mod(p);
-  auto inputC = make_shared<IntegerImpl>(4)->mod(p);
-  auto output = make_shared<IntegerImpl>(24)->mod(p);
+  ZZ_p::init(p);
+  ZZ_p inputA = conv<ZZ_p>(2);
+  ZZ_p inputB = conv<ZZ_p>(3);
+  ZZ_p inputC = conv<ZZ_p>(4);
+  ZZ_p output = conv<ZZ_p>(24);
 
   // define circuit constrains
   int m = 1;
@@ -275,19 +300,21 @@ TEST(CircuitZKP, Test_3)
   vector<shared_ptr<Matrix>> Wqa;
   vector<shared_ptr<Matrix>> Wqb;
   vector<shared_ptr<Matrix>> Wqc;
-  vector<shared_ptr<Integer>> Kq;
+  Vec<ZZ_p> Kq;
+  Kq.SetLength(2);
 
   auto ZERO_MATRIX = make_shared<Matrix>(m, n);
 
   Wqa.push_back(make_shared<Matrix>(vector<int>({0, 1}))->group(n));
   Wqb.push_back(make_shared<Matrix>(vector<int>({0, 0}))->group(n));
   Wqc.push_back(make_shared<Matrix>(vector<int>({-1, 0}))->group(n));
-  Kq.push_back(Integer::ZERO());
+  //   Kq.push_back(Integer::ZERO());
 
   Wqa.push_back(make_shared<Matrix>(vector<int>({0, 0}))->group(n));
   Wqb.push_back(make_shared<Matrix>(vector<int>({0, 0}))->group(n));
   Wqc.push_back(make_shared<Matrix>(vector<int>({0, 1}))->group(n));
-  Kq.push_back(output);
+  //   Kq.push_back(output);
+  Kq[1] = output;
 
   // create verifier
   auto verifier = make_shared<CircuitZKPVerifier>(Q, p, g, Wqa, Wqb, Wqc, Kq);
@@ -301,23 +328,26 @@ TEST(CircuitZKP, Test_3)
   auto prover = make_shared<CircuitZKPProver>(verifier, A, B, C);
 
   // P->V commit
-  vector<shared_ptr<Integer>> commits = prover->commit();
+  Vec<ZZ_p> commits;
+  prover->commit(commits);
 
   // V->P challenge y
   verifier->setCommits(commits);
-  auto y = make_shared<IntegerImpl>(3);
+  ZZ_p y = conv<ZZ_p>(3);
 
   // P->V polyCommit
-  auto pc = prover->polyCommit(y);
+  Vec<ZZ_p> pc;
+  prover->polyCommit(y, pc);
 
   // V->P challenge x
   verifier->setPolyCommits(pc);
-  auto x = make_shared<IntegerImpl>(4);
+  ZZ_p x = conv<ZZ_p>(4);
 
   // P->V proofs
-  auto proofs = prover->prove(y, x);
+  Vec<ZZ_p> proofs;
+  prover->prove(y, x, proofs);
 
-  EXPECT_EQ(proofs.size(), verifier->txN + 1 + verifier->n + 1);
+  EXPECT_EQ(proofs.length(), verifier->txN + 1 + verifier->n + 1);
 
   // V verify
   auto isValid = verifier->verify(proofs, y, x);

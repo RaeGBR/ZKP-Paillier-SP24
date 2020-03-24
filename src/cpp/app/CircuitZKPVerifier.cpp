@@ -2,53 +2,6 @@
 
 using namespace polyu;
 
-CircuitZKPVerifier::CircuitZKPVerifier(
-    const shared_ptr<Integer> &GP_Q,
-    const shared_ptr<Integer> &GP_P,
-    const shared_ptr<Integer> &GP_G,
-    const vector<shared_ptr<Matrix>> &Wqa,
-    const vector<shared_ptr<Matrix>> &Wqb,
-    const vector<shared_ptr<Matrix>> &Wqc,
-    const vector<shared_ptr<Integer>> &Kq)
-    : CircuitZKPVerifier(GP_Q, GP_P, GP_G, Wqa, Wqb, Wqc, Kq, 0, 0) {}
-
-CircuitZKPVerifier::CircuitZKPVerifier(
-    const shared_ptr<Integer> &GP_Q,
-    const shared_ptr<Integer> &GP_P,
-    const shared_ptr<Integer> &GP_G,
-    const vector<shared_ptr<Matrix>> &Wqa,
-    const vector<shared_ptr<Matrix>> &Wqb,
-    const vector<shared_ptr<Matrix>> &Wqc,
-    const vector<shared_ptr<Integer>> &Kq,
-    size_t m,
-    size_t n)
-{
-  this->GP_Q = GP_Q;
-  this->GP_P = GP_P;
-  this->GP_G = GP_G;
-  this->Wqa = Wqa;
-  this->Wqb = Wqb;
-  this->Wqc = Wqc;
-  this->Kq = Kq;
-
-  this->Q = Wqa.size();
-  if (this->Q <= 0 || this->Q != Wqb.size() || this->Q != Wqc.size())
-    throw invalid_argument("the number of linear constrians are different in Wqa, Wqb and Wqc");
-  m = m > 0 ? m : Wqa[0]->m;
-  n = n > 0 ? n : Wqa[0]->n;
-  this->m = m;
-  this->n = n;
-  this->N = m * n;
-  this->M = N + m;
-
-  auto txCfg = calcM1M2N(m);
-  this->txM1 = txCfg[0];
-  this->txM2 = txCfg[1];
-  this->txN = txCfg[2];
-
-  this->commitScheme = make_shared<PolynomialCommitment>(this->GP_Q, this->GP_P, this->GP_G, max(this->txN, this->n));
-}
-
 vector<size_t> CircuitZKPVerifier::calcMN(size_t _N)
 {
   double N = _N;
@@ -68,254 +21,512 @@ vector<size_t> CircuitZKPVerifier::calcM1M2N(size_t m)
   return ret;
 }
 
-vector<shared_ptr<Integer>> CircuitZKPVerifier::getY_Mq(const shared_ptr<Integer> &y)
+CircuitZKPVerifier::CircuitZKPVerifier(
+    const ZZ &GP_Q,
+    const ZZ &GP_P,
+    const ZZ_p &GP_G,
+    const vector<shared_ptr<Matrix>> &Wqa,
+    const vector<shared_ptr<Matrix>> &Wqb,
+    const vector<shared_ptr<Matrix>> &Wqc,
+    const Vec<ZZ_p> &Kq)
+    : CircuitZKPVerifier(GP_Q, GP_P, GP_G, Wqa, Wqb, Wqc, Kq, 0, 0) {}
+
+CircuitZKPVerifier::CircuitZKPVerifier(
+    const ZZ &GP_Q,
+    const ZZ &GP_P,
+    const ZZ_p &GP_G,
+    const vector<shared_ptr<Matrix>> &Wqa,
+    const vector<shared_ptr<Matrix>> &Wqb,
+    const vector<shared_ptr<Matrix>> &Wqc,
+    const Vec<ZZ_p> &Kq,
+    size_t m,
+    size_t n)
 {
-  if (cachedY_Mq.size() > 0)
-    return cachedY_Mq;
+  this->GP_Q = GP_Q;
+  this->GP_P = GP_P;
+  this->GP_G = GP_G;
 
-  vector<shared_ptr<Integer>> ret;
-  auto M = make_shared<IntegerImpl>(this->M);
-  auto y_M = y->modPow(M, GP_P);
+  this->Q = Wqa.size();
+  if (this->Q <= 0 || this->Q != Wqb.size() || this->Q != Wqc.size())
+    throw invalid_argument("the number of linear constrians are different in Wqa, Wqb and Wqc");
 
-  ret.push_back(y_M->modMul(y, GP_P)); // y^(M+1)
-  for (size_t q = 1; q < Q; q++)
+  m = m > 0 ? m : Wqa[0]->m;
+  n = n > 0 ? n : Wqa[0]->n;
+  this->m = m;
+  this->n = n;
+  this->N = m * n;
+  this->M = N + m;
+
+  auto txCfg = CircuitZKPVerifier::calcM1M2N(m);
+  this->txM1 = txCfg[0];
+  this->txM2 = txCfg[1];
+  this->txN = txCfg[2];
+
+  this->commitScheme = make_shared<PolynomialCommitment>(this->GP_Q, this->GP_P, this->GP_G, max(this->txN, this->n));
+
+  convertWire(Wqa, this->Wqa);
+  convertWire(Wqb, this->Wqb);
+  convertWire(Wqc, this->Wqc);
+  this->Kq = Kq;
+}
+void CircuitZKPVerifier::convertWire(const vector<shared_ptr<Matrix>> &source, map<size_t, map<size_t, map<size_t, ZZ_p>>> &target)
+{
+  for (size_t i = 0; i < m; i++)
   {
-    ret.push_back(ret[q - 1]->modMul(y, GP_P)); // y^(M+q)
+    target[i] = map<size_t, map<size_t, ZZ_p>>();
+
+    for (size_t q = 0; q < source.size(); q++)
+    {
+      if (source[q]->rowExists(i))
+      {
+        for (auto it : source[q]->values[i])
+        {
+          size_t j = it.first;
+          auto v = it.second;
+
+          if (IsZero(v))
+            continue;
+
+          if (target[i].find(q) == target[i].end())
+          {
+            target[i][q] = map<size_t, ZZ_p>();
+          }
+          target[i][q][j] = v;
+        }
+      }
+    }
   }
-  cachedY_Mq = ret;
-  return ret;
 }
 
-shared_ptr<Integer> CircuitZKPVerifier::getY_Mq(const shared_ptr<Integer> &y, size_t q)
+Vec<ZZ_p> &CircuitZKPVerifier::getY_Mq(const ZZ_p &y)
+{
+  if (!IsZero(cachedY_Mq))
+    return cachedY_Mq;
+
+  ZZ_pPush push(GP_P);
+  cachedY_Mq.SetLength(Q);
+
+  ZZ_p y_M = power(y, this->M); // y^M
+  mul(cachedY_Mq[0], y_M, y);   // y^(M+1)
+  for (size_t q = 1; q < Q; q++)
+  {
+    mul(cachedY_Mq[q], cachedY_Mq[q - 1], y); // y^(M+q)
+  }
+  return cachedY_Mq;
+}
+
+ZZ_p CircuitZKPVerifier::getY_Mq(const ZZ_p &y, size_t q)
 {
   return getY_Mq(y)[q - 1];
 }
 
-shared_ptr<Matrix> CircuitZKPVerifier::getY(const shared_ptr<Integer> &y)
+Vec<ZZ_p> &CircuitZKPVerifier::getY(const ZZ_p &y)
 {
-  if (cachedY != nullptr)
+  if (!IsZero(cachedY))
     return cachedY;
 
-  auto Y = Matrix::powerVector(y, m + 1, GP_P); // [1, y, y^2, ... , y^m]
-  cachedY = Y;
-  return Y;
+  MathUtils::powerVecZZ_p(y, m + 1, GP_P, cachedY); // [1, y, y^2, ... , y^m]
+  return cachedY;
 }
 
-shared_ptr<Matrix> CircuitZKPVerifier::getY_(const shared_ptr<Integer> &y)
+Vec<ZZ_p> &CircuitZKPVerifier::getY_(const ZZ_p &y)
 {
-  if (cachedY_ != nullptr)
+  if (!IsZero(cachedY_))
     return cachedY_;
 
-  auto Y_ = make_shared<Matrix>(1, n);
-  Y_->values[0][0] = y->modPow(make_shared<IntegerImpl>(m), GP_P); // y^m
+  ZZ_pPush push(GP_P);
+  cachedY_.SetLength(n);
+
+  power(cachedY_[0], y, m); // y^m
   for (size_t i = 1; i < n; i++)
   {
     // y^m * previous object (so [y^m, y^2m, ... , y^mn])
-    Y_->values[0][i] = Y_->values[0][i - 1]->modMul(Y_->values[0][0], GP_P);
+    mul(cachedY_[i], cachedY_[i - 1], cachedY_[0]);
   }
-  cachedY_ = Y_;
-  return Y_;
+  return cachedY_;
 }
 
-void CircuitZKPVerifier::setY(const shared_ptr<Integer> &y)
+void CircuitZKPVerifier::setY(const ZZ_p &y)
 {
-  this->cachedY_Mq.clear();
-  this->cachedY = nullptr;
-  this->cachedY_ = nullptr;
+  this->cachedY_Mq.SetLength(0);
+  this->cachedY.SetLength(0);
+  this->cachedY_.SetLength(0);
   getY_Mq(y);
   getY(y);
   getY_(y);
 }
 
-shared_ptr<Matrix> CircuitZKPVerifier::Wai(size_t i, const shared_ptr<Integer> &y)
+shared_ptr<Matrix> CircuitZKPVerifier::Wai(size_t i, const ZZ_p &y)
 {
   if (i <= 0 || i > m)
     throw invalid_argument("i should between 1 to m");
 
+  ZZ_p tmp;
+
   auto ret = make_shared<Matrix>(1, n);
-  for (size_t q = 1; q <= Q; q++)
+  for (auto it1 : Wqa[i - 1])
   {
-    auto w = make_shared<Matrix>(Wqa[q - 1]->row(i - 1));
-    w = w->mul(getY_Mq(y, q), GP_P);
-    ret = ret->add(w, GP_P);
+    size_t q = it1.first + 1;
+    auto Wqi = it1.second;
+
+    auto yMq = getY_Mq(y, q);
+    for (auto it2 : Wqi)
+    {
+      size_t j = it2.first;
+      auto v = it2.second;
+
+      if (IsOne(v))
+      {
+        tmp = yMq;
+      }
+      else
+      {
+        mul(tmp, v, yMq);
+      }
+      if (ret->cellExists(0, j))
+      {
+        add(tmp, tmp, ret->cell(0, j));
+      }
+      ret->cell(0, j, tmp);
+    }
   }
   return ret;
 }
 
-shared_ptr<Matrix> CircuitZKPVerifier::Wbi(size_t i, const shared_ptr<Integer> &y)
+shared_ptr<Matrix> CircuitZKPVerifier::Wbi(size_t i, const ZZ_p &y)
 {
   if (i <= 0 || i > m)
     throw invalid_argument("i should between 1 to m");
 
+  ZZ_p tmp;
+
   auto ret = make_shared<Matrix>(1, n);
-  for (size_t q = 1; q <= Q; q++)
+  for (auto it1 : Wqb[i - 1])
   {
-    auto w = make_shared<Matrix>(Wqb[q - 1]->row(i - 1));
-    w = w->mul(getY_Mq(y, q), GP_P);
-    ret = ret->add(w, GP_P);
+    size_t q = it1.first + 1;
+    auto Wqi = it1.second;
+
+    auto yMq = getY_Mq(y, q);
+    for (auto it2 : Wqi)
+    {
+      size_t j = it2.first;
+      auto v = it2.second;
+
+      if (IsOne(v))
+      {
+        tmp = yMq;
+      }
+      else
+      {
+        mul(tmp, v, yMq);
+      }
+      if (ret->cellExists(0, j))
+      {
+        add(tmp, tmp, ret->cell(0, j));
+      }
+      ret->cell(0, j, tmp);
+    }
   }
   return ret;
 }
 
-shared_ptr<Matrix> CircuitZKPVerifier::Wci(size_t i, const shared_ptr<Integer> &y)
+shared_ptr<Matrix> CircuitZKPVerifier::Wci(size_t i, const ZZ_p &y)
 {
   if (i <= 0 || i > m)
     throw invalid_argument("i should between 1 to m");
 
+  ZZ_p tmp;
+
   auto ret = make_shared<Matrix>(1, n);
-  for (size_t q = 1; q <= Q; q++)
+  for (auto it1 : Wqc[i - 1])
   {
-    auto w = make_shared<Matrix>(Wqc[q - 1]->row(i - 1));
-    w = w->mul(getY_Mq(y, q), GP_P);
-    ret = ret->add(w, GP_P);
+    size_t q = it1.first + 1;
+    auto Wqi = it1.second;
+
+    auto yMq = getY_Mq(y, q);
+    for (auto it2 : Wqi)
+    {
+      size_t j = it2.first;
+      auto v = it2.second;
+
+      if (IsOne(v))
+      {
+        tmp = yMq;
+      }
+      else
+      {
+        mul(tmp, v, yMq);
+      }
+      if (ret->cellExists(0, j))
+      {
+        add(tmp, tmp, ret->cell(0, j));
+      }
+      ret->cell(0, j, tmp);
+    }
   }
 
   auto Y_ = getY_(y);
-  auto _y_i = Integer::ZERO()->sub(y->modPow(make_shared<IntegerImpl>(i), GP_P));
-  auto Y_y_i = Y_->mul(_y_i, GP_P);
+  auto yi = getY(y)[i];
+  for (size_t j = 0; j < n; j++)
+  {
+    mul(tmp, Y_[j], yi);
+    sub(tmp, ret->cell(0, j), tmp);
+    ret->cell(0, j, tmp);
+  }
 
-  ret = ret->add(Y_y_i, GP_P);
   return ret;
 }
 
-shared_ptr<Integer> CircuitZKPVerifier::K(const shared_ptr<Integer> &y)
+ZZ_p CircuitZKPVerifier::K(const ZZ_p &y)
 {
-  auto ret = Integer::ZERO();
+  ZZ_p ret;
   for (size_t q = 1; q <= Q; q++)
   {
-    auto KqYmq = Kq[q - 1]->modMul(getY_Mq(y, q), GP_P);
-    ret = ret->add(KqYmq)->mod(GP_P);
+    auto kq = Kq(q);
+    if (IsZero(kq))
+      continue;
+
+    ZZ_p KqYmq;
+
+    if (IsOne(kq))
+    {
+      KqYmq = getY_Mq(y, q);
+    }
+    else
+    {
+      mul(KqYmq, kq, getY_Mq(y, q));
+    }
+    add(ret, ret, KqYmq);
   }
   return ret;
 }
 
-shared_ptr<Polynomial> CircuitZKPVerifier::createSx(const shared_ptr<Integer> &y)
+void CircuitZKPVerifier::createSx(const ZZ_p &y, vector<ZZ_pX> &sx)
 {
+  ZZ_pPush push(GP_P);
+  sx.clear();
+  for (size_t i = 0; i < n; i++)
+  {
+    sx.push_back(ZZ_pX());
+  }
+
   // s(X) = SUM(Wai(y) * y^-i * X^-i) + SUM(Wbi(y) * X^i) + X^-m * SUM(Wci(y) * X^-i)
-  auto sx = make_shared<Polynomial>();
+  //      = (X^2m) * ( SUM(Wai(y) * y^-i * X^(2m-i)) + SUM(Wbi(y) * X^(2m+i)) + SUM(Wci(y) * X^(m-i)) )
+  Vec<ZZ_p> Y = getY(y); // [1, y, y^2, ... , y^m]
+  ZZ_p tmp;
 
-  auto Y = getY(y)->row(0); // [1, y, y^2, ... , y^m]
-
+  Timer::start("sx.wai");
   for (size_t i = 1; i <= m; i++)
   {
     auto wai = Wai(i, y);
-    auto yi = Y[i]->inv(GP_P);
-    wai = wai->mul(yi, GP_P);
-    sx->put(-i, wai);
+    auto yi = inv(Y[i]);
 
-    auto wbi = Wbi(i, y);
-    sx->put(i, wbi);
-
-    auto wci = Wci(i, y);
-    sx->put(-m - i, wci);
+    for (auto it : wai->values[0])
+    {
+      auto j = it.first;
+      auto v = it.second;
+      mul(tmp, v, yi);
+      SetCoeff(sx[j], 2 * m - i, tmp);
+    }
   }
-  return sx;
+  Timer::end("sx.wai");
+
+  Timer::start("sx.wbi");
+  for (size_t i = 1; i <= m; i++)
+  {
+    auto wbi = Wbi(i, y);
+    for (auto it : wbi->values[0])
+    {
+      auto j = it.first;
+      auto v = it.second;
+      SetCoeff(sx[j], 2 * m + i, v);
+    }
+  }
+  Timer::end("sx.wbi");
+
+  Timer::start("sx.wci");
+  for (size_t i = 1; i <= m; i++)
+  {
+    auto wci = Wci(i, y);
+    for (auto it : wci->values[0])
+    {
+      auto j = it.first;
+      auto v = it.second;
+      SetCoeff(sx[j], m - i, v);
+    }
+  }
+  Timer::end("sx.wci");
 }
 
-void CircuitZKPVerifier::setCommits(const vector<shared_ptr<Integer>> &commits)
+void CircuitZKPVerifier::setCommits(const Vec<ZZ_p> &commits)
 {
-  if (commits.size() != 3 * m + 1)
+  if (commits.length() != 3 * m + 1)
     throw invalid_argument("commitments count is not correct");
 
-  commitA.clear();
-  commitB.clear();
-  commitC.clear();
+  ConvertUtils::subVec(commits, commitA, 0, m);
+  ConvertUtils::subVec(commits, commitB, m, 2 * m);
+  ConvertUtils::subVec(commits, commitC, 2 * m, 3 * m);
 
-  commitA.insert(commitA.begin(), commits.begin(), commits.begin() + m);
-  commitB.insert(commitB.begin(), commits.begin() + m, commits.begin() + m + m);
-  commitC.insert(commitC.begin(), commits.begin() + m + m, commits.begin() + m + m + m);
   commitD = commits[3 * m];
 }
 
-shared_ptr<Integer> CircuitZKPVerifier::calculateY()
+ZZ_p CircuitZKPVerifier::calculateY()
 {
-  auto seed = commitD->toBinary();
+  auto seed = ConvertUtils::toBinary(commitD);
   for (size_t i = 0; i < m; i++)
   {
-    HexUtils::append(seed, commitA[i]->toBinary());
-    HexUtils::append(seed, commitB[i]->toBinary());
-    HexUtils::append(seed, commitC[i]->toBinary());
+    ConvertUtils::append(seed, ConvertUtils::toBinary(commitA[i]));
+    ConvertUtils::append(seed, ConvertUtils::toBinary(commitB[i]));
+    ConvertUtils::append(seed, ConvertUtils::toBinary(commitC[i]));
   }
 
-  auto ret = Random::genInteger(GP_P, seed, true);
+  SetSeed(seed.data(), seed.size());
+  auto ret = MathUtils::randZZ_p(GP_P, true);
   return ret;
 }
 
-void CircuitZKPVerifier::setPolyCommits(const vector<shared_ptr<Integer>> &pc)
+void CircuitZKPVerifier::setPolyCommits(const Vec<ZZ_p> &pc)
 {
-  if (pc.size() != txM1 + txM2 + 1)
+  if (pc.length() != txM1 + txM2 + 1)
     throw invalid_argument("polynomial commitments count is not correct");
 
   this->pc = pc;
 }
 
-shared_ptr<Integer> CircuitZKPVerifier::calculateX()
+ZZ_p CircuitZKPVerifier::calculateX()
 {
-  auto seed = pc[0]->toBinary();
-  for (size_t i = 1; i < pc.size(); i++)
+  auto seed = ConvertUtils::toBinary(pc[0]);
+  for (size_t i = 1; i < pc.length(); i++)
   {
-    HexUtils::append(seed, pc[i]->toBinary());
+    ConvertUtils::append(seed, ConvertUtils::toBinary(pc[i]));
   }
 
-  auto ret = Random::genInteger(GP_P, seed, true);
+  SetSeed(seed.data(), seed.size());
+  auto ret = MathUtils::randZZ_p(GP_P, true);
   return ret;
 }
 
-bool CircuitZKPVerifier::verify(const vector<shared_ptr<Integer>> &proofs, const shared_ptr<Integer> &y, const shared_ptr<Integer> &x)
+bool CircuitZKPVerifier::verify(const Vec<ZZ_p> &proofs, const ZZ_p &y, const ZZ_p &x)
 {
+  Timer::start("verifier.verify");
   // check proof size
-  if (proofs.size() != txN + 1 + n + 1)
+  if (proofs.length() != txN + 1 + n + 1)
     return false;
 
-  vector<shared_ptr<Integer>> pe(proofs.begin(), proofs.begin() + txN + 1);
-  vector<shared_ptr<Integer>> rArray(proofs.begin() + txN + 1, proofs.begin() + txN + 1 + n);
-  auto r = make_shared<Matrix>(rArray);
-  auto rr = proofs[proofs.size() - 1];
+  ZZ_pPush push(GP_Q);
+
+  // extract pe, r, rr from proofs
+  Vec<ZZ_p> pe;
+  Vec<ZZ_p> r;
+  ConvertUtils::subVec(proofs, pe, 0, txN + 1);
+  ConvertUtils::subVec(proofs, r, txN + 1, txN + 1 + n);
+  ZZ_p rr = proofs[proofs.length() - 1];
+
+  ZZ_p tmp;
 
   // check PolyVerify
+  Timer::start("verifier.polyVerify");
   if (!commitScheme->verify(txM1, txM2, txN, pc, pe, x))
     return false;
+  Timer::end("verifier.polyVerify");
 
   // setting: u = 0
   // check PolyEval = r dot r' - 2K
+  Timer::start("verifier.calcV1");
   auto v1 = commitScheme->calcV(txN, pe, x);
+  Timer::end("verifier.calcV1");
 
-  setY(y);                                                         // recalculate cachedY_ and cachedY_Mq
-  auto s2 = createSx(y)->eval(x, GP_P)->mul(Integer::TWO(), GP_P); // 2s(x)
-  auto r_ = r->inner(getY_(y), GP_P)->add(s2, GP_P);               // r' = r inner y' + 2s(x)
-  auto rr_ = r->dot(r_, GP_P);                                     // r dot r'
-  if (rr_->m != 1 || rr_->n != 1)
-    return false;
-  auto v2 = rr_->values[0][0]->sub(K(y)->modMul(Integer::TWO(), GP_P))->mod(GP_P); // r dot r' - 2K
+  Timer::start("verifier.calcV2");
+  Timer::start("verifier.setY");
+  setY(y); // recalculate cachedY_ and cachedY_Mq
+  Timer::end("verifier.setY");
 
-  if (!v1->eq(v2))
+  Timer::start("verifier.sx");
+  ZZ_p::init(GP_P);
+
+  // create polynomial s(X)
+  vector<ZZ_pX> sx;
+  createSx(y, sx);
+
+  // put x into s(X)
+  Vec<ZZ_p> sx2;
+  sx2.SetLength(n);
+  for (size_t i = 0; i < n; i++)
+  {
+    eval(sx2[i], sx[i], x);
+  }
+  // shift x^-2m, since the NTL polynomial only support positive degree
+  power(tmp, x, -2 * m);
+  mul(sx2, sx2, tmp);
+  mul(sx2, sx2, 2); // 2 * s(x)
+  Timer::end("verifier.sx");
+
+  // r' = r inner y' + 2s(x)
+  Timer::start("verifier.r_");
+  Vec<ZZ_p> r_;
+  r_.SetLength(n);
+  const auto y_ = getY_(y);
+  for (size_t i = 0; i < n; i++)
+  {
+    mul(r_[i], r[i], y_[i]);
+  }
+  add(r_, r_, sx2);
+  Timer::end("verifier.r_");
+
+  // r * r' - 2K
+  Timer::start("verifier.rr_");
+  ZZ_p v2;
+  InnerProduct(v2, r, r_); // r * r'
+  tmp = K(y);              // put y into K(y)
+  mul(tmp, tmp, 2);        // 2 * K(y)
+  sub(v2, v2, tmp);        // r * r' - 2K
+  Timer::end("verifier.rr_");
+  Timer::end("verifier.calcV2");
+
+  if (v1 != v2)
     return false;
 
   // check commit(r, rr) is correct
-  auto c1 = commitScheme->commit(rArray, rr);
-  auto c2 = Integer::ONE();
+  Timer::start("verifier.commitR1");
+  auto c1 = commitScheme->commit(r, rr);
+  Timer::end("verifier.commitR1");
 
-  auto prevX = Integer::ONE();
-  auto prevY = Integer::ONE();
-  auto prevXM = x->modPow(make_shared<IntegerImpl>(m), GP_P);
+  Timer::start("verifier.commitR2");
+  ZZ_p::init(GP_P);
+  ZZ_p c2 = conv<ZZ_p>(1);
+  ZZ_p xi = conv<ZZ_p>(1);
+  ZZ_p yi = conv<ZZ_p>(1);
+  ZZ_p xmi = power(x, m);
+  ZZ_p xi_;
+
   for (int i = 1; i <= m; i++)
   {
-    auto xi = prevX = prevX->modMul(x, GP_P);
-    auto yi = prevY = prevY->modMul(y, GP_P);
-    auto xmi = prevXM = prevXM->modMul(x, GP_P);
-    auto xi_ = xi->inv(GP_P);
+    ZZ_p::init(GP_P);
+    mul(xi, xi, x);
+    mul(yi, yi, y);
+    mul(xmi, xmi, x);
+    inv(xi_, xi);
 
-    auto xiyi = xi->modMul(yi, GP_P);
-    auto a = commitA[i - 1]->modPow(xiyi, GP_Q);
-    auto b = commitB[i - 1]->modPow(xi_, GP_Q);
-    auto c = commitC[i - 1]->modPow(xmi, GP_Q);
-    c2 = c2->modMul(a, GP_Q)->modMul(b, GP_Q)->modMul(c, GP_Q);
+    mul(tmp, xi, yi);
+    ZZ_p::init(GP_Q);
+    power(tmp, commitA[i - 1], conv<ZZ>(tmp));
+    mul(c2, c2, tmp);
+    power(tmp, commitB[i - 1], conv<ZZ>(xi_));
+    mul(c2, c2, tmp);
+    power(tmp, commitC[i - 1], conv<ZZ>(xmi));
+    mul(c2, c2, tmp);
   }
-  auto x2m1 = x->modPow(make_shared<IntegerImpl>(2 * m + 1), GP_P);
-  auto d = commitD->modPow(x2m1, GP_Q);
-  c2 = c2->modMul(d, GP_Q);
 
-  if (!c1->eq(c2))
+  ZZ_p::init(GP_P);
+  power(tmp, x, 2 * m + 1);
+  ZZ_p::init(GP_Q);
+  power(tmp, commitD, conv<ZZ>(tmp));
+  mul(c2, c2, tmp);
+  Timer::end("verifier.commitR2");
+
+  Timer::end("verifier.verify");
+
+  if (c1 != c2)
     return false;
 
   return true;

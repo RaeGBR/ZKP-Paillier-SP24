@@ -2,139 +2,212 @@
 
 #include "lib/namespace.hpp"
 
-#include "Utils.hpp"
-#include "lib/paillier/PaillierEncryption.hpp"
-#include "lib/math/IntegerImpl.hpp"
+#include <set>
+#include "app/PaillierEncryption.hpp"
+#include "app/ConvertUtils.hpp"
+
+// #include "Utils.hpp"
+// #include "lib/paillier/PaillierEncryption.hpp"
+// #include "lib/math/IntegerImpl.hpp"
 
 using namespace std;
-using namespace cryptoplus;
+using namespace polyu;
 
 namespace
 {
+
 TEST(Paillier, KeyGeneration)
 {
-  int byteLength = 32;
-  for (int i = 0; i < 10; i++)
+  // check key length correct
+  for (size_t i = 1; i < 32; i++)
   {
-    auto crypto = PaillierEncryption::generate(byteLength);
-    EXPECT_EQ(crypto->getPublicKey()->toBinary().size(), byteLength);
-    EXPECT_TRUE(crypto->getPublicKey()->gcd(crypto->getPrivateKey())->eq(Integer::ONE()));
+
+    auto crypto = make_shared<PaillierEncryption>(i);
+    EXPECT_EQ(NumBytes(crypto->getPublicKey()), i);
+    EXPECT_EQ(GCD(crypto->n, crypto->lambda), 1);
   }
 
+  // check seedable key gen
   vector<uint8_t> seed{0x00, 0x00, 0x00, 0x00, 0x00, 0x12, 0x34};
-  auto c1 = PaillierEncryption::generate(byteLength, seed);
-  auto c2 = PaillierEncryption::generate(byteLength, seed);
-  EXPECT_TRUE(c2->getPrivateKey()->eq(c1->getPrivateKey()));
-  EXPECT_TRUE(c2->getPublicKey()->eq(c1->getPublicKey()));
-  EXPECT_TRUE(c1->getPublicKey()->gcd(c1->getPrivateKey())->eq(Integer::ONE()));
+  auto c1 = make_shared<PaillierEncryption>(32, seed);
+  auto c2 = make_shared<PaillierEncryption>(32, seed);
+  EXPECT_EQ(c1->p, c2->p);
+  EXPECT_EQ(c1->q, c2->q);
+  EXPECT_EQ(c1->n2, c2->n2);
+  EXPECT_EQ(GCD(c1->n, c1->lambda), 1);
 }
 
 TEST(Paillier, CyclicGroupGeneration)
 {
-  auto crypto = make_shared<PaillierEncryption>(
-      make_shared<IntegerImpl>(15),
-      make_shared<IntegerImpl>(3),
-      make_shared<IntegerImpl>(5));
+  // p = 3, q = 5, N = 15
+  auto crypto = make_shared<PaillierEncryption>(ZZ(15), ZZ(3), ZZ(5));
 
-  auto Q = crypto->getGroupQ();
-  auto p = crypto->getGroupP();
-  auto g = crypto->getGroupG();
+  // GP_P = N^2 = 225
+  // GP_Q = (f * GP_P) + 1 is prime
+  auto Q = crypto->Q;
+  auto p = crypto->n2;
+  auto g = crypto->G;
 
-  EXPECT_EQ(p->toString(), "225");
-  EXPECT_EQ(Q->toString(), "1801");
+  EXPECT_EQ(p, 225);
+  EXPECT_EQ(Q, 1801);
 
-  EXPECT_FALSE(p->isPrime());
-  EXPECT_TRUE(Q->isPrime());
+  EXPECT_FALSE(ProbPrime(p));
+  EXPECT_TRUE(ProbPrime(Q));
 
-  EXPECT_EQ(g->modPow(p, Q)->toString(), "1");
-  EXPECT_EQ(g->modPow(Integer::ZERO(), Q)->toString(), "1");
+  ZZ_p::init(Q);
+  EXPECT_EQ(power(g, p), 1);
+  EXPECT_EQ(power(g, 0), 1);
 
-  auto _p = p->toNumber();
-  for (int i = 1; i < _p; i++)
+  for (int i = 1; i != p; i++)
   {
-    auto x = make_shared<IntegerImpl>(i);
-    EXPECT_NE(g->modPow(x, Q)->toString(), "1")
-        << "generator: " << g->toString() << "^" << i << " mod " << Q->toString()
+    EXPECT_NE(power(g, i), 1)
+        << "generator: " << g << "^" << i << " mod " << Q
         << " should not equal to 1";
+  }
+}
+
+TEST(Paillier, PickRandom)
+{
+  size_t byteLength = 2;
+  auto crypto = make_shared<PaillierEncryption>(byteLength);
+  auto N = crypto->n;
+
+  for (int i = 0; i < 1000; i++)
+  {
+    auto r = conv<ZZ>(crypto->pickRandom());
+    EXPECT_TRUE(r > conv<ZZ>(0));
+    EXPECT_TRUE(r < N);
+    EXPECT_TRUE(GCD(r, N) == 1);
   }
 }
 
 TEST(Paillier, EncryptionDecryption)
 {
-  int byteLength = 32;
-  auto m = Integer::createWithString("30.");
+  size_t byteLength = 32;
+  ZZ m;
+  m = 30;
 
-  auto crypto = PaillierEncryption::generate(byteLength);
+  auto crypto = make_shared<PaillierEncryption>(byteLength);
 
   for (int i = 0; i < 50; i++)
   {
-    auto c = crypto->encrypt(m);
-    EXPECT_EQ(crypto->decrypt(c)->toString(), m->toString());
+    auto r = crypto->pickRandom();
+    auto c = crypto->encrypt(m, r); // r is optional
+    EXPECT_EQ(crypto->decrypt(c), m);
+  }
+  for (int i = 0; i < 50; i++)
+  {
+    auto c = crypto->encrypt(m); // r is optional
+    EXPECT_EQ(crypto->decrypt(c), m);
   }
 }
 
 TEST(Paillier, EncryptionDecryption2)
 {
-  int byteLength = 32;
-  auto m = Integer::createWithString("30.");
+  size_t byteLength = 32;
+  string msg = "testing";
+  ZZ m = ConvertUtils::toZZ(ConvertUtils::toBinary(msg));
 
-  auto crypto = PaillierEncryption::generate(byteLength);
+  auto crypto = make_shared<PaillierEncryption>(byteLength);
   auto pk = crypto->getPublicKey();
   auto sk = crypto->getPrivateKey();
+  auto GP_Q = crypto->getGroupQ();
+  auto GP_P = crypto->getGroupP();
+  auto GP_G = crypto->getGroupG();
 
-  auto encryptor = make_shared<PaillierEncryption>(pk);
-  auto decryptor = make_shared<PaillierEncryption>(pk, sk);
+  auto encryptor = make_shared<PaillierEncryption>(pk, GP_Q, GP_P, GP_G);
+  auto decryptor = make_shared<PaillierEncryption>(pk, sk, GP_Q, GP_P, GP_G);
 
   auto c = encryptor->encrypt(m);
   auto r = decryptor->decrypt(c);
 
-  EXPECT_TRUE(m->eq(r));
+  auto rBin = ConvertUtils::toBinary(r);
+  auto ret = ConvertUtils::toString(rBin);
+
+  EXPECT_EQ(encryptor->getPublicKey(), decryptor->getPublicKey());
+  EXPECT_EQ(encryptor->getGroupQ(), decryptor->getGroupQ());
+  EXPECT_EQ(encryptor->getGroupP(), decryptor->getGroupP());
+  EXPECT_EQ(encryptor->getGroupG(), decryptor->getGroupG());
+  EXPECT_EQ(m, r);
+  EXPECT_EQ(ret, msg);
+}
+
+TEST(Paillier, EncryptionDecryption3)
+{
+  size_t byteLength = 32;
+  string msg = "testing";
+  ZZ m = ConvertUtils::toZZ(ConvertUtils::toBinary(msg));
+
+  auto crypto = make_shared<PaillierEncryption>(byteLength);
+  auto pk = crypto->getPublicKey();
+  auto sk = crypto->getPrivateKey();
+  auto GP_Q = crypto->getGroupQ();
+  auto GP_P = crypto->getGroupP();
+  auto GP_G = crypto->getGroupG();
+
+  auto encryptor = make_shared<PaillierEncryption>(pk, GP_Q, GP_P, GP_G);
+  auto decryptor = crypto;
+
+  auto c = encryptor->encrypt(m);
+  auto r = decryptor->decrypt(c);
+
+  auto rBin = ConvertUtils::toBinary(r);
+  auto ret = ConvertUtils::toString(rBin);
+
+  EXPECT_EQ(encryptor->getPublicKey(), decryptor->getPublicKey());
+  EXPECT_EQ(encryptor->getGroupQ(), decryptor->getGroupQ());
+  EXPECT_EQ(encryptor->getGroupP(), decryptor->getGroupP());
+  EXPECT_EQ(encryptor->getGroupG(), decryptor->getGroupG());
+  EXPECT_EQ(m, r);
+  EXPECT_EQ(ret, msg);
 }
 
 TEST(Paillier, HomomorphicAddition)
 {
-  int byteLength = 32;
-  auto m1 = make_shared<IntegerImpl>("30", 10);
-  auto m2 = make_shared<IntegerImpl>("32", 10);
+  size_t byteLength = 32;
+  auto m1 = conv<ZZ>("30");
+  auto m2 = conv<ZZ>("32");
 
-  auto crypto = PaillierEncryption::generate(byteLength);
+  auto crypto = make_shared<PaillierEncryption>(byteLength);
 
-  EXPECT_EQ(crypto->decrypt(crypto->add(crypto->encrypt(m1), m2, false))->toString(), "62");
-  EXPECT_EQ(crypto->decrypt(crypto->add(crypto->encrypt(m1), crypto->encrypt(m2), true))->toString(), "62");
+  EXPECT_EQ(crypto->decrypt(crypto->add(crypto->encrypt(m1), m2)), 62);
+  EXPECT_EQ(crypto->decrypt(crypto->add(crypto->encrypt(m1), crypto->encrypt(m2))), 62);
 
+  ZZ_p::init(crypto->n);
   for (int i = 0; i < 50; i++)
   {
-    auto ma = Random::genInteger(32);
-    auto mb = Random::genInteger(32);
-    auto sum = ma->add(mb)->mod(crypto->getPublicKey());
-    EXPECT_EQ(crypto->decrypt(crypto->add(crypto->encrypt(ma), mb, false))->toString(), sum->toString());
-    EXPECT_EQ(crypto->decrypt(crypto->add(crypto->encrypt(ma), crypto->encrypt(mb), true))->toString(), sum->toString());
+    auto ma = RandomBits_ZZ(32);
+    auto mb = RandomBits_ZZ(32);
+    auto sum = ma + mb;
+    EXPECT_EQ(crypto->decrypt(crypto->add(crypto->encrypt(ma), mb)), sum);
+    EXPECT_EQ(crypto->decrypt(crypto->add(crypto->encrypt(ma), crypto->encrypt(mb))), sum);
   }
 }
 
 TEST(Paillier, HomomorphicMultiplication)
 {
-  int byteLength = 32;
-  auto m1 = make_shared<IntegerImpl>("30", 10);
-  auto m2 = make_shared<IntegerImpl>("32", 10);
+  size_t byteLength = 32;
+  auto m1 = conv<ZZ>("30");
+  auto m2 = conv<ZZ>("32");
 
-  auto crypto = PaillierEncryption::generate(byteLength);
+  auto crypto = make_shared<PaillierEncryption>(byteLength);
 
-  EXPECT_EQ(crypto->decrypt(crypto->mul(crypto->encrypt(m1), m2))->toString(), "960");
+  EXPECT_EQ(crypto->decrypt(crypto->mul(crypto->encrypt(m1), m2)), 960);
 
+  ZZ_p::init(crypto->n);
   for (int i = 0; i < 50; i++)
   {
-    auto ma = Random::genInteger(32);
-    auto mb = Random::genInteger(32);
-    auto prod = ma->mul(mb)->mod(crypto->getPublicKey());
+    auto ma = RandomBits_ZZ(32);
+    auto mb = RandomBits_ZZ(32);
+    auto prod = ma * mb;
 
-    EXPECT_EQ(crypto->decrypt(crypto->mul(crypto->encrypt(ma), mb))->toString(), prod->toString());
+    EXPECT_EQ(crypto->decrypt(crypto->mul(crypto->encrypt(ma), mb)), prod);
   }
 }
 
 TEST(Paillier, Generate_group_element)
 {
-/*
+  /*
 ===== Key 1 =====
 byteLength: 256
 
@@ -189,8 +262,8 @@ pk=N (16-bit):
 sk=lamda (16-bit):
 0BE0
 */
-  int byteLength = 2;
-  auto crypto = PaillierEncryption::generate(byteLength);
+  size_t byteLength = 2;
+  auto crypto = make_shared<PaillierEncryption>(byteLength);
 
   auto Q = crypto->getGroupQ();
   auto p = crypto->getGroupP();
@@ -198,33 +271,37 @@ sk=lamda (16-bit):
   auto pk = crypto->getPublicKey();
   auto sk = crypto->getPrivateKey();
 
-  printf("byteLength: %d\n\n", byteLength);
-  printf("p=N^2 (%lu-bit):\n%s\n\n", p->toBinary().size()*8, p->toHex().c_str());
-  printf("Q (%lu-bit):\n%s\n\n", Q->toBinary().size()*8, Q->toHex().c_str());
-  printf("G:\n%s\n\n", g->toHex().c_str());
-  printf("pk=N (%lu-bit):\n%s\n\n", pk->toBinary().size()*8, pk->toHex().c_str());
-  printf("sk=lamda (%lu-bit):\n%s\n\n", sk->toBinary().size()*8, sk->toHex().c_str());
+  printf("byteLength: %zu\n\n", byteLength);
+  printf("p=N^2 (%lu-bit):\n%s\n\n", NumBits(p), ConvertUtils::toString(p).c_str());
+  printf("Q (%lu-bit):\n%s\n\n", NumBits(Q), ConvertUtils::toString(Q).c_str());
+  printf("G:\n%s\n\n", ConvertUtils::toString(g).c_str());
+  printf("pk=N (%lu-bit):\n%s\n\n", NumBits(pk), ConvertUtils::toString(pk).c_str());
+  printf("sk=lamda (%lu-bit):\n%s\n\n", NumBits(sk), ConvertUtils::toString(sk).c_str());
 }
 
 TEST(Paillier, Encrypt_decrypt_with_predefined_group)
 {
-  auto pk = make_shared<IntegerImpl>("03BEA95A1B88A128BC2EC72E7135793C58CD9C66D7ED637BF6E7BB49D1B888997FDF19F347DF1C973A1B9B7E86162CD565514D2D9A99B92C488BB690A4031BFC9727B17857C0A05D32DAB1DAA7F570B3E7BE863F5AAD6583D79A8446ADB7190E7CD74DBDDF5B38EDC2C2B4307068AD717B024F3F317E442C7812EE49FB02711DFC9FB282F1183A6A44EAED9781C4799B6760880A5ED5AC91315A87E410B0049B5309C92ECE60C493371996EFF948B08B92A29900ABB7086DC31B5FA5893A04E466C7C142A2F8CF558B9FC4098404BC922E1230AFB572189E7D7585FFDEF9E0973B9A60417609BC71853CD080E86C9F36F2325EAE4B1FA22E88CC0CF3FFD220D1", 16);
-  auto sk = make_shared<IntegerImpl>("03BEA95A1B88A128BC2EC72E7135793C58CD9C66D7ED637BF6E7BB49D1B888997FDF19F347DF1C973A1B9B7E86162CD565514D2D9A99B92C488BB690A4031BFC9727B17857C0A05D32DAB1DAA7F570B3E7BE863F5AAD6583D79A8446ADB7190E7CD74DBDDF5B38EDC2C2B4307068AD717B024F3F317E442C7812EE49FB02711DB43E61FA7C3082B0F18ECCA4CD5BF257A1057E6DD39280CAA6F84167A7A6C9CF41EB8066AA9A1C7BED617BF2480147BDA4883E9D978500BCEDA1CFC6B7BD700CF424732F230B605222C12D42BC1A65CC6702AEDD3835109DF4362913E35AB17D0FB72071A9103BAF39EA3655A98AC1FFE54EB1E5345ECE68DF13CBA8B4CDAE64", 16);
+  auto pk = ConvertUtils::hexToZZ("03BEA95A1B88A128BC2EC72E7135793C58CD9C66D7ED637BF6E7BB49D1B888997FDF19F347DF1C973A1B9B7E86162CD565514D2D9A99B92C488BB690A4031BFC9727B17857C0A05D32DAB1DAA7F570B3E7BE863F5AAD6583D79A8446ADB7190E7CD74DBDDF5B38EDC2C2B4307068AD717B024F3F317E442C7812EE49FB02711DFC9FB282F1183A6A44EAED9781C4799B6760880A5ED5AC91315A87E410B0049B5309C92ECE60C493371996EFF948B08B92A29900ABB7086DC31B5FA5893A04E466C7C142A2F8CF558B9FC4098404BC922E1230AFB572189E7D7585FFDEF9E0973B9A60417609BC71853CD080E86C9F36F2325EAE4B1FA22E88CC0CF3FFD220D1");
+  auto sk = ConvertUtils::hexToZZ("03BEA95A1B88A128BC2EC72E7135793C58CD9C66D7ED637BF6E7BB49D1B888997FDF19F347DF1C973A1B9B7E86162CD565514D2D9A99B92C488BB690A4031BFC9727B17857C0A05D32DAB1DAA7F570B3E7BE863F5AAD6583D79A8446ADB7190E7CD74DBDDF5B38EDC2C2B4307068AD717B024F3F317E442C7812EE49FB02711DB43E61FA7C3082B0F18ECCA4CD5BF257A1057E6DD39280CAA6F84167A7A6C9CF41EB8066AA9A1C7BED617BF2480147BDA4883E9D978500BCEDA1CFC6B7BD700CF424732F230B605222C12D42BC1A65CC6702AEDD3835109DF4362913E35AB17D0FB72071A9103BAF39EA3655A98AC1FFE54EB1E5345ECE68DF13CBA8B4CDAE64");
+  auto GP_Q = ConvertUtils::hexToZZ("163D773422B7A657B68B1D3CDCC41F0A2D82D64D70E39AACF1783F882076523B7F74627EA9B6C7C639586F0920C7D4A24D84B668E425E9A60E4C98A9FFCC3C059D084491BA159EB2325BFB526B6480574510EC11C784C2678643C3668147A6088C988524169F5B558A0FFF66B3B8AFB40EDC25F18A3BA395609002DE1385F555276AC7103538EDBD820F4D48617B43FD30D14C1983B71C664FDD5DBBBE929C6EDAB4E5FDA0AC79E3D6D2678611AD809B4FC802EFDBE3D8D9FEB4AA8A6B0FEB4FE4F101929323C09D6914CDAFDFC76325695B14AAC1AF89D347B3A72DB369E761868D35EDF6E4605729D500D5753D8E19D9C29090021A5B78A0B5729B0589904D8842209DA364972FD7DCE1820AC2B32D29692B102367D977422302CACF4AE7281F292A53653AACB17AE65E88BE82A8CACEA079F6388C6A7842FD3D60B7EEBBC23AEBC91A0E3F5288B9E46B74F88F9B3374569386E1326E87B982381A5FAEA3CDBFB9CF756C1CABD269933210C810FDF0CB5B77EBEBB25CAEE92CF0A014BF9B3FDAB84689BF82544239D2126667432B73B9CCD2FDBA9D471C9153EBEC7F91E0E3DD462B3071A84FFDDC776BBE0F7AF1867835189D1110AB08DFA398949C544A5C8692C5ED17D1FFA00180D9C76438B29A6DC621607D2E45674E454984EE95B3795716BBA7A566A5BB230088E138126FB41D6BDE5A8BB19DAAF745F21A8D841B57");
+  auto GP_P = ConvertUtils::hexToZZ("0E05F7EE6E2AA7F0AFA21F0BE4BD3D300884F10EC7CFD449BCD404BFC3C268D105F62767D3AE8588569A202E1C3C6CDA5BC165252224843137AD24FD7A3297580837A8154426DA9B3CC232040C3A53724C5655CC280D16F459B42F8B09A2754D45BC3ABAB2348F57FC41932B51CB779DAC0CB44CA2D3A26ACCA6785995C4B3EA0732EF03EA123DA11BC81276C82F75461C4264F3154246DF6895AB56DA87523E54F02C21D080EE4684EE998D48F08D9FB93DCCE2E7F8564A6697C00691B1C308C2CCEE134756DBD0F7DAAC9234D379C96700AE733C55766E857CA0E696F5D9C6F3BCAA33AE97913D43FE1C450490BE7CC0CB63FAF5F9EB7D3E3D71E11DF96B6211D16B94946CD35970266350BC618B760369681443B948CE599F88B252C914E81DBCA2E29D26420374964D434E824EAFCCB0DA24B5F121159A79D8839B121E1D2669CBBAACECA80F97431A23EC2D2696FC6E13E1070F67BE4001663676576B117F3252E3E453A79CA2696C7E99E4E1B2504DDA1E374BE4AFDD6E4E94DBE687B94998C3CEA8ACF9DB922C2EE98E0990ADDB4D721F5B2F773E26AB753B95CC380C867A6E76D2628FC21E8F65FC413FA629E96E67CBB501AEAE94948D9B7F93BADE483E47D5CFF72BE6C832FAD0F4CA369B6238D4BAF2DF61FD0A4263528EDF05F9474EA63ED4BED4F41B1D5791CB1473D53214182F011169B8BA2EA03918EAA1");
+  auto GP_G = ConvertUtils::hexToZZ_p("109BCA88C471F06B21AF86071D58D625FEA2CEAF80C8A1132D1888067154716DA03967E375E00ADADDA9763196DB65A91ADCD3ADB1583CD4B450B3503FF528737139A9FE570C22F09348C040514C7FA61C1C3595357A4208B2495F993FEA4D826A6D673E004A91379EBE727DB415C09E334BED068EB4080B8BE18B262140D7EE0DB12706E04E2E00DCC925C9D695F78805B50CD823C070C665B07A55701409059091802D90C2463F162B781D1AB5F01C2AC86674E5689362B541E80A7256435EEC857D1A2A28FC6484D545F05703EA723090E99EA20F1844AB021735087DACD03A710BB3824AC5E81E238683887CBBECD1EA84D2BA2D4CF9415842CD47C7FCE59F2115FE67CFCC27C013CBB66D47C69C5595C5639ADB4F40C661C1B6E4821ACB93B558C9AB7C39E750A72AD3B7A54651DB933B986745A50CD97570F17068D98A17D286C898E03C48A8FD5A1D06A7A6254BD00916A7976BFB25E7F36CF92D583E5F808A200D10E2111B72DAF00880B7C3A26C9AA795AD69CF56BF0B6E7A1B6E57531734D2349D51EF59652BBE3E3E957AA4EB4C720147F951E945C51CD41743D1D9787690FB1738184830158389CCA2DF35143C87AA52E281957FE8EFCFDAC5AFEBD415D2F289CF5A2803F8565DE971095EAA26BCDC2468DAA4E0D55D0DEECE8C162D91F70F9EC4EC1323AC50EAACB828D96A3AAA659BE09D7E5F133B3C0B93FD");
 
   string msg = "testing";
-  auto m = make_shared<IntegerImpl>(Utils::stringToBinary(msg));
+  auto msgBin = ConvertUtils::toBinary(msg);
+  auto m = ConvertUtils::toZZ(msgBin);
 
-  auto encryptor = make_shared<PaillierEncryption>(pk);
-  auto decryptor = make_shared<PaillierEncryption>(pk, sk);
+  auto encryptor = make_shared<PaillierEncryption>(pk, GP_Q, GP_P, GP_G);
+  auto decryptor = make_shared<PaillierEncryption>(pk, sk, GP_Q, GP_P, GP_G);
 
   auto c = encryptor->encrypt(m);
   auto r = decryptor->decrypt(c);
 
-  auto ret = Utils::binaryToString(r->toBinary());
+  auto rBin = ConvertUtils::toBinary(r);
+  auto ret = ConvertUtils::toString(rBin);
 
-  EXPECT_EQ(m->toHex(), r->toHex());
+  EXPECT_EQ(m, r);
   EXPECT_EQ(ret, msg);
 }
-
 
 } // namespace

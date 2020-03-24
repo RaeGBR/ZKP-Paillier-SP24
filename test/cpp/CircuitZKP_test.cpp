@@ -59,7 +59,7 @@ TEST(CircuitZKP, Test_1)
   Wqc.push_back(make_shared<Matrix>(vector<int>({0, 0, 4, 0, 0, 0}))->group(n));
 
   // create verifier
-  auto verifier = make_shared<CircuitZKPVerifier>(Q, p, g, Wqa, Wqb, Wqc, Kq, m, n); // difine the dimension explicitly
+  auto verifier = make_shared<CircuitZKPVerifier>(Q, p, g, Wqa, Wqb, Wqc, Kq, m, n, Wqa.size()); // difine the dimension explicitly
   EXPECT_EQ(verifier->Q, Wqa.size());
   EXPECT_EQ(verifier->m, m);
   EXPECT_EQ(verifier->n, n);

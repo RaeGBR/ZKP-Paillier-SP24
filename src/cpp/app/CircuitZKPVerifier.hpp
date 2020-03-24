@@ -88,7 +88,8 @@ public:
       const vector<shared_ptr<Matrix>> &Wqc,
       const Vec<ZZ_p> &Kq,
       size_t m,
-      size_t n);
+      size_t n,
+      size_t Q);
 
   Vec<ZZ_p> &getY(const ZZ_p &y);
   Vec<ZZ_p> &getY_(const ZZ_p &y);

@@ -218,6 +218,69 @@ size_t CBase::addLinear()
   return ++linearCount;
 }
 
+shared_ptr<CircuitZKPVerifier> CBase::generateVerifier()
+{
+  auto mnCfg = CircuitZKPVerifier::calcMN(gateCount);
+  auto m = mnCfg[0];
+  auto n = mnCfg[1];
+
+  auto zkp = make_shared<CircuitZKPVerifier>(
+      GP_Q, GP_P, GP_G,
+      vector<shared_ptr<Matrix>>({}),
+      vector<shared_ptr<Matrix>>({}),
+      vector<shared_ptr<Matrix>>({}),
+      Kq,
+      m, n, linearCount);
+
+  convertWire(this->Wqa, zkp->Wqa, m, n);
+  convertWire(this->Wqb, zkp->Wqb, m, n);
+  convertWire(this->Wqc, zkp->Wqc, m, n);
+
+  return zkp;
+}
+
+void CBase::convertWire(const vector<shared_ptr<Matrix>> &source,
+                        map<size_t, map<size_t, map<size_t, ZZ_p>>> &target,
+                        size_t m, size_t n)
+{
+  auto N = n * m;
+  for (size_t q = 0; q < source.size(); q++)
+  {
+    if (source[q]->m != 1)
+      throw invalid_argument("wire already converted");
+
+    if (source[q]->n > N)
+      throw invalid_argument("wire convert failed, N exceed the matrix dimension");
+
+    for (auto it : source[q]->values[0])
+    {
+      size_t i = it.first;
+      auto v = it.second;
+      size_t x = i / n;
+      size_t y = i % n;
+
+      if (IsZero(v))
+        continue;
+
+      if (target[x].find(q) == target[x].end())
+      {
+        target[x][q] = map<size_t, ZZ_p>();
+      }
+      target[x][q][y] = v;
+    }
+  }
+}
+
+shared_ptr<CircuitZKPProver> CBase::generateProver()
+{
+  auto zkp = generateVerifier();
+  auto prover = make_shared<CircuitZKPProver>(zkp,
+                                              A->group(zkp->n, zkp->m),
+                                              B->group(zkp->n, zkp->m),
+                                              C->group(zkp->n, zkp->m));
+  return prover;
+}
+
 json CBase::toJson()
 {
   json output = json::object();

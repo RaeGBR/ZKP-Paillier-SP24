@@ -5,6 +5,7 @@
 - CMake
 - g++ combiler
 - lcov (C++ coverage testing tool)
+- NTL 11.4.3
 - JDK1.8
 - Gradle >4.7
 - NodeJS >8.0.0

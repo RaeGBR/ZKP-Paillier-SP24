@@ -151,11 +151,11 @@ TEST(CBatchEnc, Batch_encrypt_data)
   auto verifier = make_shared<CircuitZKPVerifier>(
       GP_Q, GP_P, GP_G,
       verifierCir->Wqa, verifierCir->Wqb, verifierCir->Wqc, verifierCir->Kq,
-      m, n);
+      m, n, Q);
   auto proverZkp = make_shared<CircuitZKPVerifier>(
       GP_Q, GP_P, GP_G,
       proverCir->Wqa, proverCir->Wqb, proverCir->Wqc, proverCir->Kq,
-      m, n);
+      m, n, Q);
   auto prover = make_shared<CircuitZKPProver>(proverZkp, proverCir->A, proverCir->B, proverCir->C);
 
   // P->V: prover commit the circuit arguments

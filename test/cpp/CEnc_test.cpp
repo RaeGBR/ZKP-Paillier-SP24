@@ -111,7 +111,7 @@ TEST(CEnc, Run_circuit)
   auto verifier = make_shared<CircuitZKPVerifier>(
       GP_Q, GP_P, GP_G,
       circuit->Wqa, circuit->Wqb, circuit->Wqc, circuit->Kq,
-      m, n);
+      m, n, Q);
   auto prover = make_shared<CircuitZKPProver>(verifier, circuit->A, circuit->B, circuit->C);
 
   Timer::start("commit");

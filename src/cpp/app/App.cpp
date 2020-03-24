@@ -81,17 +81,26 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
 
   // P: setup ZKP protocol for the circuit
   Timer::start("P.circuit");
+  auto batchCirN = proverCir->gateCount;
+  auto batchCirQ = proverCir->linearCount;
+  /*
   auto mnCfg1 = CircuitZKPVerifier::calcMN(proverCir->gateCount);
   auto m1 = mnCfg1[0];
   auto n1 = mnCfg1[1];
   proverCir->group(n1, m1);
   // proverCir->trim(); // TODO: remove?
 
+
   auto proverZkp = make_shared<CircuitZKPVerifier>(
       GP_Q, GP_P, GP_G,
       proverCir->Wqa, proverCir->Wqb, proverCir->Wqc, proverCir->Kq,
-      m1, n1);
+      m1, n1, batchCirQ);
   auto prover = make_shared<CircuitZKPProver>(proverZkp, proverCir->A, proverCir->B, proverCir->C);
+  /*/
+  auto prover = proverCir->generateProver();
+  auto m1 = prover->zkp->m;
+  auto n1 = prover->zkp->n;
+  //*/
   circuitTime += Timer::end("P.circuit");
 
   // P: prover commit the circuit arguments
@@ -156,6 +165,7 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
 
   // P: setup ZKP protocol for the circuit
   Timer::start("V.circuit");
+  /*
   auto mnCfg2 = CircuitZKPVerifier::calcMN(verifierCir->gateCount);
   auto m2 = mnCfg2[0];
   auto n2 = mnCfg2[1];
@@ -165,7 +175,10 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
   auto verifier = make_shared<CircuitZKPVerifier>(
       GP_Q, GP_P, GP_G,
       verifierCir->Wqa, verifierCir->Wqb, verifierCir->Wqc, verifierCir->Kq,
-      m2, n2);
+      m2, n2, batchCirQ);
+  /*/
+  auto verifier = verifierCir->generateVerifier();
+  //*/
   circuitTime += Timer::end("V.circuit");
 
   // V: verifier calculate challenge value Y
@@ -186,8 +199,6 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
   verifyTime += Timer::end("V.verify");
 
   circuitTime /= 2;
-  auto batchCirN = verifierCir->gateCount;
-  auto batchCirQ = verifierCir->linearCount;
 
   auto pSize = NumBytes(GP_P);
   auto qSize = NumBytes(GP_Q);

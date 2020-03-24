@@ -4,6 +4,7 @@
 
 #include <stdexcept>
 #include <vector>
+#include <map>
 
 #include <NTL/ZZ.h>
 #include <NTL/ZZ_p.h>
@@ -11,6 +12,8 @@
 #include <NTL/matrix.h>
 
 #include "./ConvertUtils.hpp"
+#include "./CircuitZKPVerifier.hpp"
+#include "./CircuitZKPProver.hpp"
 #include "../lib/math/Matrix.hpp"
 
 using namespace std;
@@ -21,6 +24,11 @@ namespace polyu
 
 class CBase
 {
+private:
+  void convertWire(const vector<shared_ptr<Matrix>> &source,
+                   map<size_t, map<size_t, map<size_t, ZZ_p>>> &target,
+                   size_t m, size_t n);
+
 public:
   static void copyCircuit(const shared_ptr<CBase> &values, const shared_ptr<CBase> &target);
 
@@ -67,6 +75,9 @@ public:
   size_t assignValues(const shared_ptr<CBase> &b, size_t offset = 0);
   size_t addGate(size_t n = 1);
   size_t addLinear();
+
+  shared_ptr<CircuitZKPVerifier> generateVerifier();
+  shared_ptr<CircuitZKPProver> generateProver();
 
   json toJson();
   string toString();

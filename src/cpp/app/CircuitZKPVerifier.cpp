@@ -29,7 +29,7 @@ CircuitZKPVerifier::CircuitZKPVerifier(
     const vector<shared_ptr<Matrix>> &Wqb,
     const vector<shared_ptr<Matrix>> &Wqc,
     const Vec<ZZ_p> &Kq)
-    : CircuitZKPVerifier(GP_Q, GP_P, GP_G, Wqa, Wqb, Wqc, Kq, 0, 0) {}
+    : CircuitZKPVerifier(GP_Q, GP_P, GP_G, Wqa, Wqb, Wqc, Kq, Wqa[Wqa.size() - 1]->m, Wqa[Wqa.size() - 1]->n, Wqa.size()) {}
 
 CircuitZKPVerifier::CircuitZKPVerifier(
     const ZZ &GP_Q,
@@ -40,18 +40,14 @@ CircuitZKPVerifier::CircuitZKPVerifier(
     const vector<shared_ptr<Matrix>> &Wqc,
     const Vec<ZZ_p> &Kq,
     size_t m,
-    size_t n)
+    size_t n,
+    size_t Q)
 {
   this->GP_Q = GP_Q;
   this->GP_P = GP_P;
   this->GP_G = GP_G;
 
-  this->Q = Wqa.size();
-  if (this->Q <= 0 || this->Q != Wqb.size() || this->Q != Wqc.size())
-    throw invalid_argument("the number of linear constrians are different in Wqa, Wqb and Wqc");
-
-  m = m > 0 ? m : Wqa[0]->m;
-  n = n > 0 ? n : Wqa[0]->n;
+  this->Q = Q;
   this->m = m;
   this->n = n;
   this->N = m * n;

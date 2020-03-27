@@ -88,6 +88,8 @@ void CircuitZKPProver::polyCommit(const ZZ_p &y, Vec<ZZ_p> &ret)
   // r(X) = SUM(ai * y^i * X^i) + SUM(bi * X^-i) + X^m * SUM(ci * X^i) + d * X^2m+1
   //      = (X^-m) * ( SUM(ai * y^i * X^(m+i)) + SUM(bi * X^(m-i)) + SUM(ci * X^(2m+i)) + d * X^3m+1 )
   Timer::start("prover.rx");
+  const size_t m2 = m*2;
+  const size_t m3 = m*3;
   for (size_t i = 1; i <= m; i++)
   {
     for (size_t j = 1; j <= n; j++)
@@ -97,14 +99,14 @@ void CircuitZKPProver::polyCommit(const ZZ_p &y, Vec<ZZ_p> &ret)
 
       SetCoeff(rx[j - 1], m - i, B(i, j));
 
-      SetCoeff(rx[j - 1], 2 * m + i, C(i, j));
+      SetCoeff(rx[j - 1], m2 + i, C(i, j));
     }
   }
   for (size_t j = 1; j <= n; j++)
   {
     if (!IsZero(D(j)))
     {
-      SetCoeff(rx[j - 1], 3 * m + 1, D(j));
+      SetCoeff(rx[j - 1], m3 + 1, D(j));
     }
   }
   Timer::end("prover.rx");
@@ -121,14 +123,12 @@ void CircuitZKPProver::polyCommit(const ZZ_p &y, Vec<ZZ_p> &ret)
   //       = X^-m * X^-m * X^m * (rX^0 + ... + rX^(3m+1)) + X^-2m * (sX^0 + ... + sX^3m)
   //       = X^-2m * (rX^m + ... + rX^(4m+1)) + X^-2m * (sX^0 + ... + sX^3m)
   Timer::start("prover.rx_");
-  ZZ_pX xm;
-  SetCoeff(xm, m, 1);
   for (size_t j = 0; j < n; j++)
   {
-    mul(tmpX, sx[j], 2);       // 2 * s(X)
-    mul(rx_[j], rx[j], Y_[j]); // r(X) inner Y_
-    mul(rx_[j], rx_[j], xm);   // * X^-m * X^m
-    add(rx_[j], rx_[j], tmpX); // r(X) inner Y_ + 2 * s(X)
+    mul(tmpX, sx[j], 2);          // 2 * s(X)
+    mul(rx_[j], rx[j], Y_[j]);    // r(X) inner Y_
+    LeftShift(rx_[j], rx_[j], m); // * X^-m, degree shift m to the left
+    add(rx_[j], rx_[j], tmpX);    // r(X) inner Y_ + 2 * s(X)
   }
 
   //   auto rx_ = rx->inner(Y_, p);
@@ -141,7 +141,7 @@ void CircuitZKPProver::polyCommit(const ZZ_p &y, Vec<ZZ_p> &ret)
   Timer::start("prover.ky");
   auto ky = zkp->K(y);
   ZZ_pX kyX;
-  SetCoeff(kyX, 3 * m, ky * 2);
+  SetCoeff(kyX, m3, ky * 2);
   Timer::end("prover.ky");
 
   Timer::start("prover.tx.mul");
@@ -154,19 +154,17 @@ void CircuitZKPProver::polyCommit(const ZZ_p &y, Vec<ZZ_p> &ret)
   sub(tx, tx, kyX); // rx * rx_ - 2ky
   Timer::end("prover.tx.mul");
 
-  if (!IsZero(tx[3 * m]))
+  if (!IsZero(tx[m3]))
     throw invalid_argument("t0 should be zero, the arguments A, B, C do not match with constrains Wa, Wb, Wc, Kq");
 
   // shift t(X) degree and calcT for polyCommit
   // t(X) = X^(-3m) * ( t0 + t1 * X^1 + ... )
   //      = X^(-txM1 * txN) * (...)
   Timer::start("prover.txT");
-  size_t degDiff = zkp->txM1 * zkp->txN - 3 * m;
+  size_t degDiff = zkp->txM1 * zkp->txN - m3;
   if (degDiff > 0)
   {
-    tmpX = ZZ_pX();
-    SetCoeff(tmpX, degDiff, 1);
-    mul(tx, tx, tmpX);
+    LeftShift(tx, tx, degDiff);
   }
   zkp->commitScheme->calcT(zkp->txM1, zkp->txM2, zkp->txN, tx, txT);
 

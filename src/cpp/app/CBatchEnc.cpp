@@ -23,6 +23,27 @@ CBatchEnc::CBatchEnc(const shared_ptr<PaillierEncryption> &crypto,
   this->RjMax = conv<ZZ>(2) << (RjPow - 1); // 2^rRjPow
 }
 
+size_t CBatchEnc::estimateGateCount()
+{
+  auto encCir = make_shared<CEnc>(crypto);
+  encCir->wireUp();
+  return encCir->gateCount * (msgCount + rangeProofCount + batchCount) + (msgCount * slotsPerMsg);
+}
+
+size_t CBatchEnc::estimateGeneratorsRequired()
+{
+  auto N = estimateGateCount();
+  auto mnCfg = CircuitZKPVerifier::calcMN(N);
+  auto m = mnCfg[0];
+  auto n = mnCfg[1];
+  auto txCfg = CircuitZKPVerifier::calcM1M2N(m);
+  auto txM1 = txCfg[0];
+  auto txM2 = txCfg[1];
+  auto txN = txCfg[2];
+  auto ret = max(txN, n);
+  return ret;
+}
+
 void CBatchEnc::encrypt(const Vec<ZZ> &msg)
 {
   if (msg.length() != msgCount)

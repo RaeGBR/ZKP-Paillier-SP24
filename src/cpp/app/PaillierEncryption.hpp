@@ -19,9 +19,9 @@ class PaillierEncryption
 {
 
 private:
-  // PaillierEncryption(const ZZ &N, const ZZ &lamda); // size_ternal no group elements
+  ZZ f; // random f such that Q = (f * n2) + 1 is prime
+
   void init(); // init value n2, g, mu
-  // void init2(const ZZ &p, const ZZ &q);                     // init value Q, G
 
 public:
   // Keypair
@@ -51,6 +51,9 @@ public:
 
   // Import KeyPair from p, q and N (private & public key), can perform encrypt, decrypt
   PaillierEncryption(const ZZ &N, const ZZ &p, const ZZ &q);
+
+  ZZ_p genGenerator();
+  Vec<ZZ_p> genGenerators(size_t n);
 
   // Export Private Key
   ZZ getPrivateKey();

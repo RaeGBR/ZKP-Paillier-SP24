@@ -10,6 +10,7 @@
 #include <NTL/ZZ_p.h>
 #include <NTL/ZZ_pX.h>
 
+#include "./PaillierEncryption.hpp"
 #include "./ConvertUtils.hpp"
 #include "./MathUtils.hpp"
 
@@ -25,8 +26,13 @@ public:
   ZZ Q;         // Group order
   ZZ p;         // sub-group order, (Q-1) % p = 0
   ZZ_p g;       // base generator, (g^p) % Q = 1
-  Vec<ZZ_p> gi; // [g0, g1, ... , gn] = g^2, g^3, ...
+  Vec<ZZ_p> gi; // [g0, g1, ... , gn]
 
+  PolynomialCommitment(const shared_ptr<PaillierEncryption> &crypto, size_t n);
+  PolynomialCommitment(const shared_ptr<PaillierEncryption> &crypto, const Vec<ZZ_p> &gi);
+  PolynomialCommitment(const ZZ &Q, const ZZ &p, const ZZ_p &g, const Vec<ZZ_p> &gi);
+
+  // FIXME: DEV_ONLY: DEPRECATED: in secure generators gi
   PolynomialCommitment(const ZZ &Q, const ZZ &p, const ZZ_p &g, size_t n);
 
   ZZ_p commit(const Vec<ZZ_p> &mi, const ZZ_p &r);

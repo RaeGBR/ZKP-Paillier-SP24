@@ -133,6 +133,12 @@ TEST(CBatchEnc, Batch_encrypt_data)
   // P: assign circuit values
   proverCir->run(ljir1, Lj);
 
+  auto encCir = make_shared<CEnc>(crypto);
+  encCir->wireUp();
+  auto encCirN = encCir->gateCount;
+
+  EXPECT_EQ(verifierCir->gateCount, encCirN * (msgCount + rangeProofCount + verifierCir->batchCount) + (msgCount * verifierCir->slotsPerMsg));
+  EXPECT_EQ(verifierCir->gateCount, verifierCir->estimateGateCount());
   EXPECT_EQ(verifierCir->gateCount, proverCir->gateCount);
   EXPECT_EQ(verifierCir->linearCount, proverCir->linearCount);
 

@@ -8,6 +8,7 @@
 #include "./CBase.hpp"
 #include "./CEnc.hpp"
 #include "./PaillierEncryption.hpp"
+#include "./CircuitZKPVerifier.hpp"
 #include "./ConvertUtils.hpp"
 #include "./MathUtils.hpp"
 
@@ -47,6 +48,8 @@ public:
             size_t msgCount, size_t rangeProofCount = 2,
             size_t slotSize = 4, size_t msgPerBatch = 15);
 
+  size_t estimateGateCount();
+  size_t estimateGeneratorsRequired();
   void encrypt(const Vec<ZZ> &msg);
   void setCipher(const Vec<ZZ_p> &Cm,
                  const Vec<ZZ_p> &Cm_,

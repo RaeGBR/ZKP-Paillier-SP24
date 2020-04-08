@@ -35,6 +35,9 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
   auto decryptor = make_shared<PaillierEncryption>(pk, sk, GP_Q, GP_P, GP_G);
   auto proverCir = make_shared<CBatchEnc>(decryptor, msgCount, rangeProofCount, slotSize, msgPerBatch);
 
+  auto giRequired = proverCir->estimateGeneratorsRequired();
+  auto gi = crypto->genGenerators(giRequired);
+
   cout << "====================" << endl;
   // P: prover prepare structured message
   Vec<ZZ> msg;
@@ -82,7 +85,7 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
 
   // P: setup ZKP protocol for the circuit
   Timer::start("P.circuit");
-  auto prover = proverCir->generateProver();
+  auto prover = proverCir->generateProver(gi);
   circuitTime += Timer::end("P.circuit");
 
   // P->V: Cm, Cm', CR'j, Lj (circuit wire up)
@@ -159,7 +162,7 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
 
   // P: setup ZKP protocol for the circuit
   Timer::start("V.circuit");
-  auto verifier = verifierCir->generateVerifier();
+  auto verifier = verifierCir->generateVerifier(gi);
   verifierCir = nullptr; // clean up, save memory
   circuitTime += Timer::end("V.circuit");
 

@@ -218,7 +218,7 @@ size_t CBase::addLinear()
   return ++linearCount;
 }
 
-shared_ptr<CircuitZKPVerifier> CBase::generateVerifier()
+shared_ptr<CircuitZKPVerifier> CBase::generateVerifier(const Vec<ZZ_p> &gi)
 {
   auto mnCfg = CircuitZKPVerifier::calcMN(gateCount);
   auto m = mnCfg[0];
@@ -231,6 +231,8 @@ shared_ptr<CircuitZKPVerifier> CBase::generateVerifier()
       vector<shared_ptr<Matrix>>({}),
       Kq,
       m, n, linearCount);
+
+  zkp->commitScheme->gi = gi;
 
   convertWire(this->Wqa, zkp->Wqa, m, n);
   convertWire(this->Wqb, zkp->Wqb, m, n);
@@ -271,9 +273,9 @@ void CBase::convertWire(const vector<shared_ptr<Matrix>> &source,
   }
 }
 
-shared_ptr<CircuitZKPProver> CBase::generateProver()
+shared_ptr<CircuitZKPProver> CBase::generateProver(const Vec<ZZ_p> &gi)
 {
-  auto zkp = generateVerifier();
+  auto zkp = generateVerifier(gi);
   auto prover = make_shared<CircuitZKPProver>(zkp,
                                               A->group(zkp->n, zkp->m),
                                               B->group(zkp->n, zkp->m),

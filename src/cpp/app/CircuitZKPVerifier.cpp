@@ -58,6 +58,7 @@ CircuitZKPVerifier::CircuitZKPVerifier(
   this->txM2 = txCfg[1];
   this->txN = txCfg[2];
 
+  // FIXME: DEV_ONLY: DEPRECATED: we should have explicit independent generators gi
   this->commitScheme = make_shared<PolynomialCommitment>(this->GP_Q, this->GP_P, this->GP_G, max(this->txN, this->n));
 
   convertWire(Wqa, this->Wqa);

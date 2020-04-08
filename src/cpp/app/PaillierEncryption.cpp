@@ -90,7 +90,6 @@ void PaillierEncryption::init()
   if (p == 0 || q == 0)
     return;
 
-  ZZ f;
   for (size_t i = 2; true; i++)
   {
     f = i;
@@ -100,47 +99,69 @@ void PaillierEncryption::init()
   }
 
   ZZ_p::init(Q);
+  G = genGenerator();
+}
+
+ZZ_p PaillierEncryption::genGenerator()
+{
+  if (p == 0 || q == 0 || f == 0)
+    throw invalid_argument("insufficient private into to generate a generator");
+
+  ZZ_pPush push(Q);
+  ZZ_p G0;
   ZZ_p y;
   while (true)
   {
     random(y);
-    power(G, y, f);
+    power(G0, y, f);
 
     ZZ_p x;
-    power(x, G, n2);
+    power(x, G0, n2);
     if (x != 1)
       continue;
 
-    power(x, G, p);
+    power(x, G0, p);
     if (x == 1)
       continue;
 
-    power(x, G, q);
+    power(x, G0, q);
     if (x == 1)
       continue;
 
-    power(x, G, p * q);
+    power(x, G0, p * q);
     if (x == 1)
       continue;
 
-    power(x, G, p * p);
+    power(x, G0, p * p);
     if (x == 1)
       continue;
 
-    power(x, G, q * q);
+    power(x, G0, q * q);
     if (x == 1)
       continue;
 
-    power(x, G, p * p * q);
+    power(x, G0, p * p * q);
     if (x == 1)
       continue;
 
-    power(x, G, q * q * p);
+    power(x, G0, q * q * p);
     if (x == 1)
       continue;
 
     break;
   }
+  return G0;
+}
+
+Vec<ZZ_p> PaillierEncryption::genGenerators(size_t n)
+{
+  Vec<ZZ_p> ret;
+  ret.SetLength(n);
+  for (size_t i = 0; i < n; i++)
+  {
+    ret[i] = genGenerator();
+  }
+  return ret;
 }
 
 ZZ PaillierEncryption::getPrivateKey()

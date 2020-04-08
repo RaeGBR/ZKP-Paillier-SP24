@@ -1,5 +1,24 @@
 #include "./PolynomialCommitment.hpp"
 
+PolynomialCommitment::PolynomialCommitment(const shared_ptr<PaillierEncryption> &crypto, size_t n)
+    : PolynomialCommitment::PolynomialCommitment(crypto, crypto->genGenerators(n))
+{
+}
+
+PolynomialCommitment::PolynomialCommitment(const shared_ptr<PaillierEncryption> &crypto, const Vec<ZZ_p> &gi)
+    : PolynomialCommitment::PolynomialCommitment(crypto->getGroupQ(), crypto->getGroupP(), crypto->getGroupG(), gi)
+{
+}
+
+PolynomialCommitment::PolynomialCommitment(const ZZ &Q, const ZZ &p, const ZZ_p &g, const Vec<ZZ_p> &gi)
+{
+  this->Q = Q;
+  this->p = p;
+  this->g = g;
+  this->gi = gi;
+}
+
+// DEPRECATED: in secure generators gi
 PolynomialCommitment::PolynomialCommitment(const ZZ &Q, const ZZ &p, const ZZ_p &g, size_t n)
 {
   this->Q = Q;

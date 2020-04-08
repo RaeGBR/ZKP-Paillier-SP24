@@ -76,8 +76,8 @@ public:
   size_t addGate(size_t n = 1);
   size_t addLinear();
 
-  shared_ptr<CircuitZKPVerifier> generateVerifier();
-  shared_ptr<CircuitZKPProver> generateProver();
+  shared_ptr<CircuitZKPVerifier> generateVerifier(const Vec<ZZ_p> &gi);
+  shared_ptr<CircuitZKPProver> generateProver(const Vec<ZZ_p> &gi);
 
   json toJson();
   string toString();

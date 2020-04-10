@@ -38,11 +38,12 @@ PaillierEncryption::PaillierEncryption(const ZZ &N, const ZZ &GP_Q, ZZ &GP_P, ZZ
 }
 
 // Import KeyPair from Lambda and N (private & public key) and group elements, can perform encrypt, decrypt
-PaillierEncryption::PaillierEncryption(const ZZ &N, const ZZ &lambda, const ZZ &GP_Q, ZZ &GP_P, ZZ_p &GP_G)
+PaillierEncryption::PaillierEncryption(const ZZ &N, const ZZ &p, const ZZ &q, const ZZ &GP_Q, ZZ &GP_P, ZZ_p &GP_G)
 {
   this->n = N;
-  this->lambda = lambda;
-  init();
+  this->p = p;
+  this->q = q;
+  init(true);
   Q = GP_Q;
   n2 = GP_P;
   G = GP_G;
@@ -62,7 +63,7 @@ PaillierEncryption::PaillierEncryption(const ZZ &N,
 }
 
 // init value n2, g, mu
-void PaillierEncryption::init()
+void PaillierEncryption::init(bool skipGenerate)
 {
   ZZ_pPush push;
 
@@ -87,6 +88,7 @@ void PaillierEncryption::init()
 
   // Cyclic group parameters
   // calculate value Q, G
+
   if (p == 0 || q == 0)
     return;
 
@@ -97,6 +99,9 @@ void PaillierEncryption::init()
     if (ProbPrime(Q))
       break;
   }
+
+  if (skipGenerate)
+    return;
 
   ZZ_p::init(Q);
   G = genGenerator();
@@ -164,9 +169,13 @@ Vec<ZZ_p> PaillierEncryption::genGenerators(size_t n)
   return ret;
 }
 
-ZZ PaillierEncryption::getPrivateKey()
+ZZ PaillierEncryption::getPrivateElement1()
 {
-  return lambda;
+  return p;
+}
+ZZ PaillierEncryption::getPrivateElement2()
+{
+  return q;
 }
 ZZ PaillierEncryption::getPublicKey()
 {

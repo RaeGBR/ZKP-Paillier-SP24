@@ -26,7 +26,8 @@ TEST(CBatchEnc, Create_circuit)
   ZZ_p::init(GP_Q);
   auto GP_G = crypto->getGroupG();
   auto pk = crypto->getPublicKey();
-  auto sk = crypto->getPrivateKey();
+  auto sk1 = crypto->getPrivateElement1();
+  auto sk2 = crypto->getPrivateElement2();
   ZZ_p::init(GP_P);
 
   size_t msgCount = 150;
@@ -58,10 +59,11 @@ TEST(CBatchEnc, Batch_encrypt_data)
   ZZ_p::init(GP_Q);
   auto GP_G = crypto->getGroupG();
   auto pk = crypto->getPublicKey();
-  auto sk = crypto->getPrivateKey();
+  auto sk1 = crypto->getPrivateElement1();
+  auto sk2 = crypto->getPrivateElement2();
   ZZ_p::init(GP_P);
 
-  auto decryptor = make_shared<PaillierEncryption>(pk, sk, GP_Q, GP_P, GP_G);
+  auto decryptor = make_shared<PaillierEncryption>(pk, sk1, sk2, GP_Q, GP_P, GP_G);
   auto encryptor = make_shared<PaillierEncryption>(pk, GP_Q, GP_P, GP_G);
 
   // define encryption circuit params

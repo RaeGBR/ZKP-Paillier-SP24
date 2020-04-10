@@ -21,7 +21,7 @@ class PaillierEncryption
 private:
   ZZ f; // random f such that Q = (f * n2) + 1 is prime
 
-  void init(); // init value n2, g, mu
+  void init(bool skipGenerate = false); // init value n2, g, mu
 
 public:
   // Keypair
@@ -47,7 +47,7 @@ public:
   PaillierEncryption(const ZZ &N, const ZZ &GP_Q, ZZ &GP_P, ZZ_p &GP_G);
 
   // Import KeyPair from Lambda and N (private & public key) and group elements, can perform encrypt, decrypt
-  PaillierEncryption(const ZZ &N, const ZZ &lambda, const ZZ &GP_Q, ZZ &GP_P, ZZ_p &GP_G);
+  PaillierEncryption(const ZZ &N, const ZZ &p, const ZZ &q, const ZZ &GP_Q, ZZ &GP_P, ZZ_p &GP_G);
 
   // Import KeyPair from p, q and N (private & public key), can perform encrypt, decrypt
   PaillierEncryption(const ZZ &N, const ZZ &p, const ZZ &q);
@@ -56,7 +56,8 @@ public:
   Vec<ZZ_p> genGenerators(size_t n);
 
   // Export Private Key
-  ZZ getPrivateKey();
+  ZZ getPrivateElement1();
+  ZZ getPrivateElement2();
   // Export Public Key
   ZZ getPublicKey();
 

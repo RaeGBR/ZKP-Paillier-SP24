@@ -43,7 +43,8 @@ TEST(Ntl, Speed_test)
       auto GP_P = crypto->getGroupP();
       auto GP_G = crypto->getGroupG();
       auto pk = crypto->getPublicKey();
-      auto sk = crypto->getPrivateKey();
+      auto sk1 = crypto->getPrivateElement1();
+      auto sk2 = crypto->getPrivateElement2();
       qSize = max(qSize, GP_Q->toBinary().size() * 8);
       pSize = max(pSize, GP_P->toBinary().size() * 8);
       mSize = max(mSize, pk->toBinary().size() * 8);

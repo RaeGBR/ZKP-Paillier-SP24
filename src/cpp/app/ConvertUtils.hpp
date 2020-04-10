@@ -20,7 +20,9 @@ class ConvertUtils
 {
 public:
   static ZZ toZZ(const ZZ_p &input);
+  static ZZ toZZ(const string &input);
   static ZZ_p toZZ_p(const ZZ &input);
+  static ZZ_p toZZ_p(const string &input);
 
   static string toString(const ZZ &input);
   static string toString(const ZZ_p &input);

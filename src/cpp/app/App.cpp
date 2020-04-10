@@ -8,12 +8,16 @@ void polyu::run(size_t byteLength, size_t msgCount, size_t rangeProofCount, size
 
 void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, size_t rangeProofCount, size_t slotSize, size_t msgPerBatch, ofstream &fs)
 {
-  auto GP_Q = crypto->getGroupQ();
-  auto GP_P = crypto->getGroupP();
+  // extract system parameters from private keys
+  auto GP_Q = crypto->getGroupQ(); // public parameter: group element Q
+  auto GP_P = crypto->getGroupP(); // public parameter: group order p
   ZZ_p::init(GP_Q);
-  auto GP_G = crypto->getGroupG();
-  auto pk = crypto->getPublicKey();
-  auto sk = crypto->getPrivateKey();
+  auto GP_G = crypto->getGroupG();         // public parameter: group generator g
+  auto pk = crypto->getPublicKey();        // public key
+  auto sk1 = crypto->getPrivateElement1(); // private key component
+  auto sk2 = crypto->getPrivateElement2(); // private key component
+
+  // variables for benchmark test
   auto byteLength = NumBytes(pk);
   ZZ_p::init(GP_P);
 
@@ -30,13 +34,12 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
   auto encCirQ = encCir->linearCount;
 
   /*
-   * Prover
+   * Prover's flow
    */
-  auto decryptor = make_shared<PaillierEncryption>(pk, sk, GP_Q, GP_P, GP_G);
+  auto decryptor = make_shared<PaillierEncryption>(pk, sk1, sk2, GP_Q, GP_P, GP_G);
   auto proverCir = make_shared<CBatchEnc>(decryptor, msgCount, rangeProofCount, slotSize, msgPerBatch);
-
   auto giRequired = proverCir->estimateGeneratorsRequired();
-  auto gi = crypto->genGenerators(giRequired);
+  auto gi = decryptor->genGenerators(giRequired); // public paramters: generators gi for commitment scheme
 
   cout << "====================" << endl;
   // P: prover prepare structured message
@@ -63,7 +66,7 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
   proverCir->encrypt(msg);
   encryptTime += Timer::end("P.encrypt");
 
-  // P: non-interactive mode, prover calculate challenge value by itself
+  // P: prover calculate challenge value Ljir (non-interactive mode)
   Timer::start("P.Ljir");
   auto ljir1 = proverCir->calculateLjir();
   circuitTime += Timer::end("P.Ljir");
@@ -88,21 +91,23 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
   auto prover = proverCir->generateProver(gi);
   circuitTime += Timer::end("P.circuit");
 
+  // Prover need to calculate the following values to verifier
   // P->V: Cm, Cm', CR'j, Lj (circuit wire up)
   //       commits           (commits of A, B, C, D)
   //       pc                (commits of polynomial t(X))
   //       proofs            (pe, r, rr)
+
   // V: verifier receive cipher and calculate challenge (lj)
   auto Cm = proverCir->Cm;
   auto Cm_ = proverCir->Cm_;
   auto CRj = proverCir->CRj;
 
+  // benchmark variables
   auto batchCount = proverCir->batchCount;
   auto msgSize = proverCir->msgSize;
   auto slotsPerMsg = proverCir->slotsPerMsg;
   auto batchCirN = proverCir->gateCount;
   auto batchCirQ = proverCir->linearCount;
-
   cout << "message count: " << msgCount << endl;
   cout << "byte length: " << byteLength * 8 << "-bit" << endl;
   cout << "single encrypt circuit's N: " << encCirN << endl;
@@ -147,32 +152,39 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
   /*
    * Verifier
    */
+
+  // Verifier received the following values and perfrom the verify protocol
+  // P->V: Cm, Cm', CR'j, Lj (circuit wire up)
+  //       commits           (commits of A, B, C, D)
+  //       pc                (commits of polynomial t(X))
+  //       proofs            (pe, r, rr)
   auto encryptor = make_shared<PaillierEncryption>(pk, GP_Q, GP_P, GP_G);
   auto verifierCir = make_shared<CBatchEnc>(encryptor, msgCount, rangeProofCount, slotSize, msgPerBatch);
 
+  // V: verifier receive cipher and calculate challenge value Ljir (non-interactive mode)
   Timer::start("V.Ljir");
   verifierCir->setCipher(Cm, Cm_, CRj);
   auto ljir2 = verifierCir->calculateLjir();
   circuitTime += Timer::end("V.Ljir");
 
-  // P: create circuit constrains
+  // V: create circuit constrains
   Timer::start("V.wireUp");
   verifierCir->wireUp(ljir2, Lj);
   circuitTime += Timer::end("V.wireUp");
 
-  // P: setup ZKP protocol for the circuit
+  // V: setup ZKP protocol for the circuit
   Timer::start("V.circuit");
   auto verifier = verifierCir->generateVerifier(gi);
   verifierCir = nullptr; // clean up, save memory
   circuitTime += Timer::end("V.circuit");
 
-  // V: verifier calculate challenge value Y
+  // V: verifier calculate challenge value Y (non-interactive mode)
   Timer::start("V.y");
   verifier->setCommits(commits);
   auto y = verifier->calculateY();
   verifyTime += Timer::end("V.y");
 
-  // V: verifier calculate challenge value X
+  // V: verifier calculate challenge value X (non-interactive mode)
   Timer::start("V.x");
   verifier->setPolyCommits(pc);
   auto x = verifier->calculateX();
@@ -183,6 +195,7 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
   auto isValid = verifier->verify(proofs, y, x);
   verifyTime += Timer::end("V.verify");
 
+  // print out benchmark result
   circuitTime /= 2;
 
   const auto m = verifier->m;

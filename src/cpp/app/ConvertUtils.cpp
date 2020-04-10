@@ -5,9 +5,19 @@ ZZ ConvertUtils::toZZ(const ZZ_p &input)
   return conv<ZZ>(input);
 }
 
+ZZ ConvertUtils::toZZ(const string &input)
+{
+  return conv<ZZ>(input.c_str());
+}
+
 ZZ_p ConvertUtils::toZZ_p(const ZZ &input)
 {
   return conv<ZZ_p>(input);
+}
+
+ZZ_p ConvertUtils::toZZ_p(const string &input)
+{
+  return conv<ZZ_p>(input.c_str());
 }
 
 void ConvertUtils::toVecZZ(const Vec<ZZ_p> &input, Vec<ZZ> &output, size_t len)

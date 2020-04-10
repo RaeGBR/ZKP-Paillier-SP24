@@ -20,9 +20,10 @@ auto GP_Q = crypto -> getGroupQ();
 auto GP_P = crypto -> getGroupP();
 auto GP_G = crypto -> getGroupG();
 auto pk = crypto -> getPublicKey();
-auto sk = crypto -> getPrivateKey();
+auto sk1 = crypto -> getPrivateElement1();
+auto sk2 = crypto -> getPrivateElement2();
 
-auto decryptor = make_shared<PaillierEncryption>(pk, sk, GP_Q, GP_P, GP_G);
+auto decryptor = make_shared<PaillierEncryption>(pk, sk1, sk2, GP_Q, GP_P, GP_G);
 auto encryptor = make_shared<PaillierEncryption>(pk, GP_Q, GP_P, GP_G);
 
 TEST(CEnc, Create_circuit)
@@ -64,7 +65,7 @@ TEST(CEnc, Run_circuit)
   cout << "Q: " << NumBytes(GP_Q) * 8 << endl;
   cout << "G: " << NumBytes(conv<ZZ>(GP_G)) * 8 << endl;
   cout << "pk=N: " << NumBytes(pk) * 8 << endl;
-  cout << "sk=lamda: " << NumBytes(sk) * 8 << endl;
+  cout << "sk=lamda: " << (NumBytes(sk1) + NumBytes(sk2)) * 8 << endl;
 
   double totalCreate = 0;
   double totalValueAsign = 0;
@@ -175,7 +176,8 @@ TEST(CEnc, Speed_test)
       auto GP_P = crypto->getGroupP();
       auto GP_G = crypto->getGroupG();
       auto pk = crypto->getPublicKey();
-      auto sk = crypto->getPrivateKey();
+      auto sk1 = crypto -> getPrivateElement1();
+      auto sk2 = crypto -> getPrivateElement2();
       qSize = max(qSize, GP_Q->toBinary().size() * 8);
       pSize = max(pSize, GP_P->toBinary().size() * 8);
       mSize = max(mSize, pk->toBinary().size() * 8);

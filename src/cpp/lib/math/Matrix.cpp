@@ -1,36 +1,13 @@
 #include "./Matrix.hpp"
 
-shared_ptr<Matrix> Matrix::identity(size_t size)
+using namespace cryptoplus;
+
+shared_ptr<Matrix> Matrix::ZERO()
 {
-  auto I = make_shared<Matrix>(size, size);
-  for (size_t i = 0; i < size; i++)
-  {
-    I->values[i][i] = Integer::ONE();
-  }
-  return I;
+  return make_shared<Matrix>();
 }
 
-shared_ptr<Matrix> Matrix::powerVector(const shared_ptr<Integer> &x,
-                                       size_t n,
-                                       const shared_ptr<Integer> &modulus)
-{
-  bool isMod = !Integer::ZERO()->eq(modulus);
-
-  auto ret = make_shared<Matrix>(1, n);
-  ret->values[0][0] = Integer::ONE();
-  for (size_t i = 1; i < n; i++)
-  {
-    if (isMod)
-    {
-      ret->values[0][i] = ret->values[0][i - 1]->modMul(x, modulus);
-    }
-    else
-    {
-      ret->values[0][i] = ret->values[0][i - 1]->mul(x);
-    }
-  }
-  return ret;
-}
+Matrix::Matrix() : Matrix(1, 1) {}
 
 Matrix::Matrix(size_t m, size_t n)
 {
@@ -41,179 +18,170 @@ Matrix::Matrix(size_t m, size_t n)
   this->n = n;
   for (size_t i = 0; i < m; i++)
   {
-    values.push_back(vector<shared_ptr<Integer>>(n));
-    for (size_t j = 0; j < n; j++)
-    {
-      values[i][j] = Integer::ZERO();
-    }
+    values.push_back(map<size_t, ZZ_p>());
   }
 }
 
-Matrix::Matrix(const vector<shared_ptr<Integer>> &values) : Matrix(vector<vector<shared_ptr<Integer>>>{values})
+Matrix::Matrix(const vector<int> &values) : Matrix::Matrix(1, values.size())
 {
-}
-
-Matrix::Matrix(const vector<vector<shared_ptr<Integer>>> &values)
-{
-  m = values.size();
-  if (m <= 0)
-    throw invalid_argument("m and n cannot be zero");
-  n = values[0].size();
-  if (n <= 0)
-    throw invalid_argument("m and n cannot be zero");
-
-  for (size_t i = 0; i < m; i++)
-  {
-    if (values[i].size() != n)
-      throw invalid_argument("matrix initial values does not fit the matrix size");
-    this->values.push_back(vector<shared_ptr<Integer>>(values[i].begin(), values[i].end()));
-  }
-}
-
-shared_ptr<Matrix> Matrix::t()
-{
-  auto b = make_shared<Matrix>(n, m);
-  for (size_t i = 0; i < m; i++)
-  {
-    for (size_t j = 0; j < n; j++)
-    {
-      b->values[j][i] = this->values[i][j];
-    }
-  }
-
-  return b;
-}
-
-shared_ptr<Matrix> Matrix::add(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus)
-{
-  if (m != b->m || n != b->n)
-    throw invalid_argument("matrix dimension not match for addition");
-
-  bool isMod = !Integer::ZERO()->eq(modulus);
-
-  auto ret = make_shared<Matrix>(m, n);
-  for (size_t i = 0; i < m; i++)
-  {
-    for (size_t j = 0; j < n; j++)
-    {
-      ret->values[i][j] = this->values[i][j]->add(b->values[i][j]);
-      if (isMod)
-      {
-        ret->values[i][j] = ret->values[i][j]->mod(modulus);
-      }
-    }
-  }
-  return ret;
-}
-
-shared_ptr<Matrix> Matrix::mul(const shared_ptr<Integer> &b, const shared_ptr<Integer> &modulus)
-{
-  bool isMod = !Integer::ZERO()->eq(modulus);
-
-  auto ret = make_shared<Matrix>(m, n);
-  for (size_t i = 0; i < m; i++)
-  {
-    for (size_t j = 0; j < n; j++)
-    {
-      if (isMod)
-      {
-        ret->values[i][j] = this->values[i][j]->modMul(b, modulus);
-      }
-      else
-      {
-        ret->values[i][j] = this->values[i][j]->mul(b);
-      }
-    }
-  }
-  return ret;
-}
-
-shared_ptr<Matrix> Matrix::mul(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus)
-{
-  if (n != b->m)
-    throw invalid_argument("matrix dimension not match for cross product");
-
-  auto p = b->n;
-  bool isMod = !Integer::ZERO()->eq(modulus);
-
-  auto ret = make_shared<Matrix>(m, p);
-  for (size_t i = 0; i < m; i++)
-  {
-    for (size_t j = 0; j < p; j++)
-    {
-      for (size_t r = 0; r < n; r++)
-      {
-        if (isMod)
-        {
-          auto v = this->values[i][r]->modMul(b->values[r][j], modulus);
-          ret->values[i][j] = ret->values[i][j]->add(v);
-          ret->values[i][j] = ret->values[i][j]->mod(modulus);
-        }
-        else
-        {
-          auto v = this->values[i][r]->mul(b->values[r][j]);
-          ret->values[i][j] = ret->values[i][j]->add(v);
-        }
-      }
-    }
-  }
-  return ret;
-}
-
-shared_ptr<Matrix> Matrix::dot(const shared_ptr<Matrix> &b, const shared_ptr<Integer> &modulus)
-{
-  if (m != b->m || n != b->n)
-    throw invalid_argument("matrix dimension not match for cross product");
-
-  auto t = b->t();
-  return this->mul(t, modulus);
-}
-
-void Matrix::appendRow(const vector<shared_ptr<Integer>> &row)
-{
-  if (row.size() != n)
-    throw invalid_argument("matrix dimension not match for append row");
-
-  m++;
   for (size_t i = 0; i < n; i++)
   {
-    values.push_back(vector<shared_ptr<Integer>>(row.begin(), row.end()));
-  }
-}
-
-void Matrix::appendCol(const vector<shared_ptr<Integer>> &col)
-{
-  if (col.size() != m)
-    throw invalid_argument("matrix dimension not match for append row");
-
-  n++;
-  for (size_t i = 0; i < m; i++)
-  {
-    values[i].push_back(col[i]);
+    this->cell(0, i, values[i]);
   }
 }
 
 shared_ptr<Matrix> Matrix::clone()
 {
-  return make_shared<Matrix>(values);
+  auto ret = make_shared<Matrix>(m, n);
+  for (size_t i = 0; i < m; i++)
+  {
+    for (auto it : values[i])
+    {
+      size_t j = it.first;
+      auto v = it.second;
+      ret->cell(i, j, v);
+    }
+  }
+
+  return ret;
 }
 
-shared_ptr<Matrix> Matrix::group(size_t newN)
+bool Matrix::cellExists(size_t i, size_t j)
+{
+  return i < m && j < n && values[i].find(j) != values[i].end();
+}
+
+ZZ_p Matrix::cell(size_t i, size_t j)
+{
+  return cellExists(i, j) ? values[i][j] : ZZ_p();
+}
+
+void Matrix::cell(size_t i, size_t j, long x)
+{
+  cell(i, j, conv<ZZ_p>(x));
+}
+
+void Matrix::cell(size_t i, size_t j, const ZZ_p &x)
+{
+  if (i >= m || j >= n)
+    throw invalid_argument("index out of the matrix dimension");
+
+  if (IsZero(x))
+  {
+    values[i].erase(j);
+  }
+  else
+  {
+    values[i][j] = x;
+  }
+}
+
+bool Matrix::rowExists(size_t i)
+{
+  return i < m && values[i].size() > 0;
+}
+
+void Matrix::row(size_t i, Vec<ZZ_p> &output)
+{
+  output.SetLength(n);
+
+  if (!rowExists(i))
+    return;
+
+  for (auto it : values[i])
+  {
+    size_t j = it.first;
+    auto v = it.second;
+    output[j] = v;
+  }
+}
+
+void Matrix::toMat(Mat<ZZ_p> &output)
+{
+  output.SetDims(m, n);
+
+  for (size_t i = 0; i < m; i++)
+  {
+    for (auto it : values[i])
+    {
+      size_t j = it.first;
+      auto v = it.second;
+      output[i][j] = v;
+    }
+  }
+}
+
+shared_ptr<Matrix> Matrix::group(size_t newN, size_t newM)
 {
   if (m != 1)
     throw invalid_argument("only allow group from vector to matrix");
 
-  size_t newM = (n % newN) == 0 ? n / newN : (n / newN) + 1;
+  if (newM == 0)
+  {
+    newM = (n % newN) == 0 ? n / newN : (n / newN) + 1;
+  }
   auto ret = make_shared<Matrix>(newM, newN);
 
-  for (size_t i = 0; i < n; i++)
+  if (n > newN * newM)
+    throw invalid_argument("cannot group a big vector to a small matrix");
+
+  for (auto it : values[0])
   {
+    size_t i = it.first;
+    auto v = it.second;
     size_t x = i / newN;
     size_t y = i % newN;
-    (*ret)[x][y] = this->values[0][i];
+    ret->cell(x, y, v);
   }
 
   return ret;
+}
+
+void Matrix::shift(size_t n)
+{
+  if (n == 0)
+    return;
+
+  this->n += n;
+
+  for (size_t i = 0; i < m; i++)
+  {
+    vector<size_t> keys;
+    vector<ZZ_p> cells;
+    for (auto it : this->values[i])
+    {
+      keys.push_back(it.first);
+      cells.push_back(it.second);
+    }
+    this->values[i].clear();
+    for (size_t j = 0; j < keys.size(); j++)
+    {
+      auto key = n + keys[j];
+      this->cell(i, key, cells[j]);
+    }
+  }
+}
+
+void Matrix::extend(size_t n)
+{
+  this->n += n;
+}
+
+void Matrix::trim()
+{
+  for (size_t i = 0; i < m; i++)
+  {
+    for (size_t j = 0; j < n; j++)
+    {
+      if (cellExists(i, j))
+      {
+        if (IsZero(values[i][j]))
+        {
+          values[i].erase(j);
+        }
+      }
+    }
+  }
 }
 
 bool Matrix::eq(const shared_ptr<Matrix> &b)
@@ -228,7 +196,7 @@ bool Matrix::eq(const shared_ptr<Matrix> &b)
 
     for (size_t j = 0; j < this->values[i].size(); j++)
     {
-      if (!this->values[i][j]->eq(b->values[i][j]))
+      if (this->cell(i, j) != b->cell(i, j))
         return false;
     }
   }
@@ -244,7 +212,7 @@ json Matrix::toJson()
     output[i] = json::array();
     for (size_t j = 0; j < n; j++)
     {
-      output[i][j] = values[i][j]->toString();
+      output[i][j] = ConvertUtils::toString(cell(i, j));
     }
   }
   return output;

@@ -18,3 +18,9 @@
 
 # NodeJS dependencies
 node_modules
+
+# testing
+*.csv
+*.xls
+*.xlsx
+*.log

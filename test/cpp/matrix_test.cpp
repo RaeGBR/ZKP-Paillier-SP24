@@ -10,6 +10,7 @@ namespace
 
 TEST(Matrix, Default)
 {
+  ZZ_p::init(conv<ZZ>(1000000));
   const size_t m = 2;
   const size_t n = 3;
   auto a = make_shared<Matrix>(m, n);
@@ -19,29 +20,28 @@ TEST(Matrix, Default)
   {
     for (size_t j = 0; j < n; j++)
     {
-      EXPECT_EQ((*a)[i][j]->toString(), "0");
+      EXPECT_EQ(a->cell(i, j), 0);
     }
   }
 
   EXPECT_EQ(a->toString(), "[[\"0\",\"0\",\"0\"],[\"0\",\"0\",\"0\"]]");
 }
 
-TEST(Matrix, Identity)
+TEST(Matrix, Constructor_int_array)
 {
-  const size_t size = 3;
-  auto a = Matrix::identity(size);
-  EXPECT_EQ(a->m, size);
-  EXPECT_EQ(a->n, size);
-  for (size_t i = 0; i < size; i++)
+  int m = 1;
+  int n = 6;
+  auto a = make_shared<Matrix>(vector<int>({0, 1, 2, 3, 4, 5}));
+  EXPECT_EQ(a->m, m);
+  EXPECT_EQ(a->n, n);
+
+  for (size_t i = 0; i < m; i++)
   {
-    for (size_t j = 0; j < size; j++)
+    for (size_t j = 0; j < n; j++)
     {
-      string expected = i == j ? "1" : "0";
-      EXPECT_EQ((*a)[i][j]->toString(), expected);
+      EXPECT_EQ(a->cell(i, j), i * n + j);
     }
   }
-
-  EXPECT_EQ(a->toString(), "[[\"1\",\"0\",\"0\"],[\"0\",\"1\",\"0\"],[\"0\",\"0\",\"1\"]]");
 }
 
 TEST(Matrix, Clone)
@@ -53,7 +53,7 @@ TEST(Matrix, Clone)
   {
     for (size_t j = 0; j < n; j++)
     {
-      (*a)[i][j] = Integer::createWithString(to_string(i * n + j));
+      a->cell(i, j, i * n + j);
     }
   }
 
@@ -63,10 +63,17 @@ TEST(Matrix, Clone)
   EXPECT_EQ(b->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
   EXPECT_EQ(c->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
 
-  (*c)[0][0] = Integer::createWithString("9");
-  EXPECT_EQ(a->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
-  EXPECT_EQ(b->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
+  a->cell(0, 0, 7);
+  b->cell(0, 0, 8);
+  c->cell(0, 0, 9);
+  EXPECT_EQ(a->toString(), "[[\"7\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
+  EXPECT_EQ(b->toString(), "[[\"8\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
   EXPECT_EQ(c->toString(), "[[\"9\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
+
+  c->cell(0, 0, 1);
+  EXPECT_EQ(a->toString(), "[[\"7\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
+  EXPECT_EQ(b->toString(), "[[\"8\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
+  EXPECT_EQ(c->toString(), "[[\"1\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
 }
 
 TEST(Matrix, Group)
@@ -78,7 +85,7 @@ TEST(Matrix, Group)
   {
     for (size_t j = 0; j < n; j++)
     {
-      (*a)[i][j] = Integer::createWithString(to_string(i * n + j));
+      a->cell(i, j, i * n + j);
     }
   }
 
@@ -89,230 +96,29 @@ TEST(Matrix, Group)
   EXPECT_EQ(c->toString(), "[[\"0\",\"1\"],[\"2\",\"3\"],[\"4\",\"0\"]]");
 }
 
-TEST(Matrix, Tansposition)
+TEST(Matrix, Group_to_big_matrix)
 {
-  const size_t m = 2;
-  const size_t n = 3;
+  const size_t m = 1;
+  const size_t n = 5;
   auto a = make_shared<Matrix>(m, n);
   for (size_t i = 0; i < m; i++)
   {
     for (size_t j = 0; j < n; j++)
     {
-      (*a)[i][j] = Integer::createWithString(to_string(i * n + j));
+      a->cell(i, j, i * n + j);
     }
   }
 
-  auto b = a->t();
-  EXPECT_EQ(a->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
-  EXPECT_EQ(b->toString(), "[[\"0\",\"3\"],[\"1\",\"4\"],[\"2\",\"5\"]]");
+  auto b = a->group(3, 3);
+  auto c = a->group(4, 2);
+  EXPECT_EQ(a->toString(), "[[\"0\",\"1\",\"2\",\"3\",\"4\"]]");
+  EXPECT_EQ(b->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"0\"],[\"0\",\"0\",\"0\"]]");
+  EXPECT_EQ(c->toString(), "[[\"0\",\"1\",\"2\",\"3\"],[\"4\",\"0\",\"0\",\"0\"]]");
 }
 
-TEST(Matrix, Add)
+TEST(Matrix, Shift)
 {
-  const size_t m = 2;
-  const size_t n = 3;
-  auto a = make_shared<Matrix>(m, n);
-  auto b = make_shared<Matrix>(m, n);
-  for (size_t i = 0; i < m; i++)
-  {
-    for (size_t j = 0; j < n; j++)
-    {
-      (*a)[i][j] = Integer::createWithString(to_string(i * n + j));
-      (*b)[i][j] = Integer::createWithString(to_string(i + j));
-    }
-  }
-
-  auto c = a->add(b);
-  EXPECT_EQ(a->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
-  EXPECT_EQ(b->toString(), "[[\"0\",\"1\",\"2\"],[\"1\",\"2\",\"3\"]]");
-  EXPECT_EQ(c->toString(), "[[\"0\",\"2\",\"4\"],[\"4\",\"6\",\"8\"]]");
-}
-
-TEST(Matrix, ModAdd)
-{
-  const size_t m = 2;
-  const size_t n = 3;
-  const auto modulus = Integer::createWithString("6");
-  auto a = make_shared<Matrix>(m, n);
-  auto b = make_shared<Matrix>(m, n);
-  for (size_t i = 0; i < m; i++)
-  {
-    for (size_t j = 0; j < n; j++)
-    {
-      (*a)[i][j] = Integer::createWithString(to_string(i * n + j));
-      (*b)[i][j] = Integer::createWithString(to_string(i + j));
-    }
-  }
-
-  auto c = a->add(b, modulus);
-  EXPECT_EQ(a->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
-  EXPECT_EQ(b->toString(), "[[\"0\",\"1\",\"2\"],[\"1\",\"2\",\"3\"]]");
-  EXPECT_EQ(c->toString(), "[[\"0\",\"2\",\"4\"],[\"4\",\"0\",\"2\"]]");
-}
-
-TEST(Matrix, Mul)
-{
-  const size_t m = 2;
-  const size_t n = 3;
-  auto a = make_shared<Matrix>(m, n);
-  auto b = Integer::createWithString("2");
-  for (size_t i = 0; i < m; i++)
-  {
-    for (size_t j = 0; j < n; j++)
-    {
-      (*a)[i][j] = Integer::createWithString(to_string(i * n + j));
-    }
-  }
-
-  auto c = a->mul(b);
-  EXPECT_EQ(a->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
-  EXPECT_EQ(b->toString(), "2");
-  EXPECT_EQ(c->toString(), "[[\"0\",\"2\",\"4\"],[\"6\",\"8\",\"10\"]]");
-}
-
-TEST(Matrix, ModMul)
-{
-  const size_t m = 2;
-  const size_t n = 3;
-  const auto modulus = Integer::createWithString("6");
-  auto a = make_shared<Matrix>(m, n);
-  auto b = Integer::createWithString("2");
-  for (size_t i = 0; i < m; i++)
-  {
-    for (size_t j = 0; j < n; j++)
-    {
-      (*a)[i][j] = Integer::createWithString(to_string(i * n + j));
-    }
-  }
-
-  auto c = a->mul(b, modulus);
-  EXPECT_EQ(a->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
-  EXPECT_EQ(b->toString(), "2");
-  EXPECT_EQ(c->toString(), "[[\"0\",\"2\",\"4\"],[\"0\",\"2\",\"4\"]]");
-}
-
-TEST(Matrix, CrossProduct)
-{
-  const size_t m = 2;
-  const size_t n = 3;
-  const size_t p = 2;
-  auto a = make_shared<Matrix>(m, n);
-  auto b = make_shared<Matrix>(n, p);
-  for (size_t i = 0; i < m; i++)
-  {
-    for (size_t j = 0; j < n; j++)
-    {
-      (*a)[i][j] = Integer::createWithString(to_string(i * n + j + 1));
-      for (size_t k = 0; k < p; k++)
-      {
-        (*b)[j][k] = Integer::create(to_string(m * n + j * p + k + 1), 10);
-      }
-    }
-  }
-
-  auto c = a->mul(b);
-  EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\"],[\"4\",\"5\",\"6\"]]");
-  EXPECT_EQ(b->toString(), "[[\"7\",\"8\"],[\"9\",\"10\"],[\"11\",\"12\"]]");
-  EXPECT_EQ(c->toString(), "[[\"58\",\"64\"],[\"139\",\"154\"]]");
-}
-
-TEST(Matrix, ModCrossProduct)
-{
-  const size_t m = 2;
-  const size_t n = 3;
-  const size_t p = 2;
-  const auto modulus = Integer::createWithString("7");
-  auto a = make_shared<Matrix>(m, n);
-  auto b = make_shared<Matrix>(n, p);
-  for (size_t i = 0; i < m; i++)
-  {
-    for (size_t j = 0; j < n; j++)
-    {
-      (*a)[i][j] = Integer::createWithString(to_string(i * n + j + 1));
-      for (size_t k = 0; k < p; k++)
-      {
-        (*b)[j][k] = Integer::create(to_string(m * n + j * p + k + 1), 10);
-      }
-    }
-  }
-
-  auto c = a->mul(b, modulus);
-  EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\"],[\"4\",\"5\",\"6\"]]");
-  EXPECT_EQ(b->toString(), "[[\"7\",\"8\"],[\"9\",\"10\"],[\"11\",\"12\"]]");
-  EXPECT_EQ(c->toString(), "[[\"2\",\"1\"],[\"6\",\"0\"]]");
-}
-
-TEST(Matrix, Dot)
-{
-  const size_t m = 2;
-  const size_t n = 3;
-  auto a = make_shared<Matrix>(m, n);
-  auto b = make_shared<Matrix>(m, n);
-  for (size_t i = 0; i < m; i++)
-  {
-    for (size_t j = 0; j < n; j++)
-    {
-      (*a)[i][j] = Integer::create(to_string(i * n + j), 10);
-      (*b)[i][j] = Integer::create(to_string(i * n + j + 1), 10);
-    }
-  }
-
-  auto c = a->dot(b);
-  EXPECT_EQ(a->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
-  EXPECT_EQ(b->toString(), "[[\"1\",\"2\",\"3\"],[\"4\",\"5\",\"6\"]]");
-  EXPECT_EQ(c->toString(), "[[\"8\",\"17\"],[\"26\",\"62\"]]");
-
-  auto d = make_shared<Matrix>(1, n);
-  auto e = make_shared<Matrix>(1, n);
-  for (size_t i = 0; i < n; i++)
-  {
-    (*d)[0][i] = Integer::create(to_string(i + 1), 10);
-    (*e)[0][i] = Integer::create(to_string(i + 1), 10);
-  }
-
-  auto f = d->dot(e);
-  EXPECT_EQ(d->toString(), "[[\"1\",\"2\",\"3\"]]");
-  EXPECT_EQ(e->toString(), "[[\"1\",\"2\",\"3\"]]");
-  EXPECT_EQ(f->toString(), "[[\"14\"]]");
-}
-
-TEST(Matrix, ModDot)
-{
-  const size_t m = 2;
-  const size_t n = 3;
-  const auto modulus = Integer::createWithString("7");
-  auto a = make_shared<Matrix>(m, n);
-  auto b = make_shared<Matrix>(m, n);
-  for (size_t i = 0; i < m; i++)
-  {
-    for (size_t j = 0; j < n; j++)
-    {
-      (*a)[i][j] = Integer::create(to_string(i * n + j), 10);
-      (*b)[i][j] = Integer::create(to_string(i * n + j + 1), 10);
-    }
-  }
-
-  auto c = a->dot(b, modulus);
-  EXPECT_EQ(a->toString(), "[[\"0\",\"1\",\"2\"],[\"3\",\"4\",\"5\"]]");
-  EXPECT_EQ(b->toString(), "[[\"1\",\"2\",\"3\"],[\"4\",\"5\",\"6\"]]");
-  EXPECT_EQ(c->toString(), "[[\"1\",\"3\"],[\"5\",\"6\"]]");
-
-  auto d = make_shared<Matrix>(1, n);
-  auto e = make_shared<Matrix>(1, n);
-  for (size_t i = 0; i < n; i++)
-  {
-    (*d)[0][i] = Integer::create(to_string(i + 1), 10);
-    (*e)[0][i] = Integer::create(to_string(i + 1), 10);
-  }
-
-  auto f = d->dot(e, modulus);
-  EXPECT_EQ(d->toString(), "[[\"1\",\"2\",\"3\"]]");
-  EXPECT_EQ(e->toString(), "[[\"1\",\"2\",\"3\"]]");
-  EXPECT_EQ(f->toString(), "[[\"0\"]]");
-}
-
-TEST(Matrix, AppendRow)
-{
+  ZZ_p::init(conv<ZZ>(100));
   const size_t m = 2;
   const size_t n = 3;
   auto a = make_shared<Matrix>(m, n);
@@ -320,27 +126,24 @@ TEST(Matrix, AppendRow)
   {
     for (size_t j = 0; j < n; j++)
     {
-      (*a)[i][j] = Integer::createWithString(to_string(i * n + j + 1));
+      a->cell(i, j, conv<ZZ_p>(i * n + j + 1));
     }
   }
-
-  vector<shared_ptr<Integer>> b{
-      Integer::createWithString("7"),
-      Integer::createWithString("8"),
-      Integer::createWithString("9")};
 
   EXPECT_EQ(a->m, m);
   EXPECT_EQ(a->n, n);
   EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\"],[\"4\",\"5\",\"6\"]]");
 
-  a->appendRow(b);
-  EXPECT_EQ(a->m, m + 1);
-  EXPECT_EQ(a->n, n);
-  EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\"],[\"4\",\"5\",\"6\"],[\"7\",\"8\",\"9\"]]");
+  size_t offset = 3;
+  a->shift(offset);
+  EXPECT_EQ(a->m, m);
+  EXPECT_EQ(a->n, n + offset);
+  EXPECT_EQ(a->toString(), "[[\"0\",\"0\",\"0\",\"1\",\"2\",\"3\"],[\"0\",\"0\",\"0\",\"4\",\"5\",\"6\"]]");
 }
 
-TEST(Matrix, AppendCol)
+TEST(Matrix, Extend)
 {
+  ZZ_p::init(conv<ZZ>(100));
   const size_t m = 2;
   const size_t n = 3;
   auto a = make_shared<Matrix>(m, n);
@@ -348,45 +151,41 @@ TEST(Matrix, AppendCol)
   {
     for (size_t j = 0; j < n; j++)
     {
-      (*a)[i][j] = Integer::createWithString(to_string(i * n + j + 1));
+      a->cell(i, j, conv<ZZ_p>(i * n + j + 1));
     }
   }
-
-  vector<shared_ptr<Integer>> b{
-      Integer::createWithString("7"),
-      Integer::createWithString("8")};
 
   EXPECT_EQ(a->m, m);
   EXPECT_EQ(a->n, n);
   EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\"],[\"4\",\"5\",\"6\"]]");
 
-  a->appendCol(b);
+  size_t offset = 3;
+  a->extend(offset);
   EXPECT_EQ(a->m, m);
-  EXPECT_EQ(a->n, n + 1);
-  EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\",\"7\"],[\"4\",\"5\",\"6\",\"8\"]]");
+  EXPECT_EQ(a->n, n + offset);
+  EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\",\"0\",\"0\",\"0\"],[\"4\",\"5\",\"6\",\"0\",\"0\",\"0\"]]");
 }
 
-TEST(Matrix, Power_vector)
+TEST(Matrix, Trim)
 {
-  const size_t n = 6;
-  auto x = Integer::TWO();
-  auto a = Matrix::powerVector(x, n);
-  auto b = a->t();
+  auto a = make_shared<Matrix>(vector<int>({1, 2, 3, 0, 0, 0, 4, 5, 6}));
 
-  EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"4\",\"8\",\"16\",\"32\"]]");
-  EXPECT_EQ(b->toString(), "[[\"1\"],[\"2\"],[\"4\"],[\"8\"],[\"16\"],[\"32\"]]");
-}
+  EXPECT_EQ(a->m, 1);
+  EXPECT_EQ(a->n, 9);
+  EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\",\"0\",\"0\",\"0\",\"4\",\"5\",\"6\"]]");
 
-TEST(Matrix, Power_vector_mod)
-{
-  const auto modulus = Integer::createWithString("7");
-  const size_t n = 6;
-  auto x = Integer::TWO();
-  auto a = Matrix::powerVector(x, n, modulus);
-  auto b = a->t();
+  a = a->group(3);
+  EXPECT_EQ(a->m, 3);
+  EXPECT_EQ(a->n, 3);
+  EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\"],[\"0\",\"0\",\"0\"],[\"4\",\"5\",\"6\"]]");
 
-  EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"4\",\"1\",\"2\",\"4\"]]");
-  EXPECT_EQ(b->toString(), "[[\"1\"],[\"2\"],[\"4\"],[\"1\"],[\"2\"],[\"4\"]]");
+  a->trim();
+  EXPECT_EQ(a->m, 3);
+  EXPECT_EQ(a->n, 3);
+  EXPECT_EQ(a->values[0].size(), 3);
+  EXPECT_EQ(a->values[1].size(), 0);
+  EXPECT_EQ(a->values[2].size(), 3);
+  EXPECT_EQ(a->toString(), "[[\"1\",\"2\",\"3\"],[\"0\",\"0\",\"0\"],[\"4\",\"5\",\"6\"]]");
 }
 
 TEST(Matrix, Equal)
@@ -396,12 +195,12 @@ TEST(Matrix, Equal)
 
   EXPECT_EQ(a->eq(b), true);
 
-  (*b)[0][0] = Integer::ONE();
-  (*b)[1][1] = Integer::ONE();
+  b->cell(0, 0, 1);
+  b->cell(1, 1, 1);
 
   EXPECT_EQ(a->eq(b), false);
 
-  auto c = Matrix::identity(2);
+  auto c = make_shared<Matrix>(vector<int>({1, 0, 0, 1}))->group(2);
   EXPECT_EQ(b->eq(c), true);
 }
 

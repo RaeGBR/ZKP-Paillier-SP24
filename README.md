@@ -5,18 +5,17 @@
 - CMake
 - g++ combiler
 - lcov (C++ coverage testing tool)
-- NTL 11.4.3
-- JDK1.8
-- Gradle >4.7
-- NodeJS >8.0.0
-- emscripten
-- Android Studio
+- [NTL 11.4.3](https://www.shoup.net/ntl/)
+
+In mac, you can install NTL through Homebrew
+
+```
+brew install ntl
+```
 
 ## Git Submodule
 
-- Crypto++
 - Google Test
-- Djinni
 
 You need to update the submodule after project clone.
 
@@ -30,38 +29,14 @@ git submodule update --init --recursive
 # full rebuild for C++ project
 make
 
-# build dependencies and submodules
+# build submodules
 make deps_build
 
 # build core library and run test case
 make lib_build
-
-# build and package for iOS development
-make ios_build
-
-# build and package for Android development
-make android_build
-
-# build and package for JS development
-make wasm_build
 ```
 
 ## Troubleshoot
-
-### ios.toolchain.cmake error
-
-Error:
-
-```
-CMake Error at cmake/ios.toolchain.cmake:145 (message):
-  Invalid CMAKE_OSX_SYSROOT: does not exist.
-```
-
-It may cause by some updates (OS/tools) are not synchronize with XCode, please try command:
-
-```
-sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
-```
 
 ## Windows Tips
 
@@ -71,7 +46,6 @@ You may use `scoop` to install the following useful tools:
 
 - cmake
 - gcc
-- gradle
 - make
 
 You can install `rsync` through `MinGW`, then run the following command to port the binary to Git Bash.

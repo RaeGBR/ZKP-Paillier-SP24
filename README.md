@@ -36,6 +36,10 @@ make deps_build
 make lib_build
 ```
 
+## How to use
+
+Please refer to [examples](examples.md)
+
 ## Troubleshoot
 
 ## Windows Tips

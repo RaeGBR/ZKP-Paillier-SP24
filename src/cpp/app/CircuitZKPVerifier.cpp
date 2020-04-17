@@ -1,7 +1,5 @@
 #include "./CircuitZKPVerifier.hpp"
 
-using namespace polyu;
-
 vector<size_t> CircuitZKPVerifier::calcMN(size_t _N)
 {
   double N = _N;

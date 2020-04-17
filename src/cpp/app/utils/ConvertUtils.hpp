@@ -1,17 +1,13 @@
 #pragma once
 
-#include "../lib/namespace.hpp"
+#include "../namespace.hpp"
 
-#include <vector>
 #include <bitset>
 
 #include <NTL/ZZ.h>
 #include <NTL/ZZ_p.h>
 #include <NTL/ZZ_pX.h>
 #include <NTL/vector.h>
-
-using namespace std;
-using namespace NTL;
 
 namespace polyu
 {
@@ -60,5 +56,3 @@ public:
 };
 
 } // namespace polyu
-
-using namespace polyu;

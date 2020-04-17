@@ -2,13 +2,11 @@
 
 #include "../namespace.hpp"
 
-#include <map>
 #include <chrono>
 
-using namespace std;
 using namespace std::chrono;
 
-namespace cryptoplus
+namespace polyu
 {
 
 class Timer
@@ -21,6 +19,4 @@ public:
   static double end(const string &name, bool quite = false);
 };
 
-} // namespace cryptoplus
-
-using namespace cryptoplus;
+} // namespace polyu

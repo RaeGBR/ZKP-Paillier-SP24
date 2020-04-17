@@ -2,10 +2,12 @@
 
 ## Dependencies
 
-- CMake
-- g++ combiler
-- lcov (C++ coverage testing tool)
-- [NTL 11.4.3](https://www.shoup.net/ntl/)
+- Build tools
+  - CMake
+  - g++ compiler
+  - lcov (C++ coverage testing tool)
+- Library dependencies
+  - [NTL 11.4.3](https://www.shoup.net/ntl/)
 
 In mac, you can install NTL through Homebrew
 

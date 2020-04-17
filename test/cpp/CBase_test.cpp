@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 
-#include "lib/namespace.hpp"
+#include "app/namespace.hpp"
 
 #include <NTL/ZZ.h>
 #include <NTL/ZZ_p.h>
@@ -9,11 +9,7 @@
 
 #include "app/CBase.hpp"
 #include "app/CEnc.hpp"
-#include "lib/math/Matrix.hpp"
-
-using namespace cryptoplus;
-using namespace polyu;
-using namespace NTL;
+#include "app/math/Matrix.hpp"
 
 namespace
 {

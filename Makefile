@@ -47,7 +47,10 @@ cpp_coverage:
 .PHONY: pack_cpp
 pack_cpp:
 	@echo "\033[33mPack Crypto Library...\033[0m"
-	@rm -rf build/cpp/cryptoplus
-	@mkdir -p build/cpp/cryptoplus
-	@rm -rf src/cpp/lib/*.gcno src/cpp/lib/**/*.gcno
-	@rm -rf src/cpp/lib/*.gcda src/cpp/lib/**/*.gcda
+	@rm -rf build/cpp
+	@mkdir -p build/cpp
+	@rm -rf src/cpp/**/*.gcno src/cpp/**/*.gcno
+	@rm -rf src/cpp/**/**/*.gcno src/cpp/**/**/*.gcno
+	@rm -rf src/cpp/**/*.gcda src/cpp/**/*.gcda
+	@rm -rf src/cpp/**/**/*.gcda src/cpp/**/**/*.gcda
+	@rsync -avzq --exclude="*.cpp" --exclude="Makefile" src/cpp/./ build/cpp

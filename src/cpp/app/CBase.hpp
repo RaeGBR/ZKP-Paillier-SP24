@@ -1,23 +1,16 @@
 #pragma once
 
-#include "../lib/namespace.hpp"
-
-#include <stdexcept>
-#include <vector>
-#include <map>
+#include "./namespace.hpp"
 
 #include <NTL/ZZ.h>
 #include <NTL/ZZ_p.h>
 #include <NTL/vector.h>
 #include <NTL/matrix.h>
 
-#include "./ConvertUtils.hpp"
+#include "./utils/ConvertUtils.hpp"
 #include "./CircuitZKPVerifier.hpp"
 #include "./CircuitZKPProver.hpp"
-#include "../lib/math/Matrix.hpp"
-
-using namespace std;
-using namespace NTL;
+#include "./math/Matrix.hpp"
 
 namespace polyu
 {

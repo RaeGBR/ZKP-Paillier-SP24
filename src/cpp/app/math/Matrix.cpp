@@ -1,7 +1,5 @@
 #include "./Matrix.hpp"
 
-using namespace cryptoplus;
-
 shared_ptr<Matrix> Matrix::ZERO()
 {
   return make_shared<Matrix>();
@@ -79,21 +77,6 @@ void Matrix::cell(size_t i, size_t j, const ZZ_p &x)
 bool Matrix::rowExists(size_t i)
 {
   return i < m && values[i].size() > 0;
-}
-
-void Matrix::row(size_t i, Vec<ZZ_p> &output)
-{
-  output.SetLength(n);
-
-  if (!rowExists(i))
-    return;
-
-  for (auto it : values[i])
-  {
-    size_t j = it.first;
-    auto v = it.second;
-    output[j] = v;
-  }
 }
 
 void Matrix::toMat(Mat<ZZ_p> &output)

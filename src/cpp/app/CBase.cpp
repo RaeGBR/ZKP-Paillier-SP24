@@ -1,7 +1,5 @@
 #include "./CBase.hpp"
 
-using namespace polyu;
-
 void CBase::copyCircuit(const shared_ptr<CBase> &values, const shared_ptr<CBase> &target)
 {
   target->GP_Q = values->GP_Q;

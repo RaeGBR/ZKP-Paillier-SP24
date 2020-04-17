@@ -1,20 +1,15 @@
 #pragma once
 
-#include "../lib/namespace.hpp"
-
-#include <stdexcept>
-#include <vector>
+#include "./namespace.hpp"
 
 #include "./CBase.hpp"
 #include "./CEnc.hpp"
 #include "./PaillierEncryption.hpp"
 #include "./CircuitZKPVerifier.hpp"
-#include "./ConvertUtils.hpp"
-#include "./MathUtils.hpp"
+#include "./utils/ConvertUtils.hpp"
+#include "./math/MathUtils.hpp"
 
-#include "../lib/math/Matrix.hpp"
-
-using namespace std;
+#include "./math/Matrix.hpp"
 
 namespace polyu
 {

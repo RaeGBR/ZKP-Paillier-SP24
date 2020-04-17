@@ -1,7 +1,5 @@
 #include "./CircuitZKPProver.hpp"
 
-using namespace polyu;
-
 CircuitZKPProver::CircuitZKPProver(
     const shared_ptr<CircuitZKPVerifier> &zkp,
     const shared_ptr<Matrix> &A,
@@ -88,8 +86,8 @@ void CircuitZKPProver::polyCommit(const ZZ_p &y, Vec<ZZ_p> &ret)
   // r(X) = SUM(ai * y^i * X^i) + SUM(bi * X^-i) + X^m * SUM(ci * X^i) + d * X^2m+1
   //      = (X^-m) * ( SUM(ai * y^i * X^(m+i)) + SUM(bi * X^(m-i)) + SUM(ci * X^(2m+i)) + d * X^3m+1 )
   Timer::start("prover.rx");
-  const size_t m2 = m*2;
-  const size_t m3 = m*3;
+  const size_t m2 = m * 2;
+  const size_t m3 = m * 3;
   for (size_t i = 1; i <= m; i++)
   {
     for (size_t j = 1; j <= n; j++)

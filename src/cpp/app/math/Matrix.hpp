@@ -2,25 +2,14 @@
 
 #include "../namespace.hpp"
 
-#include <stdexcept>
-#include <map>
-#include <vector>
-
 #include <NTL/ZZ.h>
 #include <NTL/ZZ_p.h>
 #include <NTL/vector.h>
 #include <NTL/matrix.h>
 
-#include "../../app/ConvertUtils.hpp"
+#include "../utils/ConvertUtils.hpp"
 
-// #include "Integer.hpp"
-// #include "./IntegerImpl.hpp"
-
-using namespace std;
-using namespace NTL;
-using namespace polyu;
-
-namespace cryptoplus
+namespace polyu
 {
 
 class Matrix
@@ -44,7 +33,6 @@ public:
   void cell(size_t i, size_t j, const ZZ_p &x);
 
   bool rowExists(size_t i);
-  void row(size_t i, Vec<ZZ_p> &output);
   void toMat(Mat<ZZ_p> &output);
 
   shared_ptr<Matrix> group(size_t n, size_t m = 0);
@@ -59,4 +47,4 @@ public:
   string toString();
 };
 
-} // namespace cryptoplus
+} // namespace polyu

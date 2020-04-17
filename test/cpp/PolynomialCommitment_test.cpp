@@ -2,16 +2,8 @@
 
 #include "app/PolynomialCommitment.hpp"
 #include "app/PaillierEncryption.hpp"
-#include "app/MathUtils.hpp"
-#include "app/ConvertUtils.hpp"
-// #include "lib/paillier/PaillierEncryption.hpp"
-// #include "lib/math/Random.hpp"
-// #include "lib/math/IntegerImpl.hpp"
-
-using namespace std;
-using namespace cryptoplus;
-using namespace polyu;
-using namespace NTL;
+#include "app/math/MathUtils.hpp"
+#include "app/utils/ConvertUtils.hpp"
 
 namespace
 {

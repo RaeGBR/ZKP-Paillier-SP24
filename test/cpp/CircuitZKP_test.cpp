@@ -1,12 +1,9 @@
 #include "gtest/gtest.h"
 
-#include "lib/namespace.hpp"
+#include "app/namespace.hpp"
 
 #include "app/CircuitZKPVerifier.hpp"
 #include "app/CircuitZKPProver.hpp"
-
-using namespace cryptoplus;
-using namespace polyu;
 
 namespace
 {

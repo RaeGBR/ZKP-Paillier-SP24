@@ -54,3 +54,8 @@ pack_cpp:
 	@rm -rf src/cpp/**/*.gcda src/cpp/**/*.gcda
 	@rm -rf src/cpp/**/**/*.gcda src/cpp/**/**/*.gcda
 	@rsync -avzq --exclude="*.cpp" --exclude="Makefile" src/cpp/./ build/cpp
+
+cpp_doc:
+	@echo "\033[33mGenerate readme document...\033[0m"
+	@md-to-pdf README.md
+	@mv README.pdf ./docs

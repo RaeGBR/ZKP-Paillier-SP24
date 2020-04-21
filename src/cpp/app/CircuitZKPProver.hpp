@@ -18,6 +18,9 @@
 namespace polyu
 {
 
+/**
+ * @brief _CircuitZKPProver_ handles the ZKP for prover, it contains the function needed by prover. Since some common functions are already implemented in verify protocol (_CircuitZKPVerifier_), it reuses the code by composite a verifier object. The circuit arguments' must be assigned in order to run the prove protocol successfully.
+ */
 class CircuitZKPProver
 {
 private:

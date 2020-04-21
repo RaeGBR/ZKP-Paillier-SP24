@@ -14,6 +14,9 @@
 namespace polyu
 {
 
+/**
+ * @brief _CBatchEnc_ represents a circuit for paillier encryption of multiple structured messages, it inherits from _CBase_. It help you to generate the linear constrains and assign values to circuit arguments base on the given inputs (ciphertexts, original messages or randomnesses). Internally it reuses the _CEnc_ object, and aggregates to a larger circuit with additional constrains.
+ */
 class CBatchEnc : public CBase
 {
 public:

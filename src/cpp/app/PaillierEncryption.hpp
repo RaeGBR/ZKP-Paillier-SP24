@@ -9,6 +9,9 @@
 namespace polyu
 {
 
+/**
+ * @brief _PaillierEncryption_ represents the paillier group elements with at least a public key or a public-key-private-key pair. Depends on the value it has, it is used in encryption, decryption, commitment and zero-knowledge(ZKP) prove protocols. Also, there are some static function for you to generate a new key pair and find the generator in the group.
+ */
 class PaillierEncryption
 {
 

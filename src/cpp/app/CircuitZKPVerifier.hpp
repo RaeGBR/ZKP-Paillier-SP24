@@ -19,6 +19,9 @@
 namespace polyu
 {
 
+/**
+ * @brief _CircuitZKPVerifier_ handles the ZKP for verifier, it contains functions needed by verifier and some common functions between prover and verifier. The ZKP will run on a circuit (_CBase_), and depends on a paillier group (_PaillierEncryption_) and a commitment scheme (_PolynomialCommitment_).
+ */
 class CircuitZKPVerifier
 {
 private:

@@ -15,6 +15,9 @@
 namespace polyu
 {
 
+/**
+ * @brief _PolynomialCommitment_ handles the commitment scheme for polynomial. It requires the a _PaillierEncryption_ group and a list of independent generators as a setup parameters.
+ */
 class PolynomialCommitment
 {
 public:

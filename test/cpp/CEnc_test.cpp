@@ -1,16 +1,13 @@
 #include "gtest/gtest.h"
 
-#include "lib/namespace.hpp"
+#include "app/namespace.hpp"
 
 #include "app/CBase.hpp"
 #include "app/CEnc.hpp"
 #include "app/CircuitZKPVerifier.hpp"
 #include "app/CircuitZKPProver.hpp"
-#include "lib/math/Matrix.hpp"
-#include "lib/utils/Timer.hpp"
-
-using namespace cryptoplus;
-using namespace polyu;
+#include "app/math/Matrix.hpp"
+#include "app/utils/Timer.hpp"
 
 namespace
 {

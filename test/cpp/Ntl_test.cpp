@@ -6,16 +6,13 @@
 #include <NTL/vector.h>
 #include <NTL/matrix.h>
 
-#include "lib/namespace.hpp"
+#include "app/namespace.hpp"
 
-#include "lib/math/Matrix.hpp"
-#include "lib/utils/Timer.hpp"
+#include "app/math/Matrix.hpp"
+#include "app/utils/Timer.hpp"
 
-#include "app/ConvertUtils.hpp"
-#include "app/MathUtils.hpp"
-
-using namespace cryptoplus;
-using namespace NTL;
+#include "app/utils/ConvertUtils.hpp"
+#include "app/math/MathUtils.hpp"
 
 namespace
 {

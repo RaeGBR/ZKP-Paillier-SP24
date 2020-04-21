@@ -1,9 +1,6 @@
 #include "gtest/gtest.h"
 
-#include "lib/math/Matrix.hpp"
-
-using namespace std;
-using namespace cryptoplus;
+#include "app/math/Matrix.hpp"
 
 namespace
 {

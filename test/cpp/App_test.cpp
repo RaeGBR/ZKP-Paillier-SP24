@@ -2,7 +2,7 @@
 
 #include <fstream>
 
-#include "lib/namespace.hpp"
+#include "app/namespace.hpp"
 
 #include "app/CBase.hpp"
 #include "app/CEnc.hpp"
@@ -10,13 +10,10 @@
 #include "app/PaillierEncryption.hpp"
 #include "app/CircuitZKPVerifier.hpp"
 #include "app/CircuitZKPProver.hpp"
-#include "lib/math/Matrix.hpp"
-#include "lib/utils/Timer.hpp"
+#include "app/math/Matrix.hpp"
+#include "app/utils/Timer.hpp"
 
 #include "app/App.hpp"
-
-using namespace cryptoplus;
-using namespace polyu;
 
 namespace
 {

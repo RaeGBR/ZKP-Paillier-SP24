@@ -1,7 +1,5 @@
 #include "./CBatchEnc.hpp"
 
-using namespace polyu;
-
 CBatchEnc::CBatchEnc(const shared_ptr<PaillierEncryption> &crypto,
                      size_t msgCount, size_t rangeProofCount,
                      size_t slotSize, size_t msgPerBatch)

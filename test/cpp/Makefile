@@ -102,6 +102,6 @@ test_coverage: $(COVERAGE_OUT)
 	@echo "\033[33mRun coverage report...\033[0m"
 	cd $(CPP_DIR) && gcov $(foreach f, $(CPP_OBJS), $f) > /dev/null
 
-	@lcov -q --no-external -c -b $(CPP_DIR)/lib -d $(CPP_DIR)/lib --ignore-errors graph -o $(COVERAGE_OUT)/coverage.info
-	@lcov -r $(COVERAGE_OUT)/coverage.info '$(CPP_DIR)/lib/*/*.hpp' '$(CPP_DIR)/lib/*.hpp' '*.hpp' -o $(COVERAGE_OUT)/coverage.info
+	@lcov -q --no-external -c -b $(CPP_DIR)/app -d $(CPP_DIR)/app --ignore-errors graph -o $(COVERAGE_OUT)/coverage.info
+	@lcov -r $(COVERAGE_OUT)/coverage.info '$(CPP_DIR)/app/*/*.hpp' '$(CPP_DIR)/app/*.hpp' '*.hpp' -o $(COVERAGE_OUT)/coverage.info
 	@genhtml $(COVERAGE_OUT)/coverage.info -o $(COVERAGE_OUT)

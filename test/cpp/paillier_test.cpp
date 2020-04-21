@@ -1,17 +1,10 @@
 #include "gtest/gtest.h"
 
-#include "lib/namespace.hpp"
+#include "app/namespace.hpp"
 
 #include <set>
 #include "app/PaillierEncryption.hpp"
-#include "app/ConvertUtils.hpp"
-
-// #include "Utils.hpp"
-// #include "lib/paillier/PaillierEncryption.hpp"
-// #include "lib/math/IntegerImpl.hpp"
-
-using namespace std;
-using namespace polyu;
+#include "app/utils/ConvertUtils.hpp"
 
 namespace
 {

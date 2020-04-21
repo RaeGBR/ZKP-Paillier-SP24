@@ -1,7 +1,5 @@
 #include "./CEnc.hpp"
 
-using namespace polyu;
-
 CEnc::CEnc(const shared_ptr<PaillierEncryption> &crypto)
     : CBase::CBase(crypto->getGroupQ(), crypto->getGroupP(), crypto->getGroupG())
 {

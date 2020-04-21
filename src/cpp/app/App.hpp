@@ -1,10 +1,8 @@
 #pragma once
 
-#include "../lib/namespace.hpp"
+#include "./namespace.hpp"
 
 #include <fstream>
-#include <stdexcept>
-#include <vector>
 #include <math.h>
 
 #include <NTL/ZZ.h>
@@ -12,15 +10,13 @@
 #include <NTL/vector.h>
 #include <NTL/matrix.h>
 
-#include "../lib/utils/Timer.hpp"
+#include "./utils/Timer.hpp"
 #include "./PaillierEncryption.hpp"
-#include "./ConvertUtils.hpp"
-#include "./MathUtils.hpp"
+#include "./utils/ConvertUtils.hpp"
+#include "./math/MathUtils.hpp"
 #include "./CBatchEnc.hpp"
 #include "./CircuitZKPVerifier.hpp"
 #include "./CircuitZKPProver.hpp"
-
-using namespace std;
 
 namespace polyu
 {

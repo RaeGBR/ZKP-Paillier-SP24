@@ -59,3 +59,6 @@ cpp_doc:
 	@echo "\033[33mGenerate readme document...\033[0m"
 	@md-to-pdf README.md
 	@mv README.pdf ./docs
+	@echo "\033[33mGenerate API document...\033[0m"
+	@rm -rf ./docs/api
+	@doxygen Doxyfile

@@ -18,39 +18,149 @@ namespace polyu
 class PolynomialCommitment
 {
 public:
-    ZZ Q;         // Group order
-    ZZ p;         // sub-group order, (Q-1) % p = 0
-    ZZ_p g;       // base generator, (g^p) % Q = 1
-    Vec<ZZ_p> gi; // [g0, g1, ... , gn]
+  /**
+   * @brief Group element Q
+   */
+  ZZ Q; // Group order
 
-    PolynomialCommitment(const shared_ptr<PaillierEncryption> &crypto, size_t n);
-    PolynomialCommitment(const shared_ptr<PaillierEncryption> &crypto, const Vec<ZZ_p> &gi);
-    PolynomialCommitment(const ZZ &Q, const ZZ &p, const ZZ_p &g, const Vec<ZZ_p> &gi);
+  /**
+   * @brief Group element p, (Q-1) % p = 0
+   */
+  ZZ p;
 
-    // FIXME: DEV_ONLY: DEPRECATED: in secure generators gi
-    PolynomialCommitment(const ZZ &Q, const ZZ &p, const ZZ_p &g, size_t n);
+  /**
+   * @brief Base group generator g, (g^p) % Q = 1
+   */
+  ZZ_p g;
 
-    ZZ_p commit(const Vec<ZZ_p> &mi, const ZZ_p &r);
-    void commit(const Mat<ZZ_p> &ms, const Vec<ZZ_p> &rs, Vec<ZZ_p> &ret);
+  /**
+   * @brief Independent generators for commitment [g0, g1, ... , gn]
+   */
+  Vec<ZZ_p> gi;
 
-    void calcT(
-        size_t m1, size_t m2, size_t n,
-        const ZZ_pX &tx, Mat<ZZ_p> &ret);
+  /**
+   * @brief Construct a new polynomial commitment scheme
+   *
+   * @param crypto PaillierEncryption object, defined the group elements
+   * @param n Degree of polynomial / number of generators
+   */
+  PolynomialCommitment(const shared_ptr<PaillierEncryption> &crypto, size_t n);
 
-    void commit(
-        size_t m1, size_t m2, size_t n,
-        const Mat<ZZ_p> &T, Vec<ZZ_p> &ri, Vec<ZZ_p> &ret);
+  /**
+   * @brief Construct a new polynomial commitment scheme
+   *
+   * @param crypto PaillierEncryption object, defined the group elements
+   * @param gi Pre-defined generators
+   */
+  PolynomialCommitment(const shared_ptr<PaillierEncryption> &crypto, const Vec<ZZ_p> &gi);
 
-    void eval(
-        size_t m1, size_t m2, size_t n,
-        const Mat<ZZ_p> &T, const Vec<ZZ_p> &ri, const ZZ_p &x,
-        Vec<ZZ_p> &result);
+  /**
+   * @brief Construct a new polynomial commitment scheme
+   *
+   * @param Q Group element Q
+   * @param p Group element p
+   * @param g Base group generator g
+   * @param gi Pre-defined generators
+   */
+  PolynomialCommitment(const ZZ &Q, const ZZ &p, const ZZ_p &g, const Vec<ZZ_p> &gi);
 
-    bool verify(
-        size_t m1, size_t m2, size_t n,
-        const Vec<ZZ_p> &pc, const Vec<ZZ_p> &pe, const ZZ_p &x);
+  /**
+   * @brief (DEPRECATED) Construct a new polynomial commitment scheme, the generators gi are insecure
+   * @deprecated
+   *
+   * @param Q Group element Q
+   * @param p Group element p
+   * @param g Base group generator g
+   * @param n Degree of polynomial / number of generators
+   */
+  PolynomialCommitment(const ZZ &Q, const ZZ &p, const ZZ_p &g, size_t n);
 
-    ZZ_p calcV(size_t n, const Vec<ZZ_p> &pe, const ZZ_p &x);
+  /**
+   * @brief Commit a message
+   *
+   * @param mi Message (m)
+   * @param r Randomness (r)
+   * @return ZZ_p Commitment (c)
+   */
+  ZZ_p commit(const Vec<ZZ_p> &mi, const ZZ_p &r);
+
+  /**
+   * @brief Commit multiple messages
+   *
+   * @param ms Messages (ms)
+   * @param rs Randomness (rs)
+   * @param ret Commitments result
+   */
+  void commit(const Mat<ZZ_p> &ms, const Vec<ZZ_p> &rs, Vec<ZZ_p> &ret);
+
+  /**
+   * @brief Calculate matrix (T) for polynomial commitment
+   *
+   * @param m1
+   * @param m2
+   * @param n
+   * @param tx Polynomial t(x)
+   * @param ret Result matrix (T)
+   */
+  void calcT(
+      size_t m1, size_t m2, size_t n,
+      const ZZ_pX &tx, Mat<ZZ_p> &ret);
+
+  /**
+   * @brief Calculate polynomial commitment
+   *
+   * @param m1
+   * @param m2
+   * @param n
+   * @param T Matrix (T)
+   * @param ri Randomness (r_i)
+   * @param ret Commitments result (pc)
+   */
+  void commit(
+      size_t m1, size_t m2, size_t n,
+      const Mat<ZZ_p> &T, Vec<ZZ_p> &ri, Vec<ZZ_p> &ret);
+
+  /**
+   * @brief Calculate polynomial evaluate
+   *
+   * @param m1
+   * @param m2
+   * @param n
+   * @param T Matrix (T)
+   * @param ri Randomness (r_i)
+   * @param x Challenge value (x)
+   * @param result Evaluate result (pe)
+   */
+  void eval(
+      size_t m1, size_t m2, size_t n,
+      const Mat<ZZ_p> &T, const Vec<ZZ_p> &ri, const ZZ_p &x,
+      Vec<ZZ_p> &result);
+
+  /**
+   * @brief Verify polynomial commitments
+   *
+   * @param m1
+   * @param m2
+   * @param n
+   * @param pc Commitments result (pc)
+   * @param pe Evaluate result (pe)
+   * @param x Challenge value (x)
+   * @return true
+   * @return false
+   */
+  bool verify(
+      size_t m1, size_t m2, size_t n,
+      const Vec<ZZ_p> &pc, const Vec<ZZ_p> &pe, const ZZ_p &x);
+
+  /**
+   * @brief Calculate v = t(x)
+   *
+   * @param n
+   * @param pe Evaluate result (pe)
+   * @param x Challenge value (x)
+   * @return ZZ_p v = t(x)
+   */
+  ZZ_p calcV(size_t n, const Vec<ZZ_p> &pe, const ZZ_p &x);
 };
 
 } // namespace polyu

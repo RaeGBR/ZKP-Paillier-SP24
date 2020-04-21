@@ -7,6 +7,8 @@
 *.gcda
 *.gcov
 *.tmp
+/docs/api
+/docs/README.pdf
 
 # OSX Macro File
 .DS_Store

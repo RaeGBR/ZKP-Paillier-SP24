@@ -88,8 +88,7 @@ compile_test: $(TEST_OUT) $(TEST_OBJS)
 		$(GTEST_DIR)/build/gtest_main.a -o $(TEST_OUT)/$(TEST_NAME) \
 			$(COVERAGE_FLAG) \
 			-L$(CRYPTOPP_DIR) \
-			-lntl -lgmp -lm \
-			-lcryptopp;
+			-lntl -lgmp -lm;
 	@echo "\033[33mTest build done...\033[0m"
 
 .PHONY: run_test

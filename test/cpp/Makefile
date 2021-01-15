@@ -11,8 +11,6 @@ TEST_OUT ?= $(SRC_DIR)
 COVERAGE_OUT ?= $(TEST_OUT)/coverage
 
 GTEST_DIR:= $(ROOT_DIR)/deps/googletest/googletest
-CRYPTOPP_DIR ?= $(ROOT_DIR)/build/cpp/vendor/cryptopp
-DJINNI_GEN_DIR ?= $(ROOT_DIR)/generated-src/cpp
 CPP_DIR := $(ROOT_DIR)/src/cpp
 
 CPP_SRC_FILES := $(wildcard \
@@ -22,8 +20,6 @@ CPP_SRC_FILES := $(wildcard \
 )
 CPP_OBJS := $(patsubst ${CPP_DIR}/%,%,${CPP_SRC_FILES})
 CPP_INCLUDES := \
-	$(CRYPTOPP_DIR) \
-	$(DJINNI_GEN_DIR) \
 	$(CPP_DIR)
 CPP_TARGET := $(wildcard \
 	${CPP_DIR}/*.o \
@@ -87,7 +83,6 @@ compile_test: $(TEST_OUT) $(TEST_OBJS)
 		$(foreach f, $(TEST_LIST), $(TEST_OUT)/$f.o) \
 		$(GTEST_DIR)/build/gtest_main.a -o $(TEST_OUT)/$(TEST_NAME) \
 			$(COVERAGE_FLAG) \
-			-L$(CRYPTOPP_DIR) \
 			-lntl -lgmp -lm;
 	@echo "\033[33mTest build done...\033[0m"
 

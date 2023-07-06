@@ -21,7 +21,7 @@ namespace
 //*/
 TEST(App, Run)
 {
-  string filename = "../../test0.csv";
+  string filename = "../../test_files/test0.csv";
   ifstream ifile(filename);
   ofstream fs;
   if (ifile)
@@ -72,7 +72,7 @@ TEST(App, Run)
   // vector<size_t> bls({8, 16, 32, 64, 128, 256});
   // vector<size_t> ms({10, 20, 50, 100, 200});
   // vector<size_t> bls({64});
-  vector<size_t> bls({8});
+  vector<size_t> bls({16});
   vector<size_t> ms({10});
   // vector<size_t> bls({64, 128});
   // vector<size_t> ms({300, 400, 500, 600, 700, 800, 900, 1000});

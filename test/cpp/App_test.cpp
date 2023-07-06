@@ -21,7 +21,7 @@ namespace
 //*/
 TEST(App, Run)
 {
-  string filename = "../../test11.csv";
+  string filename = "../../test0.csv";
   ifstream ifile(filename);
   ofstream fs;
   if (ifile)
@@ -63,7 +63,7 @@ TEST(App, Run)
 
   size_t byteLength, msgCount, rangeProofCount, slotSize, msgPerBatch;
 
-  byteLength = 8;
+  byteLength = 8; // bytes
   msgCount = 10;
   rangeProofCount = 10;
   slotSize = 4;

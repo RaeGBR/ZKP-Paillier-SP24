@@ -10,6 +10,7 @@
 /docs/api
 /docs/README.pdf
 
+
 # OSX Macro File
 .DS_Store
 
@@ -26,3 +27,6 @@ node_modules
 *.xls
 *.xlsx
 *.log
+
+# test files
+/test_files

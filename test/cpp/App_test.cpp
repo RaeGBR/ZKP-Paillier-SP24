@@ -14,6 +14,8 @@
 #include "app/utils/Timer.hpp"
 
 #include "app/App.hpp"
+#include "app/EndToEnd.hpp"
+
 
 namespace
 {
@@ -21,7 +23,7 @@ namespace
 //*/
 TEST(App, Run)
 {
-  string filename = "../../test_files/test0.csv";
+  string filename = "../../test_files/test.csv";
   ifstream ifile(filename);
   ofstream fs;
   if (ifile)
@@ -72,11 +74,13 @@ TEST(App, Run)
   // vector<size_t> bls({8, 16, 32, 64, 128, 256});
   // vector<size_t> ms({10, 20, 50, 100, 200});
   // vector<size_t> bls({64});
-  vector<size_t> bls({16});
+  vector<size_t> bls({64}); // msg length
   vector<size_t> ms({10});
   // vector<size_t> bls({64, 128});
   // vector<size_t> ms({300, 400, 500, 600, 700, 800, 900, 1000});
-  for (size_t i = 0; i < bls.size(); i++)
+
+  //new for end_to_end
+   for (size_t i = 0; i < bls.size(); i++)
   {
     byteLength = bls[i];
     auto crypto = make_shared<PaillierEncryption>(byteLength);
@@ -84,11 +88,28 @@ TEST(App, Run)
     for (size_t j = 0; j < ms.size(); j++)
     {
       msgCount = ms[j];
-      polyu::run(crypto, msgCount, rangeProofCount, slotSize, msgPerBatch, fs);
+      polyu::end_to_end(crypto, msgCount, rangeProofCount, slotSize, msgPerBatch, fs);
     }
   }
 
   fs.close();
+
+
+  // old 
+  // for (size_t i = 0; i < bls.size(); i++)
+  // {
+  //   byteLength = bls[i];
+  //   auto crypto = make_shared<PaillierEncryption>(byteLength);
+
+  //   for (size_t j = 0; j < ms.size(); j++)
+  //   {
+  //     msgCount = ms[j];
+  //     polyu::run(crypto, msgCount, rangeProofCount, slotSize, msgPerBatch, fs);
+  //   }
+  // }
+
+  // fs.close();
+
 }
 //*/
 

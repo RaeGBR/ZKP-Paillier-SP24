@@ -30,6 +30,7 @@ CPP_TARGET := $(wildcard \
 TEST_FILES := $(wildcard ${SRC_DIR}/*.cpp)
 # TEST_LIST := $(patsubst ${SRC_DIR}/%.cpp,%,${TEST_FILES})
 TEST_LIST := App_test
+# TEST_LIST := Paillier_test
 TEST_OBJS := $(patsubst %.cpp,%.o,${TEST_FILES})
 
 

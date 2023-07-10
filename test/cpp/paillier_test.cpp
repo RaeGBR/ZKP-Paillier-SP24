@@ -5,6 +5,7 @@
 #include <set>
 #include "app/PaillierEncryption.hpp"
 #include "app/utils/ConvertUtils.hpp"
+#include "app/EndToEnd.hpp"
 
 namespace
 {
@@ -246,5 +247,6 @@ TEST(Paillier, Encrypt_decrypt_with_predefined_group)
   EXPECT_EQ(m, r);
   EXPECT_EQ(ret, msg);
 }
+
 
 } // namespace

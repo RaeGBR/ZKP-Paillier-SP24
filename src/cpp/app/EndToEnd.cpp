@@ -1,14 +1,15 @@
-#include "./App.hpp"
+#include "./EndToEnd.hpp"
+
+// for end to end implementation
 
 
-// old
-void polyu::run(size_t byteLength, size_t msgCount, size_t rangeProofCount, size_t slotSize, size_t msgPerBatch, ofstream &fs)
+void polyu::end_to_end(size_t byteLength, size_t msgCount, size_t rangeProofCount, size_t slotSize, size_t msgPerBatch, ofstream &fs)
 {
   auto crypto = make_shared<PaillierEncryption>(byteLength);
-  polyu::run(crypto, msgCount, rangeProofCount, slotSize, msgPerBatch, fs);
+  polyu::end_to_end(crypto, msgCount, rangeProofCount, slotSize, msgPerBatch, fs);
 }
 
-void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, size_t rangeProofCount, size_t slotSize, size_t msgPerBatch, ofstream &fs)
+void polyu::end_to_end(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, size_t rangeProofCount, size_t slotSize, size_t msgPerBatch, ofstream &fs)
 {
   // extract system parameters from private keys
   auto GP_Q = crypto->getGroupQ(); // public parameter: group element Q
@@ -103,6 +104,7 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
   auto Cm = proverCir->Cm;
   auto Cm_ = proverCir->Cm_;
   auto CRj = proverCir->CRj;
+  auto Rm = proverCir->Rm;
 
   // benchmark variables
   auto batchCount = proverCir->batchCount;
@@ -197,6 +199,59 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
   auto isValid = verifier->verify(proofs, y, x);
   verifyTime += Timer::end("V.verify");
 
+  // todo: 1. Verifier: attach Wi
+  // 2. Verifier: calculate the result 
+  // 3. Prover: decypt
+  // 4. Prover: decompose and calculate the ave.
+
+  // 1.2. V: attach wi and calculate result
+  ZZ max = power(conv<ZZ>(2), slotSize * 8) - 1;
+  max = max / conv<ZZ>(msgCount);
+  long num_bits = NumBits(max) - 1;
+  // cout << "max  is " << max << endl;
+  // cout << "its num bits is " <<s num_bits << endl;
+  
+  ZZ_p result = conv<ZZ_p>(1);
+  ZZ sum = conv<ZZ>(0);
+
+  for (size_t i = 0; i < Cm.length(); i++) {
+    // random weight wi
+    auto random_wi = RandomBits_ZZ(num_bits);
+    auto c_wi = crypto->mul(Cm[i], random_wi);
+
+    ZZ_p::init(GP_P);
+    result *= c_wi;
+    sum += random_wi * msg[i];
+}
+  
+// 3. P: decrypt
+
+ZZ sum_m = crypto->decrypt(result);
+//todo: to be deleted
+// cout << "decrypt final result is " << sum_m << endl;
+// cout << "should be " << sum << endl;
+
+// 4. P: decopmpose and calculate the average
+string m_decmp = ConvertUtils::toBinaryString(sum_m);
+size_t slot_num = byteLength / slotSize;
+vector<size_t> ave_result;
+
+for (size_t i = 0; i < slot_num; i++) {
+    size_t agg_result = 0;
+
+    for (size_t j = 0; j < slotSize * 8; j++) {
+        agg_result += static_cast<size_t>(m_decmp[i * slot_num * 8 + j]);
+    }
+    cout << i << "-th slot aggregation result is" << agg_result << endl;
+    ave_result.push_back(agg_result/msgCount);
+}
+
+// output the average for every attribute
+for (size_t i = 0; i < slot_num; i++) {
+    cout << "the " << i << "-th slot's averaged result is " << ave_result[i] << endl;
+}
+
+
   // print out benchmark result
   circuitTime /= 2;
 
@@ -273,3 +328,14 @@ void polyu::run(const shared_ptr<PaillierEncryption> &crypto, size_t msgCount, s
   if (!isValid)
     throw invalid_argument("zkp is not valid");
 }
+
+// ZZ_p polyu:: help_random (ZZ max) {
+//     ZZ_pPush push(max);
+//     ZZ_p r;
+//     while (true) {
+//         random(r);
+//         if (r == 0) 
+//             continue;
+//         return r;
+//     }
+// }

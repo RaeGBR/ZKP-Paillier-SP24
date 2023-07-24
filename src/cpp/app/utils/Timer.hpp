@@ -17,6 +17,7 @@ public:
 
   static void start(const string &name);
   static double end(const string &name, bool quite = false);
+  static double endMil(const string &name, bool quite = false);
 };
 
 } // namespace polyu

@@ -23,7 +23,7 @@ namespace
 //*/
 TEST(App, Run)
 {
-  string filename = "../../test_files/end_to_end(512, test).csv";
+  string filename = "../../test_files/end_to_end(1024,1-400).csv";
   ifstream ifile(filename);
   ofstream fs;
   if (ifile)
@@ -63,25 +63,31 @@ TEST(App, Run)
     fs << "verify time" << ",";
 
     // end-to-end
-    fs << "attach (V) time" << ",";
-    fs << "phase1 (P) time" << ",";
-    fs << "phase2 (V) time" << ",";
-    fs << "phase3 (P) time" << endl;
+    fs << "attach time-V(s)" << ",";
+    fs << "phase1 time-P(s)" << ",";
+    fs << "phase2 time-V(s)" << ",";
+    fs << "phase3 time-P(s)" << ",";
+    fs << "phase3 time-P(ms)" << ",";
+
+    //amortized time
+    fs << "amo. cmt time (ms)" << ",";
+    fs << "amo. totalPrf time (ms)" << ",";
+    fs << "amo. vrf. time (ms)" << endl;
   }
 
   size_t byteLength, msgCount, rangeProofCount, slotSize, msgPerBatch;
 
   byteLength = 8; // bytes
   msgCount = 10;
-  rangeProofCount = 10;
-  slotSize = 4;
+  rangeProofCount = 80; // sp
+  slotSize = 4; 
   msgPerBatch = 15;
 
   // vector<size_t> bls({8, 16, 32, 64, 128, 256});
   // vector<size_t> ms({10, 20, 50, 100, 200});
   // vector<size_t> bls({64});
-  vector<size_t> bls({16}); // msg length
-  vector<size_t> ms({1, 10, 20, 30});
+  vector<size_t> bls({128}); // msg length
+  vector<size_t> ms({1, 10, 20, 40, 80, 100, 200, 400});
   // vector<size_t> bls({64, 128});
   // vector<size_t> ms({300, 400, 500, 600, 700, 800, 900, 1000});
 

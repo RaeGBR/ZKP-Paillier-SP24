@@ -23,7 +23,7 @@ namespace
 //*/
 TEST(App, Run)
 {
-  string filename = "../../test_files/test.csv";
+  string filename = "../../test_files/end_to_end(512, test).csv";
   ifstream ifile(filename);
   ofstream fs;
   if (ifile)
@@ -60,7 +60,13 @@ TEST(App, Run)
     fs << "value assign time,";
     fs << "commit time,";
     fs << "prove time,";
-    fs << "verify time" << endl;
+    fs << "verify time" << ",";
+
+    // end-to-end
+    fs << "attach (V) time" << ",";
+    fs << "phase1 (P) time" << ",";
+    fs << "phase2 (V) time" << ",";
+    fs << "phase3 (P) time" << endl;
   }
 
   size_t byteLength, msgCount, rangeProofCount, slotSize, msgPerBatch;
@@ -74,8 +80,8 @@ TEST(App, Run)
   // vector<size_t> bls({8, 16, 32, 64, 128, 256});
   // vector<size_t> ms({10, 20, 50, 100, 200});
   // vector<size_t> bls({64});
-  vector<size_t> bls({64}); // msg length
-  vector<size_t> ms({10});
+  vector<size_t> bls({16}); // msg length
+  vector<size_t> ms({1, 10, 20, 30});
   // vector<size_t> bls({64, 128});
   // vector<size_t> ms({300, 400, 500, 600, 700, 800, 900, 1000});
 

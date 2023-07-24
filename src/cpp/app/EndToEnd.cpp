@@ -31,6 +31,12 @@ void polyu::end_to_end(const shared_ptr<PaillierEncryption> &crypto, size_t msgC
   double proveTime = 0;
   double verifyTime = 0;
 
+  // for end-to-end time
+  double phase1Time = 0;
+  double phase2Time = 0;
+  double attachTime = 0; // verify attach weights
+  double decomposeTime = 0;
+
   auto encCir = make_shared<CEnc>(crypto);
   encCir->wireUp();
   auto encCirN = encCir->gateCount;
@@ -153,6 +159,7 @@ void polyu::end_to_end(const shared_ptr<PaillierEncryption> &crypto, size_t msgC
 
   prover = nullptr; // clean up, save memory
 
+
   /*
    * Verifier
    */
@@ -214,6 +221,7 @@ void polyu::end_to_end(const shared_ptr<PaillierEncryption> &crypto, size_t msgC
   ZZ_p result = conv<ZZ_p>(1);
   ZZ sum = conv<ZZ>(0);
 
+  Timer::start("V.attach_value");
   for (size_t i = 0; i < Cm.length(); i++) {
     // random weight wi
     auto random_wi = RandomBits_ZZ(num_bits);
@@ -223,6 +231,7 @@ void polyu::end_to_end(const shared_ptr<PaillierEncryption> &crypto, size_t msgC
     result *= c_wi;
     sum += random_wi * msg[i];
 }
+  attachTime += Timer::end("V.attach_value");
   
 // 3. P: decrypt
 
@@ -236,20 +245,23 @@ string m_decmp = ConvertUtils::toBinaryString(sum_m);
 size_t slot_num = byteLength / slotSize;
 vector<size_t> ave_result;
 
+Timer::start("P.decompose");
 for (size_t i = 0; i < slot_num; i++) {
     size_t agg_result = 0;
 
     for (size_t j = 0; j < slotSize * 8; j++) {
         agg_result += static_cast<size_t>(m_decmp[i * slot_num * 8 + j]);
     }
-    cout << i << "-th slot aggregation result is" << agg_result << endl;
+    // cout << i << "-th slot aggregation result is" << agg_result << endl;
     ave_result.push_back(agg_result/msgCount);
 }
+decomposeTime += Timer::end("P.decompose");
+
 
 // output the average for every attribute
-for (size_t i = 0; i < slot_num; i++) {
-    cout << "the " << i << "-th slot's averaged result is " << ave_result[i] << endl;
-}
+// for (size_t i = 0; i < slot_num; i++) {
+//     cout << "the " << i << "-th slot's averaged result is " << ave_result[i] << endl;
+// }
 
 
   // print out benchmark result
@@ -267,6 +279,10 @@ for (size_t i = 0; i < slot_num; i++) {
   proofSize += qSize * pc.length();
   proofSize += pSize * proofs.length();
   double proofSizePerMsg = proofSize / msgCount;
+
+  phase1Time = encryptTime + circuitTime + valueTime + commitTime + proveTime;
+  phase2Time = verifyTime + attachTime; 
+ 
 
   cout << endl;
   cout << "==========" << endl;
@@ -323,7 +339,12 @@ for (size_t i = 0; i < slot_num; i++) {
   fs << valueTime << ",";
   fs << commitTime << ",";
   fs << proveTime << ",";
-  fs << verifyTime << endl;
+  fs << verifyTime << ",";
+
+  fs << attachTime << ","; // for end-to-end
+  fs << phase1Time << ",";
+  fs << phase2Time << ",";
+  fs << decomposeTime << endl;
 
   if (!isValid)
     throw invalid_argument("zkp is not valid");

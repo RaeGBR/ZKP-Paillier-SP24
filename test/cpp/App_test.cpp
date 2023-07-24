@@ -87,7 +87,7 @@ TEST(App, Run)
   // vector<size_t> ms({10, 20, 50, 100, 200});
   // vector<size_t> bls({64});
   // vector<size_t> bls({128}); // msg length
-  vector<size_t> bls({16}); // msg length
+  vector<size_t> bls({128}); // msg length
   vector<size_t> ms({1, 10, 20, 40, 80, 100, 200, 400});
   // vector<size_t> bls({64, 128});
   // vector<size_t> ms({300, 400, 500, 600, 700, 800, 900, 1000});

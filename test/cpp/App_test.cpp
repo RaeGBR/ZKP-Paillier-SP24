@@ -23,7 +23,7 @@ namespace
 //*/
 TEST(App, Run)
 {
-  string filename = "../../test_files/end_to_end(1024,1-400).csv";
+  string filename = "../../end_to_end(1024,1-400).csv";
   ifstream ifile(filename);
   ofstream fs;
   if (ifile)
@@ -86,7 +86,8 @@ TEST(App, Run)
   // vector<size_t> bls({8, 16, 32, 64, 128, 256});
   // vector<size_t> ms({10, 20, 50, 100, 200});
   // vector<size_t> bls({64});
-  vector<size_t> bls({128}); // msg length
+  // vector<size_t> bls({128}); // msg length
+  vector<size_t> bls({16}); // msg length
   vector<size_t> ms({1, 10, 20, 40, 80, 100, 200, 400});
   // vector<size_t> bls({64, 128});
   // vector<size_t> ms({300, 400, 500, 600, 700, 800, 900, 1000});

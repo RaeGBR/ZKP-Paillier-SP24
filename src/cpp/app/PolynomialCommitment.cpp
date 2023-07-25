@@ -35,20 +35,109 @@ PolynomialCommitment::PolynomialCommitment(const ZZ &Q, const ZZ &p, const ZZ_p 
   }
 }
 
+// original version
+// ZZ_p PolynomialCommitment::commit(const Vec<ZZ_p> &mi, const ZZ_p &r)
+// {
+//   ZZ_pPush push(Q);
+
+//   ZZ_p gx;
+//   ZZ_p ret = power(g, conv<ZZ>(r));
+
+//   for (size_t i = 0; i < mi.length(); i++)
+//   {
+//     power(gx, gi[i], conv<ZZ>(mi[i]));
+//     mul(ret, ret, gx);
+//   }
+//   return ret;
+// }
+
+ // allen's version
 ZZ_p PolynomialCommitment::commit(const Vec<ZZ_p> &mi, const ZZ_p &r)
 {
+  //unsigned short bitlength = r.ModulusSize();
+  
+  //cout << "is this correct bitlength?:" << p.size() << endl; 
+  //cout << "is this correct Q length?:" << Q.size() << endl; 
+
+  Vec<ZZ> zmi; 
+  zmi.SetLength(mi.length());
+  conv(zmi,mi);
+  
+  unsigned long bitlength = NumBits(zmi[0]);
+  for (int i=0;i<mi.length();i++) {
+ //   cout << "zmi[" << i << "]=" << zmi[i] << endl;
+ //   cout << "mi[" << i << "]=" << mi[i] << endl; 
+ //   cout << "numBits:" << NumBits(zmi[i]) << endl;
+    if (bitlength < NumBits(zmi[i]))
+      bitlength = NumBits(zmi[i]); 
+  }
+//  cout << "real BitLength" << bitlength << endl;
+
   ZZ_pPush push(Q);
 
   ZZ_p gx;
   ZZ_p ret = power(g, conv<ZZ>(r));
 
-  for (size_t i = 0; i < mi.length(); i++)
-  {
-    power(gx, gi[i], conv<ZZ>(mi[i]));
-    mul(ret, ret, gx);
+  
+
+
+  const unsigned int bucket_size = 256; // see below. the 4.0 depends on the bucket_size. the number should be log bucket_size
+ 
+  unsigned long round = ceil(bitlength/8.0); //1024-bit exponent, 4-bit bucket => 256 rounds 
+  // has to tune the 4.0 to represent the bucket size of 16
+  
+  ZZ pow = conv<ZZ>(1);
+  unsigned long shift = 0;
+  unsigned long d = 1;
+
+  for (unsigned int j = 0; j < round; j++ ) {
+   // cout << "====Round: " << j <<"===="<< endl;
+    ZZ_p S[bucket_size]; 
+    ZZ_p T[bucket_size]; 
+    for (unsigned int k=0; k<bucket_size;k++) {
+      S[k]=conv<ZZ_p>(1);
+      T[k]=conv<ZZ_p>(1);
+    }
+    
+    long t = 0;
+    ZZ flag = ConvertUtils::hexToZZ("FF");
+    ZZ tmp;
+    
+    for (unsigned int i =0; i < zmi.length(); i++ ) {
+      NTL::bit_and(tmp, zmi[i] >> shift, flag);
+      t = conv<int>(tmp);
+   //   cout << "zmi[i]" << zmi[i] << "|t:" << t << endl;
+      if (t!=0)
+        mul(S[t], S[t], gi[i]);
+    }
+    //list bucket:
+   // for (int i=0;i<bucket_size;i++) {
+   //   cout << "i=" << i << ":" << S[i] << "|";
+   // }
+
+    shift = shift + 8;
+    T[bucket_size-1] = S[bucket_size-1];
+    for (unsigned int i=bucket_size-1; i>1; i--) {
+      mul (T[i-1], T[i], S[i-1]);
+    }
+
+    ZZ_p R = conv<ZZ_p>(1);
+    for (unsigned int i = 1; i < bucket_size; i++) {
+      mul(R, R, T[i]);      
+    }
+    
+
+    //cout << "Round:" << j << "Power:" << pow << endl;
+   power(R, R, pow);
+   mul(pow, pow, bucket_size);
+    
+    
+    mul(ret, ret, R);
   }
+
   return ret;
 }
+
 
 void PolynomialCommitment::commit(const Mat<ZZ_p> &ms, const Vec<ZZ_p> &rs, Vec<ZZ_p> &ret)
 {

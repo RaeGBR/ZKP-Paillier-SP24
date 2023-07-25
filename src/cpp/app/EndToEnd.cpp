@@ -40,6 +40,7 @@ void polyu::end_to_end(const shared_ptr<PaillierEncryption> &crypto, size_t msgC
   double amoCmtTime = 0; // cmt_time / bits_num
   double amoTotalProofTime = 0; // total_proof_time / bits_num
   double amotVrfTime = 0; // vrf_time / bits_num
+  double amoProofCost = 0; // bits 
 
   auto encCir = make_shared<CEnc>(crypto);
   encCir->wireUp();
@@ -259,7 +260,7 @@ for (size_t i = 0; i < slot_num; i++) {
     // cout << i << "-th slot aggregation result is" << agg_result << endl;
     ave_result.push_back(agg_result/msgCount);
 }
-decomposeTime += Timer::endMil("P.decompose");
+decomposeTime += Timer::endNan("P.decompose");
 
 
 // output the average for every attribute
@@ -290,6 +291,8 @@ decomposeTime += Timer::endMil("P.decompose");
   amoCmtTime = commitTime * 1000 / (msgCount * slotsPerMsg); // ms
   amoTotalProofTime = phase1Time * 1000 / (msgCount * slotsPerMsg); //ms
   amotVrfTime = verifyTime * 1000 / (msgCount * slotsPerMsg); // ms 
+
+  amoProofCost = proofSizePerMsg * 8 / slotsPerMsg; // bits
  
 
   cout << endl;
@@ -352,13 +355,14 @@ decomposeTime += Timer::endMil("P.decompose");
   fs << attachTime << ","; // for end-to-end
   fs << phase1Time << ",";
   fs << phase2Time << ",";
-  fs << double(decomposeTime/1000) << ","; // s
-  fs << decomposeTime << ","; // ms
+  fs << double(decomposeTime/1000000) << ","; // ms
+  fs << decomposeTime << ","; // ns
 
   // for amortized time 
   fs << amoCmtTime << ",";
   fs << amoTotalProofTime << ",";
-  fs << amotVrfTime << endl;
+  fs << amotVrfTime << ",";
+  fs << amoProofCost << endl;
 
   if (!isValid)
     throw invalid_argument("zkp is not valid");

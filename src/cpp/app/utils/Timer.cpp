@@ -20,11 +20,11 @@ double Timer::end(const string &name, bool quite)
   return tDiff;
 }
 
-// millsecond
-double Timer::endMil(const string &name, bool quite)
+// nanosecond
+double Timer::endNan(const string &name, bool quite)
 {
   Timer::t2[name] = high_resolution_clock::now();
-  double tDiff = duration_cast<milliseconds>(Timer::t2[name] - Timer::t1[name]).count();
+  double tDiff = duration_cast<nanoseconds>(Timer::t2[name] - Timer::t1[name]).count();
   if (!quite)
   {
     cout << name << " time: " << tDiff << endl;

@@ -23,7 +23,7 @@ namespace
 //*/
 TEST(App, Run)
 {
-  string filename = "../../op_ete(1024,1-400,buc256).csv";
+  string filename = "../../optimize_ete(2048,1-400,buc256).csv";
   ifstream ifile(filename);
   ofstream fs;
   if (ifile)
@@ -80,15 +80,15 @@ TEST(App, Run)
 
   byteLength = 8; // bytes
   msgCount = 10;
-  rangeProofCount = 80; // sp
+  rangeProofCount = 128; // sp
   slotSize = 4; 
   msgPerBatch = 15;
 
   // vector<size_t> bls({8, 16, 32, 64, 128, 256});
   // vector<size_t> ms({10, 20, 50, 100, 200});
   // vector<size_t> bls({8});
-  vector<size_t> bls({128}); // msg length = 1024
-  // vector<size_t> bls({256}); // msg length = 2048
+  // vector<size_t> bls({128}); // msg length = 1024
+  vector<size_t> bls({256}); // msg length = 2048
   vector<size_t> ms({1, 10, 20, 40, 80, 100, 200, 400});
   // vector<size_t> bls({64, 128});
   // vector<size_t> ms({300, 400, 500, 600, 700, 800, 900, 1000});

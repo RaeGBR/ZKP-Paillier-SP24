@@ -35,7 +35,9 @@ void polyu::end_to_end(const shared_ptr<PaillierEncryption> &crypto, size_t msgC
   double phase1Time = 0;
   double phase2Time = 0;
   double attachTime = 0; // verify attach weights
-  double decomposeTime = 0;
+  double decomposeTime1 = 0;
+  double decomposeTime2 = 0;
+
 
   double amoCmtTime = 0; // cmt_time / bits_num
   double amoTotalProofTime = 0; // total_proof_time / bits_num
@@ -248,19 +250,32 @@ ZZ sum_m = crypto->decrypt(result);
 // 4. P: decopmpose and calculate the average
 string m_decmp = ConvertUtils::toBinaryString(sum_m);
 size_t slot_num = byteLength / slotSize;
-vector<size_t> ave_result;
+vector<double> ave_result1, ave_result2;
 
 Timer::start("P.decompose");
 for (size_t i = 0; i < slot_num; i++) {
     size_t agg_result = 0;
 
     for (size_t j = 0; j < slotSize * 8; j++) {
-        agg_result += static_cast<size_t>(m_decmp[i * slot_num * 8 + j]);
+        agg_result += static_cast<size_t>(m_decmp[i * slotSize * 8 + j]);
     }
     // cout << i << "-th slot aggregation result is" << agg_result << endl;
-    ave_result.push_back(agg_result/msgCount);
+    ave_result1.push_back(agg_result/msgCount);
 }
-decomposeTime += Timer::endNan("P.decompose");
+decomposeTime1 += Timer::endNan("P.decompose");
+
+Timer::start("P.decompose-complex");
+for (size_t i = 0; i < slot_num; i++) {
+    double agg_result = 0;
+
+    for (size_t j = 0; j < slotSize * 8; j++) {
+      if (m_decmp[i * slotSize * 8 + j] == '1')
+        agg_result += pow(2, j);
+        // agg_result += static_cast<size_t>(m_decmp[i * slotSize * 8 + j]);
+    }
+    ave_result2.push_back(agg_result/msgCount);
+}
+decomposeTime2 += Timer::endNan("P.decompose-complex");
 
 
 // output the average for every attribute
@@ -355,8 +370,10 @@ decomposeTime += Timer::endNan("P.decompose");
   fs << attachTime << ","; // for end-to-end
   fs << phase1Time << ",";
   fs << phase2Time << ",";
-  fs << double(decomposeTime/1000000) << ","; // ms
-  fs << decomposeTime << ","; // ns
+  fs << double(decomposeTime1/1000000) << ","; // ms
+  fs << decomposeTime1 << ","; // ns
+  fs << double(decomposeTime2/1000000) << ","; // ms
+  fs << decomposeTime2 << ","; // ns
 
   // for amortized time 
   fs << amoCmtTime << ",";

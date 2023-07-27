@@ -66,8 +66,10 @@ TEST(App, Run)
     fs << "attach time-V(s)" << ",";
     fs << "phase1 time-P(s)" << ",";
     fs << "phase2 time-V(s)" << ",";
-    fs << "phase3 time-P(ms)" << ",";
-    fs << "phase3 time-P(ns)" << ",";
+    fs << "phase3 time-P(ms) - simple" << ",";
+    fs << "phase3 time-P(ns) - simple" << ",";
+    fs << "phase3 time-P(ms) - complex" << ",";
+    fs << "phase3 time-P(ns) - complex" << ",";
 
     //amortized time
     fs << "amo. cmt time (ms)" << ",";
